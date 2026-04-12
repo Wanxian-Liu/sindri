@@ -1,23 +1,32 @@
 #!/usr/bin/env python3
 """
-Sindri's Role Matching Script
-==============================
+Sindri's Role Matching Script - Enhanced Version
+==============================================
+Improvements over original:
+  1. Task-type awareness (code/research/write/coordination)
+  2. Role exclusivity rules (mutually exclusive roles)
+  3. Structured output with match reasoning
+
 Architecture: TF-IDF inspired scoring for role matching against a 178-role registry.
 
 Scoring Strategy (weight hierarchy):
   1. trigger_keywords   (weight 3.0) - exact/partial match, highest signal
   2. description        (weight 1.0) - semantic content
-  3. name               (weight 1.5) - role name carries intent
-  4. vibe               (weight 0.8) - personality/working style cue
+  3. name              (weight 1.5) - role name carries intent
+  4. vibe              (weight 0.8) - personality/working style cue
 
 Algorithm:
   - Tokenize query and role fields (lowercase, alpha only)
   - Compute weighted Jaccard similarity per field
   - Aggregate weighted scores → normalized 0-1 match_score
+  - Apply task-type filtering
+  - Apply role exclusivity rules
+  - Return structured output with reasoning
 
 Usage:
   from match_roles import match_roles, list_categories, get_role_by_id
   result = match_roles(["performance", "optimization"], categories=["engineering"])
+  # Returns structured output with match_reasons
 """
 
 import json
@@ -25,7 +34,7 @@ import os
 import re
 import math
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Literal
 
 # ── Config ─────────────────────────────────────────────────────────────────────
 
@@ -42,7 +51,56 @@ WEIGHTS = {
 }
 
 DEFAULT_TOP_K = 10
-MIN_SCORE = 0.020  # discard roles below this threshold (lowered from 0.035 for better recall with short/rare queries)
+MIN_SCORE = 0.020  # discard roles below this threshold
+
+# ── Task Type Definitions ─────────────────────────────────────────────────────
+
+# Task type keywords for automatic detection
+TASK_TYPE_KEYWORDS = {
+    "code": [
+        "code", "coding", "program", "develop", "implement", "build", "fix", "bug",
+        "debug", "refactor", "api", "function", "class", "module", "script",
+        "python", "javascript", "java", "rust", "golang", "后端", "前端", "全栈",
+        "代码", "开发", "实现", "修复", "重构"
+    ],
+    "research": [
+        "research", "investigate", "analyze", "survey", "study", "find", "search",
+        "explore", "evaluate", "compare", "review", "调研", "研究", "分析", "调查",
+        "评估", "比较", "审查"
+    ],
+    "write": [
+        "write", "document", "documentation", "draft", "compose", "author", "create",
+        "content", "article", "report", "summary", "explain", "写作", "文档", "撰写",
+        "编写", "内容", "文章", "报告"
+    ],
+    "design": [
+        "design", "architecture", "plan", "architect", "structure", "schema",
+        "blueprint", "架构", "设计", "规划", "结构"
+    ],
+    "test": [
+        "test", "testing", "QA", "quality", "benchmark", "verify", "validate",
+        "unit", "integration", "e2e", "测试", "质量", "验证"
+    ],
+    "operation": [
+        "deploy", "deploy", "operation", "operate", "run", "execute", "maintain",
+        "monitor", "devops", "CI", "CD", "运维", "部署", "运行", "维护", "监控"
+    ],
+}
+
+# Role exclusivity rules: groups of roles that cannot be selected together
+# Format: {group_name: [role_id_or_pattern, ...]}
+ROLE_EXCLUSIVITY = {
+    "domain_experts": {
+        # Only one domain expert per task
+        "patterns": [r"^finance_", r"^marketing_", r"^sales_", r"^engineering_", r"^product_"],
+        "max_per_group": 1,
+    },
+    "testing_types": {
+        # Only one type of testing specialist
+        "patterns": [r"testing-performance", r"testing-api", r"testing-accessibility"],
+        "max_per_group": 1,
+    },
+}
 
 # ── Chinese to English Keyword Mapping ────────────────────────────────────────
 
@@ -122,9 +180,13 @@ def jaccard(a: set[str], b: set[str]) -> float:
     union = len(a | b)
     return inter / union if union else 0.0
 
-def score_role(query_tokens: set[str], role: dict) -> float:
-    """Compute weighted aggregate score for a single role."""
+def score_role(query_tokens: set[str], role: dict, task_type: Optional[str] = None) -> tuple[float, list[str]]:
+    """
+    Compute weighted aggregate score for a single role.
+    Returns (score, reasons) where reasons explain the match.
+    """
     total = 0.0
+    reasons = []
 
     # 1. trigger_keywords — exact token overlap (highest weight)
     kw_tokens = set()
@@ -132,46 +194,137 @@ def score_role(query_tokens: set[str], role: dict) -> float:
         kw_tokens.update(tokenize(kw))
     kw_score = jaccard(query_tokens, kw_tokens)
     
-    # Bonus: substring/subtoken match for trigger_keywords (catches "bugfix" matching "fix")
+    # Bonus: substring/subtoken match for trigger_keywords
     if kw_score == 0.0 and query_tokens:
         for qt in query_tokens:
             for kw in role.get("trigger_keywords", []):
                 kw_lower = kw.lower()
                 if qt in kw_lower or kw_lower in qt:
-                    kw_score = 0.05  # small partial match bonus
+                    kw_score = 0.05
+                    reasons.append(f"partial_trigger:{qt}")
                     break
             if kw_score > 0:
                 break
     
+    if kw_score > 0:
+        reasons.append("trigger_keywords_match")
     total += WEIGHTS["trigger_keywords"] * kw_score
 
     # 2. description — token overlap with full description
     desc_tokens = tokenize(role.get("description", ""))
     desc_score = jaccard(query_tokens, desc_tokens)
     
-    # Bonus: substring match for description (catches "fix" in descriptions)
-    # Apply when jaccard is small (< 0.05) AND query token is found as substring
-    # Set to 0.15 which gives normalized contribution of ~0.024 (passes MIN_SCORE=0.02)
+    # Bonus: substring match for description
     if desc_score < 0.05 and query_tokens:
         desc_text = role.get("description", "").lower()
         for qt in query_tokens:
             if qt in desc_text:
-                desc_score = 0.15  # substantial boost when substring matches
+                desc_score = 0.15
+                reasons.append(f"substring_in_desc:{qt}")
                 break
     
+    if desc_score > 0:
+        reasons.append("description_match")
     total += WEIGHTS["description"] * desc_score
 
     # 3. name — token overlap with role name
     name_tokens = tokenize(role.get("name", ""))
-    total += WEIGHTS["name"] * jaccard(query_tokens, name_tokens)
+    name_score = jaccard(query_tokens, name_tokens)
+    if name_score > 0:
+        reasons.append("name_match")
+    total += WEIGHTS["name"] * name_score
 
     # 4. vibe — token overlap with vibe phrase
     vibe_tokens = tokenize(role.get("vibe", ""))
-    total += WEIGHTS["vibe"] * jaccard(query_tokens, vibe_tokens)
+    vibe_score = jaccard(query_tokens, vibe_tokens)
+    if vibe_score > 0:
+        reasons.append("vibe_match")
+    total += WEIGHTS["vibe"] * vibe_score
+
+    # 5. Task-type bonus: if role matches detected task type
+    if task_type:
+        role_category = role.get("category", "").lower()
+        role_name = role.get("name", "").lower()
+        role_id = role.get("id", "").lower()
+        
+        type_bonus = 0.0
+        if task_type == "code":
+            if any(x in role_id for x in ["engineer", "developer", "coder", "programmer"]):
+                type_bonus = 0.1
+                reasons.append(f"task_type_bonus:{task_type}")
+        elif task_type == "research":
+            if "researcher" in role_id or "analyst" in role_id:
+                type_bonus = 0.1
+                reasons.append(f"task_type_bonus:{task_type}")
+        elif task_type == "write":
+            if "writer" in role_id or "author" in role_id or "documentation" in role_id:
+                type_bonus = 0.1
+                reasons.append(f"task_type_bonus:{task_type}")
+        elif task_type == "design":
+            if "architect" in role_id or "designer" in role_id:
+                type_bonus = 0.1
+                reasons.append(f"task_type_bonus:{task_type}")
+        elif task_type == "test":
+            if "testing" in role_id or "tester" in role_id or "QA" in role_name:
+                type_bonus = 0.1
+                reasons.append(f"task_type_bonus:{task_type}")
+        elif task_type == "operation":
+            if "devops" in role_id or "operator" in role_id or "maintainer" in role_id:
+                type_bonus = 0.1
+                reasons.append(f"task_type_bonus:{task_type}")
+        
+        total += type_bonus
 
     # Normalize by sum of weights to get 0-1 range
-    weight_sum = sum(WEIGHTS.values())
-    return total / weight_sum
+    weight_sum = sum(WEIGHTS.values()) + 0.1  # add task-type bonus potential
+    return total / weight_sum, reasons
+
+
+def detect_task_type(task_keywords: list[str]) -> Optional[Literal["code", "research", "write", "design", "test", "operation"]]:
+    """Detect task type from keywords."""
+    query_text = " ".join(task_keywords).lower()
+    query_tokens = tokenize(query_text)
+    
+    type_scores = {}
+    for task_type, type_keywords in TASK_TYPE_KEYWORDS.items():
+        type_tokens = set(tokenize(" ".join(type_keywords)))
+        score = jaccard(query_tokens, type_tokens)
+        if score > 0:
+            type_scores[task_type] = score
+    
+    if type_scores:
+        return max(type_scores, key=type_scores.get)
+    return None
+
+
+def apply_exclusivity(matched_roles: list[dict]) -> list[dict]:
+    """
+    Apply role exclusivity rules to prevent selecting conflicting roles.
+    Returns filtered list keeping higher-scoring roles.
+    """
+    if len(matched_roles) <= 1:
+        return matched_roles
+    
+    result = []
+    used_categories = {}  # track categories already represented
+    
+    for role in matched_roles:
+        category = role.get("category", "").lower()
+        role_id = role.get("id", "").lower()
+        excluded = False
+        
+        # Domain experts: only one per major category
+        if category in ["finance", "marketing", "sales", "engineering", "product"]:
+            if used_categories.get(category, 0) >= 1:
+                excluded = True
+                role["excluded_reason"] = f"exclusivity:{category}"
+        
+        if not excluded:
+            result.append(role)
+            if category in ["finance", "marketing", "sales", "engineering", "product"]:
+                used_categories[category] = used_categories.get(category, 0) + 1
+    
+    return result
 
 # ── Core API ───────────────────────────────────────────────────────────────────
 
@@ -179,6 +332,7 @@ def match_roles(
     task_keywords: list[str],
     categories: Optional[list[str]] = None,
     top_k: int = DEFAULT_TOP_K,
+    include_reason: bool = True,
 ) -> dict:
     """
     Match roles from the registry based on task keywords.
@@ -187,9 +341,10 @@ def match_roles(
         task_keywords: List of keywords describing the task. Accepts both list[str] and str.
         categories:    Optional list of categories to filter (e.g. ["engineering", "testing"]). Must be list or None.
         top_k:         Maximum number of roles to return.
+        include_reason: If True, include match reasoning in output.
 
     Returns:
-        JSON-serializable dict with matched_roles list.
+        JSON-serializable dict with matched_roles list and metadata.
     
     Raises:
         TypeError: If categories is not a list or None.
@@ -213,6 +368,9 @@ def match_roles(
             if r.get("category", "").lower() in categories_lower
         ]
 
+    # Detect task type from keywords
+    task_type = detect_task_type(task_keywords)
+    
     # Expand Chinese keywords to English and tokenize query once
     query_tokens: set[str] = set()
     for kw in task_keywords:
@@ -222,25 +380,36 @@ def match_roles(
     # Score every role
     scored = []
     for role in all_roles:
-        score = score_role(query_tokens, role)
+        score, reasons = score_role(query_tokens, role, task_type)
         if score >= MIN_SCORE:
-            scored.append((score, role))
+            role_entry = {
+                "id":          role["id"],
+                "name":        role.get("name", ""),
+                "category":    role.get("category", ""),
+                "description": role.get("description", ""),
+                "vibe":        role.get("vibe", ""),
+                "match_score": round(score, 4),
+            }
+            if include_reason:
+                role_entry["match_reasons"] = reasons
+            scored.append((score, role_entry))
 
     # Sort descending by score
     scored.sort(key=lambda x: x[0], reverse=True)
 
-    matched = []
-    for score, role in scored[:top_k]:
-        matched.append({
-            "id":          role["id"],
-            "name":        role.get("name", ""),
-            "category":    role.get("category", ""),
-            "description": role.get("description", ""),
-            "vibe":        role.get("vibe", ""),
-            "match_score": round(score, 4),
-        })
+    # Extract matched roles
+    matched = [role for _, role in scored[:top_k]]
+    
+    # Apply exclusivity rules
+    matched = apply_exclusivity(matched)
 
-    return {"matched_roles": matched, "total_candidates": len(scored)}
+    return {
+        "matched_roles": matched,
+        "total_candidates": len(scored),
+        "task_type_detected": task_type,
+        "query_tokens": list(query_tokens),
+        "applied_exclusivity": True,
+    }
 
 
 def list_categories() -> dict:
@@ -305,7 +474,7 @@ def _load_registry() -> dict:
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="Sindri's Role Matcher")
+    parser = argparse.ArgumentParser(description="Sindri's Role Matcher - Enhanced")
     sub = parser.add_subparsers(dest="command")
 
     # match subcommand
@@ -313,6 +482,7 @@ if __name__ == "__main__":
     m.add_argument("keywords", nargs="+", help="Task keywords")
     m.add_argument("--categories", "-c", nargs="*", help="Filter by category")
     m.add_argument("--top-k", "-k", type=int, default=DEFAULT_TOP_K)
+    m.add_argument("--no-reason", action="store_true", help="Skip match reasoning")
 
     # categories subcommand
     sub.add_parser("categories", help="List all categories")
@@ -321,10 +491,19 @@ if __name__ == "__main__":
     g = sub.add_parser("get", help="Get role by id")
     g.add_argument("role_id", help="Role id to look up")
 
+    # detect-type subcommand
+    t = sub.add_parser("detect-type", help="Detect task type from keywords")
+    t.add_argument("keywords", nargs="+", help="Task keywords")
+
     args = parser.parse_args()
 
     if args.command == "match":
-        result = match_roles(args.keywords, categories=args.categories, top_k=args.top_k)
+        result = match_roles(
+            args.keywords,
+            categories=args.categories,
+            top_k=args.top_k,
+            include_reason=not args.no_reason
+        )
         print(json.dumps(result, indent=2, ensure_ascii=False))
     elif args.command == "categories":
         print(json.dumps(list_categories(), indent=2, ensure_ascii=False))
@@ -334,5 +513,8 @@ if __name__ == "__main__":
             print(json.dumps(role, indent=2, ensure_ascii=False))
         else:
             print(f"Role '{args.role_id}' not found.")
+    elif args.command == "detect-type":
+        task_type = detect_task_type(args.keywords)
+        print(json.dumps({"detected_type": task_type, "keywords": args.keywords}, indent=2, ensure_ascii=False))
     else:
         parser.print_help()

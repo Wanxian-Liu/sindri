@@ -304,6 +304,9 @@ class SindrisExecutor:
         workspace_root: Optional[str] = None,
         workspace_id: Optional[str] = None,
     ):
+        # sindris根目录（执行器所在目录）
+        self.sindri_root = SCRIPT_DIR
+        # workspace_root用于OMX状态存储
         self.workspace_root = workspace_root or os.path.expanduser("~/.openclaw/workspace")
         self.workspace_id = workspace_id or f"ws_{uuid.uuid4().hex[:8]}"
 
@@ -669,27 +672,96 @@ class SindrisExecutor:
         roles: List[Dict],
         task_type: TaskType,
     ) -> List[Task]:
-        """根据角色和任务类型分解任务"""
+        """
+        根据角色和任务类型分解任务为精确slice
+        
+        改进：
+        1. 使用SliceGenerator分析任务，提取关键实体
+        2. 将任务分解为多个精确的slice
+        3. 每个slice有明确的verify命令
+        4. 每个slice分配给一个角色
+        """
         subtasks = []
 
-        for i, role in enumerate(roles):
-            # 加载完整角色markdown
-            role_markdown = self._load_role_markdown(role)
+        # 尝试使用SliceGenerator生成精确slice
+        slices = None
+        try:
+            # 动态导入避免循环依赖
+            import importlib.util
+            _slice_gen_path = os.path.join(SCRIPT_DIR, "scripts", "slice_generator.py")
+            spec = importlib.util.spec_from_file_location("slice_generator", _slice_gen_path)
+            slice_gen_module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(slice_gen_module)
             
-            t = Task(
-                id=self._gen_id("task"),
-                title=f"[{role.get('name', role.get('id', 'unknown'))}] {task}",
-                kind="round1_planning",
-                phase="round1",
-                status=TaskStatus.PENDING,
-                priority="high",
-                verify=[f"验证{role.get('name', '角色')}输出"],
-                metadata={
-                    "role": role,
-                    "role_markdown": role_markdown,
-                },
-            )
-            subtasks.append(t)
+            gen = slice_gen_module.SliceGenerator(workspace_root=self.workspace_root)
+            slices = gen.generate_slices(task)
+        except Exception as e:
+            # 如果slice_generator失败，使用原逻辑
+            print(f"[sindris] SliceGenerator failed: {e}, using fallback")
+            slices = None
+
+        # 检查是否是分析类任务（这类任务的slices即使没有匹配角色也应该创建subtask）
+        # 注意：task_type来自TaskClassifier（枚举），SliceGenerator返回字符串，所以要兼容处理
+        task_type_str = task_type.value if hasattr(task_type, 'value') else str(task_type)
+        # 分析类任务的特征：有高层分析维度，不需要代码级分解
+        analysis_types = {
+            'analysis', 'architecture', 'design', 'planning',  # SliceGenerator字符串
+            'logical', 'divergent',  # TaskClassifier枚举名称
+            'simple',  # SIMPLE类型也可能是分析类任务（如"规划某事"）
+        }
+        is_analysis_task = task_type_str.lower() in analysis_types
+        
+        if slices and len(slices) > 0 and (roles or is_analysis_task):
+            # 为每个slice分配角色
+            for i, slice in enumerate(slices):
+                # 如果没有匹配到角色，使用默认角色或从slice构造
+                if roles:
+                    role = roles[i % len(roles)]  # 轮询分配角色
+                    role_markdown = self._load_role_markdown(role)
+                else:
+                    # 分析类任务没有匹配角色时，使用通用角色
+                    role = {"id": "general_analyzer", "name": "通用分析师", "category": "general"}
+                    role_markdown = "你是一个专业的分析师，负责高层分析和评估。"
+                role_markdown = self._load_role_markdown(role)
+                
+                t = Task(
+                    id=self._gen_id("task"),
+                    title=f"[{role.get('name', role.get('id', 'unknown'))}] {slice.file}::{slice.function}",
+                    kind="round1_planning",
+                    phase="round1",
+                    status=TaskStatus.PENDING,
+                    priority=slice.priority,
+                    verify=[slice.test_cmd],  # 精确验证命令
+                    metadata={
+                        "role": role,
+                        "role_markdown": role_markdown,
+                        "slice": {
+                            "file": slice.file,
+                            "function": slice.function,
+                            "description": slice.description,
+                        },
+                    },
+                )
+                subtasks.append(t)
+        else:
+            # Fallback：原逻辑（每个角色一个任务）
+            for i, role in enumerate(roles):
+                role_markdown = self._load_role_markdown(role)
+                
+                t = Task(
+                    id=self._gen_id("task"),
+                    title=f"[{role.get('name', role.get('id', 'unknown'))}] {task}",
+                    kind="round1_planning",
+                    phase="round1",
+                    status=TaskStatus.PENDING,
+                    priority="high",
+                    verify=[f"验证{role.get('name', '角色')}输出"],
+                    metadata={
+                        "role": role,
+                        "role_markdown": role_markdown,
+                    },
+                )
+                subtasks.append(t)
 
         return subtasks
 
@@ -950,14 +1022,19 @@ class SindrisExecutor:
         return "developer"  # 默认
 
     def _get_timeout_for_role(self, role_type: str) -> int:
-        """获取角色超时时间（秒）"""
+        """
+        获取角色超时时间（秒）
+        
+        改进：统一调整为20分钟（与oh-my-codex的lease机制一致）
+        确保子代理有足够时间完成任务
+        """
         timeout_map = {
-            "researcher": 300,
-            "developer": 600,
-            "verifier": 180,
-            "recorder": 60,
+            "researcher": 1200,  # 20分钟
+            "developer": 1200,   # 20分钟
+            "verifier": 1200,    # 20分钟
+            "recorder": 1200,    # 20分钟
         }
-        return timeout_map.get(role_type, 300)
+        return timeout_map.get(role_type, 1200)
 
     def _ralph_default_verify_items(self) -> List[Dict]:
         """
@@ -1325,6 +1402,9 @@ class SindrisExecutor:
                     "timeout": self._get_timeout_for_role(role_type),
                     "allowed_tools": allowed_tools,
                     "role_markdown": role_markdown,
+                    "verify": t.verify,  # 精确的验证命令
+                    "slice": t.metadata.get("slice"),  # slice信息
+                    "cwd": self.sindri_root,  # 子代理工作目录（sindris根目录）
                 })
             
             return {

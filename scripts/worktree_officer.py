@@ -126,8 +126,8 @@ class WorktreeOfficer:
         
         if code != 0:
             # 可能分支已存在，尝试复用
-            code2, _, _ = self._run_git(['worktree', 'list'])
-            if agent_name in code2:
+            _, stdout, _ = self._run_git(['worktree', 'list'])
+            if agent_name in stdout:
                 self.worktree_map[agent_name] = wt_dir
                 return wt_dir
             return None
