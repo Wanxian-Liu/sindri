@@ -1,0 +1,1093 @@
+[
+  {
+    "id": "M1.1",
+    "title": "扫描Mimir-Core所有Python模块",
+    "kind": "mimir",
+    "phase": "phase0",
+    "status": "completed",
+    "priority": "high",
+    "owner": "Software Architect",
+    "verify": [
+      "验收: 模块清单"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [
+      "M1.2",
+      "M1.3"
+    ],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": "2026-04-11T17:41:26.448772",
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.817884"
+      },
+      {
+        "status": "completed",
+        "at": "2026-04-11T17:41:26.448769",
+        "by": null,
+        "note": "模块地图生成完成，111个模块"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.817854",
+    "updated_at": "2026-04-11T17:41:26.449081"
+  },
+  {
+    "id": "M1.2",
+    "title": "提取接口定义（函数、类、公共API）",
+    "kind": "mimir",
+    "phase": "phase0",
+    "status": "completed",
+    "priority": "high",
+    "owner": "API Tester",
+    "verify": [
+      "验收: 接口文档"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [
+      "M1.4"
+    ],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": "2026-04-11T18:00:43.478039",
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.817936"
+      },
+      {
+        "status": "completed",
+        "at": "2026-04-11T18:00:43.478035",
+        "by": null,
+        "note": "接口文档生成完成，111个模块，2555行"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.817931",
+    "updated_at": "2026-04-11T18:00:43.478380"
+  },
+  {
+    "id": "M1.3",
+    "title": "生成依赖关系图",
+    "kind": "mimir",
+    "phase": "phase0",
+    "status": "completed",
+    "priority": "high",
+    "owner": "Workflow Architect",
+    "verify": [
+      "验收: 关系图谱"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [
+      "M1.4"
+    ],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": "2026-04-11T18:03:44.328489",
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.817956"
+      },
+      {
+        "status": "completed",
+        "at": "2026-04-11T18:03:44.328485",
+        "by": null,
+        "note": "依赖关系图生成完成，111模块79条边"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.817952",
+    "updated_at": "2026-04-11T18:03:44.328824"
+  },
+  {
+    "id": "M1.4",
+    "title": "建立可查询的模块清单API",
+    "kind": "mimir",
+    "phase": "phase0",
+    "status": "pending",
+    "priority": "high",
+    "owner": "Senior Developer",
+    "verify": [
+      "验收: introspection/modules.py"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [
+      "M2.1"
+    ],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": null,
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.817971"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.817967",
+    "updated_at": "2026-04-11T12:56:23.817969"
+  },
+  {
+    "id": "M2.1",
+    "title": "给每个模块加状态探针",
+    "kind": "mimir",
+    "phase": "phase0",
+    "status": "pending",
+    "priority": "high",
+    "owner": "Senior Developer",
+    "verify": [
+      "验收: 状态装饰器"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [
+      "M2.2"
+    ],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": null,
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.817986"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.817982",
+    "updated_at": "2026-04-11T12:56:23.817984"
+  },
+  {
+    "id": "M2.2",
+    "title": "建立状态汇总API",
+    "kind": "mimir",
+    "phase": "phase0",
+    "status": "pending",
+    "priority": "high",
+    "owner": "API Tester",
+    "verify": [
+      "验收: introspection/status.py"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [
+      "M2.3"
+    ],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": null,
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.817999"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.817995",
+    "updated_at": "2026-04-11T12:56:23.817997"
+  },
+  {
+    "id": "M2.3",
+    "title": "实现轻量级仪表盘",
+    "kind": "mimir",
+    "phase": "phase0",
+    "status": "pending",
+    "priority": "high",
+    "owner": "Frontend Developer",
+    "verify": [
+      "验收: 状态页"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [
+      "M2.4"
+    ],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": null,
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.818012"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.818008",
+    "updated_at": "2026-04-11T12:56:23.818010"
+  },
+  {
+    "id": "M2.4",
+    "title": "定义关键指标阈值",
+    "kind": "mimir",
+    "phase": "phase0",
+    "status": "pending",
+    "priority": "high",
+    "owner": "Architect",
+    "verify": [
+      "验收: 阈值配置"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [
+      "M3.1"
+    ],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": null,
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.818025"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.818021",
+    "updated_at": "2026-04-11T12:56:23.818023"
+  },
+  {
+    "id": "M3.1",
+    "title": "集成日志分析器",
+    "kind": "mimir",
+    "phase": "phase0",
+    "status": "pending",
+    "priority": "high",
+    "owner": "SRE",
+    "verify": [
+      "验收: introspection/log_analyzer.py"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [
+      "M3.2"
+    ],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": null,
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.818039"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.818034",
+    "updated_at": "2026-04-11T12:56:23.818037"
+  },
+  {
+    "id": "M3.2",
+    "title": "实现问题分类引擎",
+    "kind": "mimir",
+    "phase": "phase0",
+    "status": "pending",
+    "priority": "high",
+    "owner": "Agents Orchestrator",
+    "verify": [
+      "验收: 问题分类"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [
+      "M3.3"
+    ],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": null,
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.818051"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.818047",
+    "updated_at": "2026-04-11T12:56:23.818049"
+  },
+  {
+    "id": "M3.3",
+    "title": "建立根因分析链路",
+    "kind": "mimir",
+    "phase": "phase0",
+    "status": "pending",
+    "priority": "high",
+    "owner": "Architect",
+    "verify": [
+      "验收: 链路追踪"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [
+      "M3.4"
+    ],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": null,
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.818062"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.818058",
+    "updated_at": "2026-04-11T12:56:23.818061"
+  },
+  {
+    "id": "M3.4",
+    "title": "实现告警机制",
+    "kind": "mimir",
+    "phase": "phase0",
+    "status": "pending",
+    "priority": "high",
+    "owner": "DevOps Automator",
+    "verify": [
+      "验收: 告警系统"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": null,
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.818074"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.818070",
+    "updated_at": "2026-04-11T12:56:23.818072"
+  },
+  {
+    "id": "F1.1",
+    "title": "实现问题定位",
+    "kind": "mimir",
+    "phase": "phase1",
+    "status": "pending",
+    "priority": "high",
+    "owner": "Agents Orchestrator",
+    "verify": [
+      "验收: evolve/problem_locator.py"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [
+      "F1.2"
+    ],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": null,
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.818087"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.818083",
+    "updated_at": "2026-04-11T12:56:23.818085"
+  },
+  {
+    "id": "F1.2",
+    "title": "实现修复指令生成",
+    "kind": "mimir",
+    "phase": "phase1",
+    "status": "pending",
+    "priority": "high",
+    "owner": "Senior Developer",
+    "verify": [
+      "验收: evolve/fix_generator.py"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [
+      "F1.3"
+    ],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": null,
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.818098"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.818095",
+    "updated_at": "2026-04-11T12:56:23.818097"
+  },
+  {
+    "id": "F1.3",
+    "title": "实现自动修复执行",
+    "kind": "mimir",
+    "phase": "phase1",
+    "status": "pending",
+    "priority": "high",
+    "owner": "DevOps Automator",
+    "verify": [
+      "验收: evolve/autofix.py"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [
+      "F1.4"
+    ],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": null,
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.818109"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.818106",
+    "updated_at": "2026-04-11T12:56:23.818108"
+  },
+  {
+    "id": "F1.4",
+    "title": "实现修复验证",
+    "kind": "mimir",
+    "phase": "phase1",
+    "status": "pending",
+    "priority": "high",
+    "owner": "API Tester",
+    "verify": [
+      "验收: 验证流程"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [
+      "D1.1"
+    ],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": null,
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.818120"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.818116",
+    "updated_at": "2026-04-11T12:56:23.818118"
+  },
+  {
+    "id": "D1.1",
+    "title": "实现成功率检测",
+    "kind": "mimir",
+    "phase": "phase1",
+    "status": "pending",
+    "priority": "high",
+    "owner": "SRE",
+    "verify": [
+      "验收: evolve/success_tracker.py"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [
+      "D1.2"
+    ],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": null,
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.818132"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.818128",
+    "updated_at": "2026-04-11T12:56:23.818131"
+  },
+  {
+    "id": "D1.2",
+    "title": "实现优化空间分析",
+    "kind": "mimir",
+    "phase": "phase1",
+    "status": "pending",
+    "priority": "high",
+    "owner": "Architect",
+    "verify": [
+      "验收: evolve/optimization_finder.py"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [
+      "D1.3"
+    ],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": null,
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.818144"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.818140",
+    "updated_at": "2026-04-11T12:56:23.818142"
+  },
+  {
+    "id": "D1.3",
+    "title": "实现派生版本生成",
+    "kind": "mimir",
+    "phase": "phase1",
+    "status": "pending",
+    "priority": "high",
+    "owner": "Senior Developer",
+    "verify": [
+      "验收: evolve/derived_generator.py"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [
+      "D1.4"
+    ],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": null,
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.818156"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.818152",
+    "updated_at": "2026-04-11T12:56:23.818154"
+  },
+  {
+    "id": "D1.4",
+    "title": "实现A/B测试框架",
+    "kind": "mimir",
+    "phase": "phase1",
+    "status": "pending",
+    "priority": "high",
+    "owner": "Testing",
+    "verify": [
+      "验收: A/B测试"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": null,
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.818182"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.818178",
+    "updated_at": "2026-04-11T12:56:23.818180"
+  },
+  {
+    "id": "W1.1",
+    "title": "实现Worker注册表",
+    "kind": "mimir",
+    "phase": "phase2",
+    "status": "pending",
+    "priority": "high",
+    "owner": "Architect",
+    "verify": [
+      "验收: agent/worker_registry.py"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [
+      "W1.2"
+    ],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": null,
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.818194"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.818190",
+    "updated_at": "2026-04-11T12:56:23.818192"
+  },
+  {
+    "id": "W1.2",
+    "title": "实现状态机",
+    "kind": "mimir",
+    "phase": "phase2",
+    "status": "pending",
+    "priority": "high",
+    "owner": "Senior Developer",
+    "verify": [
+      "验收: 状态转换逻辑"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [
+      "W1.3"
+    ],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": null,
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.818205"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.818201",
+    "updated_at": "2026-04-11T12:56:23.818203"
+  },
+  {
+    "id": "W1.3",
+    "title": "实现信任门检测",
+    "kind": "mimir",
+    "phase": "phase2",
+    "status": "pending",
+    "priority": "high",
+    "owner": "Security Engineer",
+    "verify": [
+      "验收: 信任门"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [
+      "W1.4"
+    ],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": null,
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.818216"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.818212",
+    "updated_at": "2026-04-11T12:56:23.818214"
+  },
+  {
+    "id": "W1.4",
+    "title": "实现生命周期管理",
+    "kind": "mimir",
+    "phase": "phase2",
+    "status": "pending",
+    "priority": "high",
+    "owner": "DevOps Automator",
+    "verify": [
+      "验收: Worker管理"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [
+      "T1.1"
+    ],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": null,
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.818228"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.818224",
+    "updated_at": "2026-04-11T12:56:23.818226"
+  },
+  {
+    "id": "T1.1",
+    "title": "实现任务队列",
+    "kind": "mimir",
+    "phase": "phase2",
+    "status": "pending",
+    "priority": "high",
+    "owner": "Senior Developer",
+    "verify": [
+      "验收: task/queue.py"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [
+      "T1.2"
+    ],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": null,
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.818239"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.818235",
+    "updated_at": "2026-04-11T12:56:23.818237"
+  },
+  {
+    "id": "T1.2",
+    "title": "实现智能调度",
+    "kind": "mimir",
+    "phase": "phase2",
+    "status": "pending",
+    "priority": "high",
+    "owner": "Agents Orchestrator",
+    "verify": [
+      "验收: 调度算法"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [
+      "T1.3"
+    ],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": null,
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.818250"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.818246",
+    "updated_at": "2026-04-11T12:56:23.818248"
+  },
+  {
+    "id": "T1.3",
+    "title": "实现负载均衡",
+    "kind": "mimir",
+    "phase": "phase2",
+    "status": "pending",
+    "priority": "high",
+    "owner": "SRE",
+    "verify": [
+      "验收: 负载均衡"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [
+      "T1.4"
+    ],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": null,
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.818262"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.818258",
+    "updated_at": "2026-04-11T12:56:23.818260"
+  },
+  {
+    "id": "T1.4",
+    "title": "实现容错机制",
+    "kind": "mimir",
+    "phase": "phase2",
+    "status": "pending",
+    "priority": "high",
+    "owner": "DevOps Automator",
+    "verify": [
+      "验收: 重试+回滚"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": null,
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.818274"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.818269",
+    "updated_at": "2026-04-11T12:56:23.818272"
+  },
+  {
+    "id": "B1.1",
+    "title": "实现分层加载",
+    "kind": "mimir",
+    "phase": "phase3",
+    "status": "pending",
+    "priority": "high",
+    "owner": "Architect",
+    "verify": [
+      "验收: 分层架构"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [
+      "B1.2"
+    ],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": null,
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.818287"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.818283",
+    "updated_at": "2026-04-11T12:56:23.818285"
+  },
+  {
+    "id": "B1.2",
+    "title": "实现按需导入",
+    "kind": "mimir",
+    "phase": "phase3",
+    "status": "pending",
+    "priority": "high",
+    "owner": "Senior Developer",
+    "verify": [
+      "验收: bootstrap/lazy_import.py"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [
+      "B1.3"
+    ],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": null,
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.818298"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.818294",
+    "updated_at": "2026-04-11T12:56:23.818296"
+  },
+  {
+    "id": "B1.3",
+    "title": "实现缓存预热",
+    "kind": "mimir",
+    "phase": "phase3",
+    "status": "pending",
+    "priority": "high",
+    "owner": "SRE",
+    "verify": [
+      "验收: 缓存策略"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [
+      "B1.4"
+    ],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": null,
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.818309"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.818306",
+    "updated_at": "2026-04-11T12:56:23.818308"
+  },
+  {
+    "id": "B1.4",
+    "title": "实现启动优化",
+    "kind": "mimir",
+    "phase": "phase3",
+    "status": "pending",
+    "priority": "high",
+    "owner": "DevOps Automator",
+    "verify": [
+      "验收: 启动加速"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [
+      "B2.1"
+    ],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": null,
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.818321"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.818317",
+    "updated_at": "2026-04-11T12:56:23.818319"
+  },
+  {
+    "id": "B2.1",
+    "title": "性能基准测试",
+    "kind": "mimir",
+    "phase": "phase3",
+    "status": "pending",
+    "priority": "high",
+    "owner": "SRE",
+    "verify": [
+      "验收: 基准报告"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [
+      "B2.2"
+    ],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": null,
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.818345"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.818341",
+    "updated_at": "2026-04-11T12:56:23.818343"
+  },
+  {
+    "id": "B2.2",
+    "title": "瓶颈分析",
+    "kind": "mimir",
+    "phase": "phase3",
+    "status": "pending",
+    "priority": "high",
+    "owner": "Architect",
+    "verify": [
+      "验收: 瓶颈报告"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [
+      "B2.3"
+    ],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": null,
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.818361"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.818357",
+    "updated_at": "2026-04-11T12:56:23.818359"
+  },
+  {
+    "id": "B2.3",
+    "title": "优化实现",
+    "kind": "mimir",
+    "phase": "phase3",
+    "status": "pending",
+    "priority": "high",
+    "owner": "Senior Developer",
+    "verify": [
+      "验收: 优化代码"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [
+      "B2.4"
+    ],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": null,
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.818372"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.818369",
+    "updated_at": "2026-04-11T12:56:23.818371"
+  },
+  {
+    "id": "B2.4",
+    "title": "验证优化效果",
+    "kind": "mimir",
+    "phase": "phase3",
+    "status": "pending",
+    "priority": "high",
+    "owner": "Testing",
+    "verify": [
+      "验收: 验证报告"
+    ],
+    "notes": [],
+    "metadata": {},
+    "dependencies": [],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": null,
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-11T12:56:23.818384"
+      }
+    ],
+    "created_at": "2026-04-11T12:56:23.818380",
+    "updated_at": "2026-04-11T12:56:23.818382"
+  }
+]
