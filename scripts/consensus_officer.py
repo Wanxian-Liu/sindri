@@ -35,12 +35,13 @@ class ConsensusOfficer:
     )
     
     # 宽松格式: consensus: yes
+    # 注意: (yes|no) 后面必须跟词边界或行尾，防止"Yesplease"被误判为YES
     VARIANT_PATTERNS = [
-        re.compile(r'consensus[:\s]+(yes|no)', re.IGNORECASE),
-        re.compile(r'\*\*consensus\*\*[:\s]+(yes|no)', re.IGNORECASE),
-        re.compile(r'CONSENSUS=(YES|NO)', re.IGNORECASE),
-        re.compile(r'共识投票[:：\s]+(YES|NO)', re.IGNORECASE),
-        re.compile(r'\[CONSENSUS\][:\s]+(YES|NO)', re.IGNORECASE),
+        re.compile(r'consensus[:\s]+(yes|no)(?=\s|[^\w]|$)', re.IGNORECASE),
+        re.compile(r'\*\*consensus\*\*[:\s]+(yes|no)(?=\s|[^\w]|$)', re.IGNORECASE),
+        re.compile(r'CONSENSUS=(YES|NO)(?=\s|[^\w]|$)', re.IGNORECASE),
+        re.compile(r'共识投票[:：\s]+(YES|NO)(?=\s|[^\w]|$)', re.IGNORECASE),
+        re.compile(r'\[CONSENSUS\][:\s]+(YES|NO)(?=\s|[^\w]|$)', re.IGNORECASE),
     ]
     
     def __init__(self, threshold: float = 0.5):

@@ -731,6 +731,15 @@ class OMXIntegrator:
                 return phase.output.get("task_id")
         return None
 
+    def get_status(self) -> Dict[str, Any]:
+        """
+        获取当前会话状态（API兼容性方法，等同于get_session_summary）
+
+        Returns:
+            dict: 包含session_id, phases, actions, omx_summary的完整状态
+        """
+        return self.get_session_summary()
+
 
 # ============================================================
 # 全局便捷函数

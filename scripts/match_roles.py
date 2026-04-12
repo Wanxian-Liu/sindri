@@ -79,6 +79,11 @@ ZH_TO_EN = {
     "集成": "integration",
     "监控": "monitoring health",
     "熔断": "circuit breaker resilience",
+    
+    # Evolution / Self-improvement
+    "进化": "evolution improve growth",
+    "自进化": "self-improvement automation",
+    "自我进化": "self-improvement automation testing",
 }
 
 def expand_query(text: str) -> str:
@@ -180,15 +185,22 @@ def match_roles(
 
     Args:
         task_keywords: List of keywords describing the task. Accepts both list[str] and str.
-        categories:    Optional list of categories to filter (e.g. ["engineering", "testing"]).
+        categories:    Optional list of categories to filter (e.g. ["engineering", "testing"]). Must be list or None.
         top_k:         Maximum number of roles to return.
 
     Returns:
         JSON-serializable dict with matched_roles list.
+    
+    Raises:
+        TypeError: If categories is not a list or None.
     """
     # Auto-convert string to list for convenience
     if isinstance(task_keywords, str):
         task_keywords = [task_keywords]
+    
+    # Type check for categories parameter
+    if categories is not None and not isinstance(categories, list):
+        raise TypeError(f"categories must be a list or None, got {type(categories).__name__}")
     
     registry = _load_registry()
     all_roles = registry["roles"]
