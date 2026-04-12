@@ -778,20 +778,47 @@ class SindrisExecutor:
                 )
                 subtasks.append(t)
         else:
-            # Fallback：原逻辑（每个角色一个任务）
-            for i, role in enumerate(roles):
-                role_markdown = self._load_role_markdown(role)
+            # Fallback：当没有匹配角色但有slices时，使用默认角色
+            if slices and len(slices) > 0:
+                # 使用默认角色
+                default_role = {"id": "default_coder", "name": "Developer", "category": "general"}
+                role_markdown = "你是一个专业的开发者，负责根据给定的slices执行任务。"
+                
+                for i, slice in enumerate(slices):
+                    t = Task(
+                        id=self._gen_id("task"),
+                        title=f"[Developer] {slice.file}::{slice.function}",
+                        kind="round1_planning",
+                        phase="round1",
+                        status=TaskStatus.PENDING,
+                        priority=slice.priority,
+                        verify=[slice.test_cmd],
+                        metadata={
+                            "role": default_role,
+                            "role_markdown": role_markdown,
+                            "slice": {
+                                "file": slice.file,
+                                "function": slice.function,
+                                "description": slice.description,
+                            },
+                        },
+                    )
+                    subtasks.append(t)
+            else:
+                # 真正没有任何信息时，创建一个通用任务
+                default_role = {"id": "general", "name": "Assistant", "category": "general"}
+                role_markdown = "你是一个通用的助手，负责处理任何任务。"
                 
                 t = Task(
                     id=self._gen_id("task"),
-                    title=f"[{role.get('name', role.get('id', 'unknown'))}] {task}",
+                    title=f"[Assistant] {task[:50]}...",
                     kind="round1_planning",
                     phase="round1",
                     status=TaskStatus.PENDING,
                     priority="high",
-                    verify=[f"验证{role.get('name', '角色')}输出"],
+                    verify=["echo '任务完成'"],
                     metadata={
-                        "role": role,
+                        "role": default_role,
                         "role_markdown": role_markdown,
                     },
                 )

@@ -121,18 +121,20 @@ class SliceGenerator:
     }
     
     # 报告分析类任务关键词（直接分析给定内容，不需要代码级分解）
+    # 报告分析类任务关键词（直接分析给定内容，不需要代码级分解）
+    # 注意：这些关键词需要出现在"针对/关于/分析"等上下文后才触发report_analysis
     REPORT_ANALYSIS_KEYWORDS = {
-        "报告": "report_analysis",
-        "总结": "report_analysis",
-        "摘要": "report_analysis",
-        "建议": "report_analysis",
-        "修复": "report_analysis",
-        "改进": "report_analysis",
-        "优化": "report_analysis",
-        "诊断": "report_analysis",
-        "审查": "report_analysis",  # 代码审查是特殊的
-        "审视": "report_analysis",
+        # 明确指向报告/内容的词
+        "针对": "report_analysis",
+        "关于": "report_analysis",
     }
+    
+    # 报告分析触发词组（这些词组出现时才是report_analysis）
+    REPORT_ANALYSIS_PHRASES = [
+        "给出建议", "给出修复", "给出改进", "给出优化",
+        "报告指出", "报告发现", "报告建议",
+        "内容分析", "问题分析",
+    ]
     
     # 分析类任务关键词（高于sindris等具体任务类型）
     ANALYSIS_KEYWORDS = {
@@ -360,9 +362,21 @@ class SliceGenerator:
         task_lower = task.lower()
         
         # 最高优先级：报告分析类（直接分析内容，不需要代码分解）
-        for keyword, task_type in self.REPORT_ANALYSIS_KEYWORDS.items():
-            if keyword in task_lower:
-                return task_type  # "report_analysis"
+        # 需要精确匹配词组或特定上下文
+        for phrase in self.REPORT_ANALYSIS_PHRASES:
+            if phrase in task_lower:
+                return "report_analysis"
+        
+        # 检查"针对/关于+关键词"模式
+        for keyword in ["报告", "建议", "修复", "改进", "优化"]:
+            if f"针对" in task_lower and keyword in task_lower:
+                return "report_analysis"
+            if f"关于" in task_lower and keyword in task_lower:
+                return "report_analysis"
+        
+        # 检查"分析报告/分析内容"模式
+        if "分析" in task_lower and ("报告" in task_lower or "内容" in task_lower):
+            return "report_analysis"
         
         # 第二优先级：分析类任务
         for keyword, task_type in self.ANALYSIS_KEYWORDS.items():
