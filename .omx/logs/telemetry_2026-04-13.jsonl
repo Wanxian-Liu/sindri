@@ -1,0 +1,5 @@
+{"event": "task_start", "timestamp": "2026-04-13T02:14:20.651587", "task_id": "task_test_001", "worker_id": null, "role": "developer", "duration_ms": null, "success": null, "error": null, "details": {}}
+{"event": "task_complete", "timestamp": "2026-04-13T02:14:20.651763", "task_id": "task_test_001", "worker_id": null, "role": "developer", "duration_ms": null, "success": true, "error": null, "details": {}}
+{"event": "circuit_break", "timestamp": "2026-04-13T02:14:20.651820", "task_id": "task_test_002", "worker_id": null, "role": "developer", "duration_ms": null, "success": false, "error": "Circuit break: test", "details": {"reason": "test"}}
+{"event": "task_start", "timestamp": "2026-04-13T02:30:21.748081", "task_id": "t1", "worker_id": null, "role": "dev", "duration_ms": null, "success": null, "error": null, "details": {}}
+{"event": "task_complete", "timestamp": "2026-04-13T02:30:21.748188", "task_id": "t1", "worker_id": null, "role": "dev", "duration_ms": null, "success": true, "error": null, "details": {}}
