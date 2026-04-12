@@ -120,6 +120,20 @@ class SliceGenerator:
         },
     }
     
+    # 报告分析类任务关键词（直接分析给定内容，不需要代码级分解）
+    REPORT_ANALYSIS_KEYWORDS = {
+        "报告": "report_analysis",
+        "总结": "report_analysis",
+        "摘要": "report_analysis",
+        "建议": "report_analysis",
+        "修复": "report_analysis",
+        "改进": "report_analysis",
+        "优化": "report_analysis",
+        "诊断": "report_analysis",
+        "审查": "report_analysis",  # 代码审查是特殊的
+        "审视": "report_analysis",
+    }
+    
     # 分析类任务关键词（高于sindris等具体任务类型）
     ANALYSIS_KEYWORDS = {
         "分析": "analysis",
@@ -130,9 +144,9 @@ class SliceGenerator:
         "research": "analysis",
         "评审": "analysis",
         "review": "analysis",
-        "审视": "analysis",
+        "审视": "review",  # 改为review避免与report_analysis混淆
         "检查": "analysis",
-        "审查": "analysis",
+        "审查": "review",  # 改为review
         "架构": "architecture",
         "architecture": "architecture",
         "设计": "design",
@@ -235,7 +249,19 @@ class SliceGenerator:
         # 1. 识别任务类型
         task_type = self._identify_task_type(task)
         
-        # 1.5. 分析类任务返回高层维度slice，不返回代码级slice
+        # 1.5. 报告分析类任务：返回特殊slice，指示直接分析报告内容
+        if task_type == "report_analysis":
+            slices.append(Slice(
+                file=".",
+                function="report_analysis",
+                test_cmd="echo '分析报告内容'",
+                description="【报告分析】直接分析给定的报告内容，给出具体建议",
+                priority="high"
+            ))
+            self._cache[cache_key] = slices
+            return slices
+        
+        # 1.6. 分析类任务返回高层维度slice，不返回代码级slice
         if task_type in ("analysis", "architecture", "design", "planning"):
             for dim in self.ANALYSIS_DIMENSIONS:
                 slices.append(Slice(
@@ -333,7 +359,12 @@ class SliceGenerator:
         """从任务描述识别任务类型"""
         task_lower = task.lower()
         
-        # 首先检查是否是分析类任务（最高优先级）
+        # 最高优先级：报告分析类（直接分析内容，不需要代码分解）
+        for keyword, task_type in self.REPORT_ANALYSIS_KEYWORDS.items():
+            if keyword in task_lower:
+                return task_type  # "report_analysis"
+        
+        # 第二优先级：分析类任务
         for keyword, task_type in self.ANALYSIS_KEYWORDS.items():
             if keyword in task_lower:
                 return task_type  # "analysis", "architecture", "design", "planning"

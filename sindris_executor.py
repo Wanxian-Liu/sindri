@@ -682,6 +682,14 @@ class SindrisExecutor:
         4. 每个slice分配给一个角色
         """
         subtasks = []
+        
+        # 动态导入SliceGenerator
+        import importlib.util
+        _slice_gen_path = str(Path(__file__).parent / "scripts" / "slice_generator.py")
+        spec = importlib.util.spec_from_file_location("slice_generator", _slice_gen_path)
+        _sg_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(_sg_module)
+        SliceGenerator = _sg_module.SliceGenerator
 
         # 尝试使用SliceGenerator生成精确slice
         slices = None
@@ -700,18 +708,26 @@ class SindrisExecutor:
             print(f"[sindris] SliceGenerator failed: {e}, using fallback")
             slices = None
 
-        # 检查是否是分析类任务（这类任务的slices即使没有匹配角色也应该创建subtask）
-        # 注意：task_type来自TaskClassifier（枚举），SliceGenerator返回字符串，所以要兼容处理
-        task_type_str = task_type.value if hasattr(task_type, 'value') else str(task_type)
+        # 检查是否是报告分析类任务（直接分析报告内容）
+        # 使用SliceGenerator的_identify_task_type来判断，而不是TaskClassifier
+        # 因为TaskClassifier会把"报告分析"识别为ITERATIVE
+        slice_gen = SliceGenerator(workspace_root=self.workspace_root)
+        slice_task_type = slice_gen._identify_task_type(task)
+        
+        # 报告分析类任务
+        report_analysis_types = {'report_analysis'}
+        
         # 分析类任务的特征：有高层分析维度，不需要代码级分解
         analysis_types = {
             'analysis', 'architecture', 'design', 'planning',  # SliceGenerator字符串
             'logical', 'divergent',  # TaskClassifier枚举名称
             'simple',  # SIMPLE类型也可能是分析类任务（如"规划某事"）
         }
-        is_analysis_task = task_type_str.lower() in analysis_types
         
-        if slices and len(slices) > 0 and (roles or is_analysis_task):
+        is_report_analysis = slice_task_type.lower() in report_analysis_types
+        is_analysis_task = slice_task_type.lower() in analysis_types
+        
+        if slices and len(slices) > 0 and (roles or is_analysis_task or is_report_analysis):
             # 为每个slice分配角色
             for i, slice in enumerate(slices):
                 # 如果没有匹配到角色，使用默认角色或从slice构造
@@ -724,15 +740,10 @@ class SindrisExecutor:
                     role_markdown = "你是一个专业的分析师，负责高层分析和评估。"
                 role_markdown = self._load_role_markdown(role)
                 
-                t = Task(
-                    id=self._gen_id("task"),
-                    title=f"[{role.get('name', role.get('id', 'unknown'))}] {slice.file}::{slice.function}",
-                    kind="round1_planning",
-                    phase="round1",
-                    status=TaskStatus.PENDING,
-                    priority=slice.priority,
-                    verify=[slice.test_cmd],  # 精确验证命令
-                    metadata={
+                # 报告分析类任务使用特殊的title和metadata
+                if is_report_analysis:
+                    task_title = f"[报告分析师] {slice.description}"
+                    task_metadata = {
                         "role": role,
                         "role_markdown": role_markdown,
                         "slice": {
@@ -740,7 +751,30 @@ class SindrisExecutor:
                             "function": slice.function,
                             "description": slice.description,
                         },
-                    },
+                        "is_report_analysis": True,
+                        "task_context": task,  # 原始任务描述
+                    }
+                else:
+                    task_title = f"[{role.get('name', role.get('id', 'unknown'))}] {slice.file}::{slice.function}"
+                    task_metadata = {
+                        "role": role,
+                        "role_markdown": role_markdown,
+                        "slice": {
+                            "file": slice.file,
+                            "function": slice.function,
+                            "description": slice.description,
+                        },
+                    }
+                
+                t = Task(
+                    id=self._gen_id("task"),
+                    title=task_title,
+                    kind="round1_planning",
+                    phase="round1",
+                    status=TaskStatus.PENDING,
+                    priority=slice.priority,
+                    verify=[slice.test_cmd],  # 精确验证命令
+                    metadata=task_metadata,
                 )
                 subtasks.append(t)
         else:
@@ -1030,8 +1064,33 @@ class SindrisExecutor:
         # 确保API key已设置
         api_key = os.environ.get('DEEPSEEK_API_KEY') or 'sk-478c1dd983e44adb974876e438776898'
         
+        # 检查是否是报告分析任务
+        is_report_analysis = task.metadata.get("is_report_analysis", False)
+        task_context = task.metadata.get("task_context", "")
+        
         # 构造角色提示词
-        role_prompt = f"""You are a {worker.role}.
+        if is_report_analysis:
+            role_prompt = f"""You are {worker.role}.
+
+You are an expert at analyzing reports and providing specific, actionable recommendations.
+
+Your task:
+1. Read the provided report carefully
+2. Identify specific issues and problems
+3. Provide concrete, actionable recommendations
+4. Do NOT give generic advice - focus on specific findings from the report
+
+Important:
+- Base your recommendations ONLY on the report content
+- Be specific, not generic
+- List concrete action items, not abstract principles
+
+Report to analyze:
+{task_context}
+
+Task: {task.title}"""
+        else:
+            role_prompt = f"""You are a {worker.role}.
 
 Role Description:
 {worker.role} - Expert in analysis and design.
@@ -1049,10 +1108,17 @@ Instructions:
 Task:"""
         
         # 构造消息
-        messages = [
-            {"role": "system", "content": role_prompt},
-            {"role": "user", "content": task.title}
-        ]
+        if is_report_analysis and task_context:
+            # 报告分析任务：消息内容包含原始任务上下文
+            messages = [
+                {"role": "system", "content": role_prompt},
+                {"role": "user", "content": f"请分析以下内容并给出具体建议：\n\n{task_context[:4000]}"}
+            ]
+        else:
+            messages = [
+                {"role": "system", "content": role_prompt},
+                {"role": "user", "content": task.title}
+            ]
         
         # 直接调用DeepSeek API
         try:
