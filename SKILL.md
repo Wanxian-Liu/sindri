@@ -1,27 +1,28 @@
 ---
 name: sindris
-version: "1.5"
+version: "1.6"
 license: MIT
 copyright: "2026 琬弦 (Wanxian)"
 description: |
-  织界统一协调系统 v1.5 - 多Agent协作执行引擎
+  织界统一协调系统 v1.6 - 多Agent协作执行引擎
   
   基于sindris Round1-4流程，参考oh-my-codex v2设计，
   整合织界中枢模块（熔断/投票/worktree）和OMX持久化。
   
   核心组件：
   1. sindris_executor.py - 唯一执行引擎（含plan/run两个方法）
-  2. agent_executor.py - 三级降级执行器（v1.5新增）
-  3. omx_integrator.py - OMX持久化层
-  4. sindris_tmux_manager.py - tmux Worker运行时
-  5. 织界中枢模块 - 熔断/投票/worktree
-  6. 178角色库 - 专业角色匹配
-  7. safety_policy.py - 危险操作拦截
-  8. review_logger.py - 结果review记录
-  9. telemetry_collector.py - 运行时遥测收集
-  10. memory_manager.py - 任务记忆管理
-  11. task_queue.py - 任务队列和阻塞管理
-  12. sindris_hud.py - 实时状态显示
+  2. agent_executor.py - 三级降级执行器
+  3. sindris_hooks.py - 事件驱动Hook系统（v1.6新增）
+  4. omx_integrator.py - OMX持久化层
+  5. sindris_tmux_manager.py - tmux Worker运行时
+  6. 织界中枢模块 - 熔断/投票/worktree
+  7. 178角色库 - 专业角色匹配
+  8. safety_policy.py - 危险操作拦截（任务级别）
+  9. review_logger.py - 结果review记录
+  10. telemetry_collector.py - 运行时遥测收集
+  11. memory_manager.py - 任务记忆管理
+  12. task_queue.py - 任务队列和阻塞管理
+  13. sindris_hud.py - 实时状态显示
   
   触发条件：
   - 复杂任务需要拆分为子任务
@@ -29,13 +30,26 @@ description: |
   - 需要外部验收机制保证质量
   - 需要失败自动恢复能力
   
+  v1.6更新（Hook系统）：
+  - sindris_hooks.py: 事件驱动Hook系统（参考oh-my-codex）
+    * SessionStart/SessionEnd - 会话生命周期
+    * RoundStart/RoundComplete - Round生命周期
+    * PreToolUse/PostToolUse - 工具执行前后钩子
+    * WorkerSpawn/WorkerComplete - Worker生命周期
+    * TaskQueued/TaskComplete - 任务生命周期
+    * ReviewSubmit/ReviewApprove/ReviewReject - 审查流程
+    * SafetyBlock/CircuitOpen - 安全事件
+    * Stop - 会话停止
+    * 内置SafetyHook：PreToolUse级别危险命令拦截
+    * 内置TelemetryHook：所有事件遥测记录
+    * Hook预设：safety/telemetry/review/all
+  
   v1.5更新（执行层增强）：
   - agent_executor.py: 三级降级执行器
     * Level 1: sessions_spawn（OpenClaw内置）
     * Level 2: DeepSeek API直接调用
     * Level 3: 本地代码执行（兜底）
     * 绕过sessions_spawn的20%失败率问题
-  - 连续5轮测试全部通过验证
   
   v1.4更新：
   - 任务分解粒度控制
@@ -43,19 +57,9 @@ description: |
   
   v1.3更新（Phase1+Phase2+Phase3+Phase4）：
   - Phase1: safety_policy + review_logger
-    * Round2执行前调用safety_policy检查危险命令
-    * 危险命令拦截：rm -rf, forkbomb, dd等
-    * 结果信号：success/failure/timeout/circuit_break
   - Phase2: telemetry_collector + memory_manager
-    * 运行时遥测数据收集（执行时间、成功率、熔断次数）
-    * 任务完成后自动生成记忆摘要
   - Phase3: task_queue + blocked管理
-    * 优先级队列调度
-    * blocked状态追踪（circuit_break/dependency/resource等）
   - Phase4: sindris_hud
-    * 实时任务状态显示
-    * 熔断状态监控
-    * 多种样式（minimal/compact/expanded）
   
   v1.2更新：
   - 新增plan()方法，返回subtasks列表供sessions_spawn执行
