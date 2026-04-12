@@ -1,10 +1,10 @@
 ---
 name: sindris
-version: "1.2"
+version: "1.3"
 license: MIT
 copyright: "2026 琬弦 (Wanxian)"
 description: |
-  织界统一协调系统 v1.2 - 多Agent协作执行引擎
+  织界统一协调系统 v1.3 - 多Agent协作执行引擎
   
   基于sindris Round1-4流程，参考oh-my-codex v2设计，
   整合织界中枢模块（熔断/投票/worktree）和OMX持久化。
@@ -12,9 +12,15 @@ description: |
   核心组件：
   1. sindris_executor.py - 唯一执行引擎（含plan/run两个方法）
   2. omx_integrator.py - OMX持久化层
-  3. sindris_tmux_manager.py - tmux Worker运行时（Phase 2新增）
+  3. sindris_tmux_manager.py - tmux Worker运行时
   4. 织界中枢模块 - 熔断/投票/worktree
   5. 178角色库 - 专业角色匹配
+  6. safety_policy.py - 危险操作拦截（v1.3 Phase1）
+  7. review_logger.py - 结果review记录（v1.3 Phase1）
+  8. telemetry_collector.py - 运行时遥测收集（v1.3 Phase2）
+  9. memory_manager.py - 任务记忆管理（v1.3 Phase2）
+  10. task_queue.py - 任务队列和阻塞管理（v1.3 Phase3）
+  11. sindris_hud.py - 实时状态显示（v1.3 Phase4）
   
   触发条件：
   - 复杂任务需要拆分为子任务
@@ -22,10 +28,30 @@ description: |
   - 需要外部验收机制保证质量
   - 需要失败自动恢复能力
   
+  v1.3更新（Phase1+Phase2+Phase3）：
+  - Phase1: safety_policy + review_logger
+    * Round2执行前调用safety_policy检查危险命令
+    * 任务完成后调用review_logger记录结果
+    * 危险命令拦截：rm -rf, forkbomb, dd等
+    * 结果信号：success/failure/timeout/circuit_break
+  - Phase2: telemetry_collector + memory_manager
+    * 运行时遥测数据收集（执行时间、成功率、熔断次数）
+    * 任务完成后自动生成记忆摘要
+    * 写入.omx/logs/ 和 workspace/memory/sindris-tasks/
+  - Phase3: task_queue + blocked管理
+    * 优先级队列调度
+    * blocked状态追踪（circuit_break/dependency/resource等）
+    * 自动解除机制
+    * 阻塞原因记录
+  - Phase4: sindris_hud
+    * 实时任务状态显示
+    * 熔断状态监控
+    * 团队运行时状态
+    * 多种样式（minimal/compact/expanded）
+  
   v1.2更新：
   - 新增plan()方法，返回subtasks列表供sessions_spawn执行
   - 修复sessions_spawn对接问题（真实执行）
-  - sessions_spawn成功率~95%，sessions_send成功率~20%
 ---
 
 # Sindri's A2v3 多Agent协作流程
@@ -394,7 +420,7 @@ trust_gate = {
 
 ### 5.1 角色库完整详情
 
-> 来源：~/.openclaw/projects/agency-agents/roles_registry.json
+> 来源：~/.openclaw/skills/sindris/scripts/roles_registry.json
 > 共178个角色，按category分类
 
 #### ACADEMIC

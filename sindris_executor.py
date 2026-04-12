@@ -18,6 +18,7 @@ sindris_executor.py - 织界统一协调系统执行引擎
 import asyncio
 import uuid
 from dataclasses import dataclass, field
+from pathlib import Path
 from datetime import datetime
 from enum import Enum
 from typing import Optional, List, Dict, Any, Callable
@@ -37,6 +38,16 @@ try:
     from worktree_officer import WorktreeOfficer
     # monitor.py 包含 CircuitBreaker
     from monitor import CircuitBreaker
+    # Phase1新增模块
+    from safety_policy import SafetyPolicy, DangerLevel
+    from review_logger import ReviewLogger, ResultSignal
+    # Phase2新增模块
+    from telemetry_collector import TelemetryCollector, TelemetryEvent
+    from memory_manager import MemoryManager
+    # Phase3新增模块
+    from task_queue import TaskQueue, BlockReason
+    # Phase4新增模块
+    from sindris_hud import SindrisHUD, HUDStyle, HUDData, TaskDisplay
 except ImportError:
     # 织界中枢模块路径
     _ZHONG_SHU_PATH = os.path.join(SCRIPT_DIR, "..", "织界中枢", "scripts")
@@ -44,6 +55,22 @@ except ImportError:
     from consensus_officer import ConsensusOfficer
     from worktree_officer import WorktreeOfficer
     from monitor import CircuitBreaker
+    # Phase1+2+3新增模块（备用路径）
+    try:
+        from safety_policy import SafetyPolicy, DangerLevel
+        from review_logger import ReviewLogger, ResultSignal
+        from telemetry_collector import TelemetryCollector, TelemetryEvent
+        from memory_manager import MemoryManager
+        from task_queue import TaskQueue, BlockReason
+    except ImportError:
+        _module_path = os.path.join(SCRIPT_DIR, "scripts")
+        sys.path.insert(0, _module_path)
+        from safety_policy import SafetyPolicy, DangerLevel
+        from review_logger import ReviewLogger, ResultSignal
+        from telemetry_collector import TelemetryCollector, TelemetryEvent
+        from memory_manager import MemoryManager
+        from task_queue import TaskQueue, BlockReason
+        from sindris_hud import SindrisHUD, HUDStyle, HUDData, TaskDisplay
 
 # ============================================================
 # sindris tmux worker runtime (自研)
@@ -287,6 +314,20 @@ class SindrisExecutor:
         
         # 熔断器：为每个角色维护一个
         self._circuit_breakers: Dict[str, CircuitBreaker] = {}
+
+        # Phase1新增：安全策略和Review记录
+        self.safety_policy = SafetyPolicy()
+        self.review_logger = ReviewLogger()
+        
+        # Phase2新增：遥测收集和记忆管理
+        self.telemetry = TelemetryCollector()
+        self.memory_manager = MemoryManager()
+        
+        # Phase3新增：任务队列和阻塞管理
+        self.task_queue = TaskQueue()
+        
+        # Phase4新增：HUD显示
+        self.hud = SindrisHUD(style=HUDStyle.COMPACT)
 
         # 状态
         self.workers: List[Worker] = []
@@ -596,6 +637,32 @@ class SindrisExecutor:
         # 返回规划结果（等待用户确认CONSENSUS）
         return ctx
 
+    def _load_role_markdown(self, role: Dict) -> str:
+        """
+        加载角色的完整markdown内容
+        
+        从sindris本地roles目录加载完整角色描述文件，
+        包含workflow、模板、成功指标等详细信息。
+        """
+        role_id = role.get("id", "")
+        category = role.get("category", "")
+        
+        if not role_id or not category:
+            return ""
+        
+        # 构建markdown文件路径
+        # id格式: testing_test_results_analyzer -> testing/testing-test-results-analyzer.md
+        markdown_filename = role_id.replace("_", "-") + ".md"
+        role_path = Path(__file__).parent / "roles" / category / markdown_filename
+        
+        if role_path.exists():
+            try:
+                with open(role_path, "r", encoding="utf-8") as f:
+                    return f.read()
+            except Exception:
+                return ""
+        return ""
+
     def _decompose_task(
         self,
         task: str,
@@ -606,6 +673,9 @@ class SindrisExecutor:
         subtasks = []
 
         for i, role in enumerate(roles):
+            # 加载完整角色markdown
+            role_markdown = self._load_role_markdown(role)
+            
             t = Task(
                 id=self._gen_id("task"),
                 title=f"[{role.get('name', role.get('id', 'unknown'))}] {task}",
@@ -614,7 +684,10 @@ class SindrisExecutor:
                 status=TaskStatus.PENDING,
                 priority="high",
                 verify=[f"验证{role.get('name', '角色')}输出"],
-                metadata={"role": role},
+                metadata={
+                    "role": role,
+                    "role_markdown": role_markdown,
+                },
             )
             subtasks.append(t)
 
@@ -658,6 +731,9 @@ class SindrisExecutor:
         """
         results = []
 
+        # Phase2: 记录Round切换遥测
+        self.telemetry.round_change("Round1", "Round2", self.tasks[0].id if self.tasks else None)
+
         # 启动Round2
         actions = [
             {"action_id": t.id, "action_name": t.title, "agent_id": t.metadata.get("role", {}).get("id", "unknown")}
@@ -698,12 +774,93 @@ class SindrisExecutor:
                 continue
 
             try:
-                        # 执行任务（带超时）
+                # Phase1: 执行前Safety检查
+                safety_result = self.safety_policy.check(task.title)
+                if safety_result.blocked:
+                    # Phase1: 危险命令被阻止
+                    self.review_logger.log_failure(
+                        task_id=task.id,
+                        summary=f"Safety blocked: {safety_result.reason}",
+                        details={
+                            "blocked": True,
+                            "danger_level": safety_result.danger_level.value,
+                            "warning_message": safety_result.warning_message,
+                        },
+                        tags=["safety_blocked"]
+                    )
+                    # Phase2: 记录安全拦截遥测
+                    self.telemetry.safety_block(
+                        task_id=task.id,
+                        command=task.title,
+                        danger_level=safety_result.danger_level.value,
+                    )
+                    result = ExecutionResult(
+                        success=False,
+                        task_id=task.id,
+                        error=f"Safety policy blocked: {safety_result.reason}",
+                    )
+                    results.append(result)
+                    continue
+
+                # 执行任务（带超时）
                 result = await self._execute_task_with_timeout(
                     worker=worker,
                     task=task,
                     timeout=self._get_timeout_for_role(worker.role_type),
                 )
+
+                # Phase1: 执行后Review记录
+                # Phase2: 执行后遥测和记忆
+                if result.success:
+                    self.review_logger.log_success(
+                        task_id=task.id,
+                        summary=f"Task completed: {task.title[:50]}",
+                        details={
+                            "worker_id": worker.id,
+                            "role": worker.role,
+                            "duration_ms": result.duration_ms,
+                        }
+                    )
+                    # Phase2: 记录任务完成遥测
+                    self.telemetry.task_complete(
+                        task_id=task.id,
+                        role=worker.role,
+                        success=True,
+                    )
+                    # Phase2: 保存任务记忆
+                    self.memory_manager.save_task_memory(
+                        task_id=task.id,
+                        task_title=task.title,
+                        success=True,
+                        duration_ms=result.duration_ms,
+                        role=worker.role,
+                    )
+                else:
+                    self.review_logger.log_failure(
+                        task_id=task.id,
+                        summary=f"Task failed: {result.error or 'Unknown error'}",
+                        details={
+                            "worker_id": worker.id,
+                            "role": worker.role,
+                            "error": result.error,
+                        }
+                    )
+                    # Phase2: 记录任务失败遥测
+                    self.telemetry.task_complete(
+                        task_id=task.id,
+                        role=worker.role,
+                        success=False,
+                        error=result.error,
+                    )
+                    # Phase2: 保存任务记忆
+                    self.memory_manager.save_task_memory(
+                        task_id=task.id,
+                        task_title=task.title,
+                        success=False,
+                        duration_ms=result.duration_ms,
+                        role=worker.role,
+                        error=result.error,
+                    )
 
                 # 验收
                 verified = self._verify_task(task, result)
@@ -719,6 +876,12 @@ class SindrisExecutor:
             except Exception as e:
                 # 熔断触发
                 self._record_failure(worker.role_type)
+                # Phase2: 记录熔断遥测
+                self.telemetry.circuit_break(
+                    task_id=task.id,
+                    role=worker.role,
+                    reason=str(e)[:100],
+                )
                 result = ExecutionResult(
                     success=False,
                     task_id=task.id,
@@ -1147,6 +1310,7 @@ class SindrisExecutor:
             subtasks = []
             for t in self.tasks:
                 role = t.metadata.get("role", {})
+                role_markdown = t.metadata.get("role_markdown", "")
                 role_name = role.get("name", role.get("id", "unknown"))
                 role_type = self._infer_role_type(role)
                 
@@ -1160,6 +1324,7 @@ class SindrisExecutor:
                     "title": t.title,
                     "timeout": self._get_timeout_for_role(role_type),
                     "allowed_tools": allowed_tools,
+                    "role_markdown": role_markdown,
                 })
             
             return {
@@ -1463,6 +1628,7 @@ async def execute_sindris(task: str, workspace_root: Optional[str] = None) -> Di
                         "step": i + 1,
                         "action": "sessions_spawn",
                         "task": subtask.get("title", ""),
+                        "task_context": subtask.get("role_markdown", ""),
                         "role": subtask.get("role", ""),
                         "role_type": subtask.get("role_type", "unknown"),
                         "timeout": subtask.get("timeout", 300),
