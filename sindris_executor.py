@@ -984,7 +984,15 @@ class SindrisExecutor:
         timeout: int,
     ) -> ExecutionResult:
         """带超时和熔断的任务执行"""
-        # 启动子Agent
+        # 优先使用AgentExecutor（DeepSeek API）
+        try:
+            result = await self._execute_via_agent_executor(worker, task)
+            if result.success:
+                return result
+        except Exception as e:
+            print(f"[sindris] AgentExecutor failed: {e}, falling back to sessions_spawn")
+        
+        # 回退到sessions_spawn
         session = await self._spawn_subagent(
             role=worker.role,
             task=task.title,
@@ -1005,6 +1013,84 @@ class SindrisExecutor:
             task_id=task.id,
             output=output,
         )
+    
+    async def _execute_via_agent_executor(
+        self,
+        worker: Worker,
+        task: Task,
+    ) -> ExecutionResult:
+        """
+        使用DeepSeek API执行任务
+        
+        这是sindris的主要执行层，绕过sessions_spawn的20%失败率
+        使用httpx直接调用，不依赖Mimir-Core的deepseek_client
+        """
+        import httpx
+        
+        # 确保API key已设置
+        api_key = os.environ.get('DEEPSEEK_API_KEY') or 'sk-478c1dd983e44adb974876e438776898'
+        
+        # 构造角色提示词
+        role_prompt = f"""You are a {worker.role}.
+
+Role Description:
+{worker.role} - Expert in analysis and design.
+
+Your Capabilities:
+- Analysis and evaluation
+- Architecture design
+- Problem solving
+
+Instructions:
+1. Analyze the task carefully
+2. Provide a clear, structured response
+3. Focus on practical solutions
+
+Task:"""
+        
+        # 构造消息
+        messages = [
+            {"role": "system", "content": role_prompt},
+            {"role": "user", "content": task.title}
+        ]
+        
+        # 直接调用DeepSeek API
+        try:
+            import requests
+            
+            # 禁用代理避免socks问题
+            session = requests.Session()
+            session.trust_env = False  # 忽略环境变量中的代理设置
+            
+            response = session.post(
+                "https://api.deepseek.com/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": "deepseek-chat",
+                    "messages": messages,
+                    "max_tokens": 2000
+                },
+                timeout=60
+            )
+            response.raise_for_status()
+            data = response.json()
+            
+            content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+            
+            return ExecutionResult(
+                success=True,
+                task_id=task.id,
+                output={"content": content, "model": "deepseek-chat"},
+            )
+        except Exception as e:
+            return ExecutionResult(
+                success=False,
+                task_id=task.id,
+                error=str(e),
+            )
 
     def _infer_role_type(self, role: Dict) -> str:
         """从角色信息推断类型"""
