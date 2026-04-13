@@ -185,9 +185,15 @@ ZH_TO_EN = {
     "熔断": "circuit breaker resilience",
     
     # Evolution / Self-improvement
-    "进化": "evolution improve growth",
+    "进化": "evolution improve",
     "自进化": "self-improvement automation",
     "自我进化": "self-improvement automation testing",
+    
+    # Research and analysis
+    "研究": "research investigate analyze study",
+    "分析": "research analyze evaluation evaluation",
+    "调研": "research survey investigation analysis",
+    "审查": "review evaluate analysis",
 }
 
 def expand_query(text: str) -> str:
