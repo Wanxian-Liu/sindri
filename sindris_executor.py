@@ -1832,7 +1832,7 @@ final_result = {
                 {"task_id": r.get("task_id"), "reviewer": "auto_reviewer", "summary": "通过" if r.get("success") and safe_len(r.get("output", "")) > 20 else "拒绝"}
                 for r in results
             ]
-            self.omx.on_round3_start(task_id=ctx.tasks[0].id if ctx.tasks else None, reviews=reviews)
+            self.omx.on_round3_start(task_id=ctx.tasks[0].id if ctx.tasks else None, review_items=reviews)
             self.omx.on_round3_complete(task_id=ctx.tasks[0].id if ctx.tasks else None, all_approved=(rejected == 0))
 
             # Round4: 完成
