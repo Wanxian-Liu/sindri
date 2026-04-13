@@ -572,18 +572,44 @@ class SindrisExecutor:
         spec = importlib.util.spec_from_file_location("sindris_match_roles", _sindris_match_roles)
         _mm = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(_mm)
-        expanded = _mm.expand_query(task)
-        # 使用tokenize提取关键词，保留中文
-        keywords = list(_mm.tokenize(expanded))
         
-        if not keywords:
-            keywords = [task]  # fallback
+        # 1. 先检查是否有显式角色ID前缀 [role_id] 或 role_id:
+        explicit_role_id = None
+        explicit_patterns = [
+            r'^\[([a-z0-9_]+)\]\s*',      # [role_id] at start
+            r'\[([a-z0-9_]+)\]\s*[:：]',  # [role_id]: or [role_id]：
+            r'^([a-z0-9_]+):\s*',          # role_id: at start (English colon)
+        ]
+        for pattern in explicit_patterns:
+            match = re.match(pattern, task.strip(), re.IGNORECASE)
+            if match:
+                explicit_role_id = match.group(1).lower()
+                print(f"[sindris] 检测到显式角色ID: [{explicit_role_id}]")
+                break
         
-        try:
-            matched = _mm.match_roles(keywords[:10], top_k=5)
-            matched_roles = matched.get("matched_roles", []) if matched else []
-        except Exception as e:
-            matched_roles = []
+        # 2. 如果有显式角色ID，优先使用它
+        matched_roles = []
+        if explicit_role_id:
+            role_lookup = _mm.get_role_by_id(explicit_role_id)
+            if role_lookup:
+                matched_roles = [role_lookup]
+                print(f"[sindris] 直接使用显式角色: {role_lookup.get('name', explicit_role_id)}")
+            else:
+                print(f"[sindris] 警告: 显式角色ID '{explicit_role_id}' 未在角色库中找到")
+        
+        # 3. 如果没有显式角色ID，使用关键词匹配
+        if not matched_roles:
+            expanded = _mm.expand_query(task)
+            keywords = list(_mm.tokenize(expanded))
+            
+            if not keywords:
+                keywords = [task]  # fallback
+            
+            try:
+                matched = _mm.match_roles(keywords[:10], top_k=5)
+                matched_roles = matched.get("matched_roles", []) if matched else []
+            except Exception as e:
+                matched_roles = []
 
         # 记录开始 - 传入实际匹配到的角色
         session_id = self.omx.on_round1_start(
