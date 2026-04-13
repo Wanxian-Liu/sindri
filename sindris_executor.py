@@ -1171,10 +1171,13 @@ Task:"""
                 
                 content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
                 
+                # 提取代码块并写入文件
+                files_written = self._extract_and_write_code(content, task.id)
+                
                 return ExecutionResult(
                     success=True,
                     task_id=task.id,
-                    output={"content": content, "model": "deepseek-chat"},
+                    output={"content": content, "model": "deepseek-chat", "files_written": files_written},
                 )
             except Exception as e:
                 if attempt < max_retries - 1:
@@ -1188,6 +1191,75 @@ Task:"""
                         task_id=task.id,
                         error=f"重试{max_retries}次后仍失败: {str(e)}",
                     )
+
+    def _extract_and_write_code(self, content: str, task_id: str) -> List[str]:
+        """
+        从API返回内容中提取代码块并写入文件
+        
+        支持```python、```代码块格式
+        返回写入的文件列表
+        """
+        import re
+        import os
+        
+        files_written = []
+        
+        # 获取工作区目录
+        workspace = getattr(self, 'workspace_root', '/tmp/sindris_output')
+        os.makedirs(workspace, exist_ok=True)
+        
+        # 提取Python代码块
+        # 匹配 ```python ... ``` 或 ``` ... ```
+        code_blocks = re.findall(r'```(?:python)?\n?(.*?)```', content, re.DOTALL)
+        
+        for i, code in enumerate(code_blocks):
+            code = code.strip()
+            if len(code) < 20:  # 忽略太短的代码块
+                continue
+            
+            # 尝试从代码中提取文件名
+            filename = None
+            
+            # 检查是否有 if __name__ == "__main__": 块（优先作为主文件）
+            if 'if __name__' in code and filename is None:
+                # 从task_id生成文件名
+                filename = f"task_{task_id[:8]}.py"
+            
+            # 尝试从注释中提取 filename = "xxx.py"
+            filename_match = re.search(r'filename\s*=\s*["\']([^"\']+)["\']', code)
+            if filename_match:
+                filename = filename_match.group(1)
+            
+            # 如果没有找到，使用默认文件名
+            if not filename:
+                filename = f"output_{task_id[:8]}_{i}.py"
+            
+            # 确保文件名安全
+            filename = re.sub(r'[^a-zA-Z0-9_.-]', '_', filename)
+            
+            filepath = os.path.join(workspace, filename)
+            
+            try:
+                with open(filepath, 'w', encoding='utf-8') as f:
+                    f.write(code)
+                files_written.append(filename)
+                print(f"[sindris] 写入代码文件: {filename} ({len(code)} bytes)")
+            except Exception as e:
+                print(f"[sindris] 写入文件失败 {filename}: {e}")
+        
+        # 如果没有找到代码块但内容看起来像代码，也写入
+        if not files_written and content.strip().startswith(('import ', 'from ', 'def ', 'class ', '#!/')):
+            filename = f"raw_{task_id[:8]}.py"
+            filepath = os.path.join(workspace, filename)
+            try:
+                with open(filepath, 'w', encoding='utf-8') as f:
+                    f.write(content.strip())
+                files_written.append(filename)
+                print(f"[sindris] 写入原始代码: {filename} ({len(content)} bytes)")
+            except Exception as e:
+                print(f"[sindris] 写入文件失败: {e}")
+        
+        return files_written
 
     def _infer_role_type(self, role: Dict) -> str:
         """从角色信息推断类型"""
