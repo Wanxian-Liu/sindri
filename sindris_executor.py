@@ -581,7 +581,8 @@ class SindrisExecutor:
         _mm = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(_mm)
         expanded = _mm.expand_query(task)
-        keywords = re.findall(r'[a-z0-9]+', expanded.lower())
+        # 使用tokenize提取关键词，保留中文
+        keywords = list(_mm.tokenize(expanded))
         
         if not keywords:
             keywords = [task]  # fallback
