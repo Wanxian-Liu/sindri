@@ -1793,10 +1793,15 @@ final_result = {
                 results.extend(batch_results)
 
             # Round3: 审查
-            # 调试：检查每个result的结构
-            for r in results:
-                print(f"[DEBUG] result: success={r.get("success")}, output_len={len(r.get("output", "") if r.get("output") else 0)}")
-            approved = sum(1 for r in results if r["success"] and len(r.get("output", "") if r.get("output") else "") > 20)
+            # 确保output是字符串才取len
+            def safe_len(x):
+                if x is None:
+                    return 0
+                if isinstance(x, str):
+                    return len(x)
+                return 0
+            
+            approved = sum(1 for r in results if r["success"] and safe_len(r.get("output")) > 20)
             rejected = len(results) - approved
             print(f"[sindris.auto_run] Round3审查: {approved}通过, {rejected}拒绝")
 
