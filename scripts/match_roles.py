@@ -87,6 +87,16 @@ TASK_TYPE_KEYWORDS = {
     ],
 }
 
+# 任务类型 -> 偏好角色类别（使用实际存在的category）
+CATEGORY_PREFERENCE = {
+    "code": ["engineering", "testing"],
+    "research": ["academic", "strategy", "product"],
+    "write": ["product", "coordination"],
+    "design": ["design", "game-development"],
+    "test": ["testing"],
+    "operation": ["engineering", "runbooks"],
+}
+
 # General purpose terms that are too common to be meaningful discriminators
 GENERAL_TERMS = {
     # Programming languages
@@ -220,9 +230,28 @@ def score_role(query_tokens: set[str], role: dict, task_type: Optional[str] = No
     """
     Compute weighted aggregate score for a single role.
     General terms are penalized unless combined with domain-specific terms.
+    task_type: 如果指定，根据类型偏好角色类别
     """
     total = 0.0
     reasons = []
+
+    # 如果指定了task_type，检查角色类别是否匹配
+    if task_type and task_type in CATEGORY_PREFERENCE:
+        preferred = CATEGORY_PREFERENCE[task_type]
+        role_category = role.get("category", "").lower()
+        role_id = role.get("id", "").lower()
+        
+        # category必须包含至少一个偏好词，或id以前缀形式匹配（如researcher_xxx）
+        # 避免"seo_specialist"被误认为匹配"specialist"类型
+        category_match = any(p in role_category for p in preferred)
+        # id以前缀_分隔匹配：researcher_xxx -> researcher
+        id_match = any(role_id.startswith(p + "_") for p in preferred)
+        
+        matched = category_match or id_match
+        
+        # 如果不匹配，标记category_penalty
+        if not matched:
+            reasons.append("category_penalty")
 
     # Identify general vs specific tokens
     general_matches = query_tokens & GENERAL_TERMS
@@ -297,6 +326,10 @@ def score_role(query_tokens: set[str], role: dict, task_type: Optional[str] = No
         reasons.append("vibe_match")
     total += WEIGHTS["vibe"] * vibe_score
 
+    # 应用category_penalty
+    if "category_penalty" in reasons:
+        total *= 0.3
+    
     return total, reasons
 
 
