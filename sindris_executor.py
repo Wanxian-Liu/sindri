@@ -1925,6 +1925,17 @@ final_result = {
                                     }, ensure_ascii=False)
                             with open(task_file, 'w') as tf:
                                 json.dump(tasks_data, tf, ensure_ascii=False, indent=2)
+                        
+                        # 更新sindris_actions.json中的action output
+                        actions_file = os.path.join(self.workspace_root, '.omx', 'state', 'sindris_actions.json')
+                        if os.path.exists(actions_file):
+                            with open(actions_file, 'r') as af:
+                                actions_data = json.load(af)
+                            for a in actions_data:
+                                if a.get('action_id') == r.get('task_id'):
+                                    a['output'] = r.get('output', '')[:1000] if r.get('output') else ''
+                            with open(actions_file, 'w') as af:
+                                json.dump(actions_data, af, ensure_ascii=False, indent=2)
             except Exception as e:
                 print(f"[sindris.auto_run] 写入结果文件失败: {e}")
 
