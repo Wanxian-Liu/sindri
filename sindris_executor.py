@@ -1787,6 +1787,36 @@ final_result = {
             print(f"[sindris.auto_run] Round3审查: {approved}通过, {rejected}拒绝")
 
             # Round4: 完成
+            # Git自动提交（如果有修改）
+            git_commit = None
+            sindris_path = '/home/rayliu/.openclaw/skills/sindris'
+            try:
+                import subprocess
+                diff_result = subprocess.run(
+                    ['git', 'diff', '--stat'],
+                    cwd=sindris_path,
+                    capture_output=True,
+                    text=True,
+                    timeout=10
+                )
+                if diff_result.stdout.strip():
+                    # 有修改，自动提交
+                    subprocess.run(['git', 'add', '-A'], cwd=sindris_path, timeout=10)
+                    commit_result = subprocess.run(
+                        ['git', 'commit', '-m', f'feat: auto_run完成 {len(results)}个任务'],
+                        cwd=sindris_path,
+                        capture_output=True,
+                        text=True,
+                        timeout=10
+                    )
+                    if commit_result.returncode == 0:
+                        git_commit = commit_result.stdout.strip()[:100]
+                        print(f"[sindris.auto_run] Git提交: {git_commit}")
+                    else:
+                        print(f"[sindris.auto_run] Git提交失败: {commit_result.stderr[:100]}")
+            except Exception as e:
+                print(f"[sindris.auto_run] Git提交跳过: {e}")
+
             return {
                 "success": rejected == 0,
                 "session_id": self.session_id,
@@ -1794,6 +1824,7 @@ final_result = {
                 "successful": approved,
                 "failed": rejected,
                 "results": results,
+                "git_commit": git_commit,
             }
 
         except Exception as e:
