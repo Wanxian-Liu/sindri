@@ -1835,6 +1835,27 @@ final_result = {
             self.omx.on_round3_start(task_id=ctx.tasks[0].id if ctx.tasks else None, review_items=reviews)
             self.omx.on_round3_complete(task_id=ctx.tasks[0].id if ctx.tasks else None, all_approved=(rejected == 0))
 
+            # Round4: 完成 - 调用round4_completion
+            # 构造ExecutionResult列表
+            from dataclasses import dataclass
+            @dataclass
+            class SimpleResult:
+                success: bool
+                task_id: str
+                output: dict = None
+                error: str = None
+            
+            exec_results = []
+            for r in results:
+                exec_results.append(SimpleResult(
+                    success=r.get('success', False),
+                    task_id=r.get('task_id', ''),
+                    output={"content": r.get('output', '')} if r.get('output') else {},
+                    error=r.get('error'),
+                ))
+            
+            await self.round4_completion(exec_results, all_verified=(rejected == 0))
+
             # Round4: 完成
             # Git自动提交（如果有修改）
             git_commit = None
