@@ -1,19 +1,11 @@
 """
 sindris_executor.py - 织界统一协调系统执行引擎
 
-基于sindris Round1-4流程，参考oh-my-codex v2的team.ts设计，
-整合织界中枢模块（熔断/投票/worktree）和OMX持久化。
-
-核心设计：
-- 状态机：Team/Worker/Task三层状态
-- 执行器：sessions_spawn驱动子Agent
-- 持久化：omx_integrator记录所有状态
-
-参考：
-- oh-my-codex v2 team.ts: tmux-aware worker runtime
-- oh-my-codex v2 runtime.ts: ledger/reviews/inbox
-- sindris SKILL.md: Round1-4流程定义
+版本历史：
+- v2.12: 统一版本号管理
 """
+
+VERSION = "2.12"
 
 import asyncio
 import uuid
