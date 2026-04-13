@@ -1906,6 +1906,25 @@ final_result = {
                             error = r.get('error', 'Unknown')
                             f.write(f"- 错误: {error}\n\n")
                 print(f"[sindris.auto_run] 结果写入: {result_file}")
+                
+                # 更新tasks.json中的result字段
+                import json
+                for r in results:
+                    if r.get('task_id'):
+                        task_file = os.path.join(self.workspace_root, '.omx', 'state', 'tasks.json')
+                        if os.path.exists(task_file):
+                            with open(task_file, 'r') as tf:
+                                tasks_data = json.load(tf)
+                            for t in tasks_data:
+                                if t.get('id') == r.get('task_id'):
+                                    output_content = r.get('output', '')[:500] if r.get('output') else ''
+                                    t['result'] = json.dumps({
+                                        'success': r.get('success', False),
+                                        'output': output_content,
+                                        'error': r.get('error'),
+                                    }, ensure_ascii=False)
+                            with open(task_file, 'w') as tf:
+                                json.dump(tasks_data, tf, ensure_ascii=False, indent=2)
             except Exception as e:
                 print(f"[sindris.auto_run] 写入结果文件失败: {e}")
 
