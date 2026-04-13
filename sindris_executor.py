@@ -1801,7 +1801,7 @@ final_result = {
                 )
                 if diff_result.stdout.strip():
                     # 有修改，自动提交
-                    subprocess.run(['git', 'add', '-A'], cwd=sindris_path, timeout=10)
+                    subprocess.run(['git', 'add', '--', '*.py', 'scripts/', 'roles/'], cwd=sindris_path, timeout=10)
                     commit_result = subprocess.run(
                         ['git', 'commit', '-m', f'feat: auto_run完成 {len(results)}个任务'],
                         cwd=sindris_path,
