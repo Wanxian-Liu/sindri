@@ -5,7 +5,7 @@ sindris_executor.py - 织界统一协调系统执行引擎
 - v2.12: 统一版本号管理
 """
 
-VERSION = "2.20"
+VERSION = "2.21"
 
 import asyncio
 import uuid
