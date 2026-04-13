@@ -51,7 +51,7 @@ WEIGHTS = {
 }
 
 DEFAULT_TOP_K = 10
-MIN_SCORE = 0.020  # discard roles below this threshold
+MIN_SCORE = 0.005  # discard roles below this threshold
 
 # ── Task Type Definitions ─────────────────────────────────────────────────────
 
@@ -86,6 +86,42 @@ TASK_TYPE_KEYWORDS = {
         "monitor", "devops", "CI", "CD", "运维", "部署", "运行", "维护", "监控"
     ],
 }
+
+# General purpose terms that are too common to be meaningful discriminators
+GENERAL_TERMS = {
+    # Programming languages
+    "python", "javascript", "java", "rust", "golang", "c++", "c#", "ruby", "php",
+    "swift", "kotlin", "typescript", "scala", "perl", "r", "matlab",
+    # Generic programming
+    "code", "coding", "program", "programming", "script", "scripting",
+    "function", "class", "method", "object", "variable", "module",
+    "api", "library", "framework", "sdk", "tool", "tools",
+    # Bug/fix
+    "bug", "bugs", "fix", "fixing", "fixed", "debug", "debugging",
+    "error", "errors", "issue", "issues", "problem", "problems",
+    "repair", "patch", "patching",
+    # Generic actions
+    "build", "building", "compile", "compiling",
+    "run", "running", "execute", "executing", "start", "starting",
+    "create", "creating", "make", "making", "generate", "generating",
+    "add", "adding", "update", "updating", "change", "changing",
+    "read", "reading", "write", "writing", "edit", "editing",
+    # Common adjectives
+    "new", "old", "good", "bad", "fast", "slow", "big", "small",
+    "simple", "complex", "easy", "hard", "basic", "advanced",
+    # Generic nouns
+    "data", "file", "files", "content", "task", "tasks", "work",
+    "project", "value", "result", "results", "example", "test",
+    # More generic
+    "world", "worlds", "hello", "hi", "goodbye", "thanks", "please",
+    "user", "users", "person", "persons", "people", "man", "woman",
+    "computer", "laptop", "phone", "mobile", "server", "client",
+    # Chinese
+    "代码", "程序", "编程", "开发", "修复", "问题", "错误",
+    "添加", "更新", "创建", "生成", "运行", "执行",
+}
+
+GENERAL_TERMS_PENALTY = 0.15  # heavily penalize roles matched only on general terms
 
 # Role exclusivity rules: groups of roles that cannot be selected together
 # Format: {group_name: [role_id_or_pattern, ...]}
@@ -183,43 +219,57 @@ def jaccard(a: set[str], b: set[str]) -> float:
 def score_role(query_tokens: set[str], role: dict, task_type: Optional[str] = None) -> tuple[float, list[str]]:
     """
     Compute weighted aggregate score for a single role.
-    Returns (score, reasons) where reasons explain the match.
+    General terms are penalized unless combined with domain-specific terms.
     """
     total = 0.0
     reasons = []
 
-    # 1. trigger_keywords — exact token overlap (highest weight)
+    # Identify general vs specific tokens
+    general_matches = query_tokens & GENERAL_TERMS
+    specific_tokens = query_tokens - GENERAL_TERMS
+    
+    # If only general terms, apply STRONG penalty (95% off)
+    use_penalty = len(specific_tokens) == 0 and len(general_matches) > 0
+    penalty = GENERAL_TERMS_PENALTY if use_penalty else 1.0
+    
+    # For trigger_keywords: only use general terms if no specific terms exist
+    # AND if the match is ONLY through general terms (not domain-specific)
+    if specific_tokens:
+        trigger_match_tokens = specific_tokens
+    else:
+        # Only general terms available - still use them but expect low score
+        trigger_match_tokens = query_tokens
+
+    # 1. trigger_keywords - ZERO score if only general terms matched
     kw_tokens = set()
     for kw in role.get("trigger_keywords", []):
         kw_tokens.update(tokenize(kw))
-    kw_score = jaccard(query_tokens, kw_tokens)
     
-    # Bonus: substring/subtoken match for trigger_keywords
-    if kw_score == 0.0 and query_tokens:
-        for qt in query_tokens:
-            for kw in role.get("trigger_keywords", []):
-                kw_lower = kw.lower()
-                if qt in kw_lower or kw_lower in qt:
-                    kw_score = 0.05
-                    reasons.append(f"partial_trigger:{qt}")
-                    break
-            if kw_score > 0:
-                break
+    kw_score = jaccard(trigger_match_tokens, kw_tokens)
+    
+    # If only general terms, ZERO out trigger keyword score completely
+    if len(specific_tokens) == 0:
+        kw_score = 0
+        # No partial match bonus either when only general terms
     
     if kw_score > 0:
         reasons.append("trigger_keywords_match")
     total += WEIGHTS["trigger_keywords"] * kw_score
 
-    # 2. description — token overlap with full description
+    # 2. description - use specific tokens if available, otherwise all
+    desc_match_tokens = specific_tokens if specific_tokens else query_tokens
     desc_tokens = tokenize(role.get("description", ""))
-    desc_score = jaccard(query_tokens, desc_tokens)
+    desc_score = jaccard(desc_match_tokens, desc_tokens)
     
-    # Bonus: substring match for description
-    if desc_score < 0.05 and query_tokens:
+    # Apply penalty if only general terms matched
+    if desc_score > 0 and len(specific_tokens) == 0:
+        desc_score *= penalty
+    
+    if desc_score < 0.05 and desc_match_tokens:
         desc_text = role.get("description", "").lower()
-        for qt in query_tokens:
+        for qt in desc_match_tokens:
             if qt in desc_text:
-                desc_score = 0.15
+                desc_score = 0.05 * penalty  # low substring bonus
                 reasons.append(f"substring_in_desc:{qt}")
                 break
     
@@ -227,57 +277,27 @@ def score_role(query_tokens: set[str], role: dict, task_type: Optional[str] = No
         reasons.append("description_match")
     total += WEIGHTS["description"] * desc_score
 
-    # 3. name — token overlap with role name
+    # 3. name - use specific tokens if available
     name_tokens = tokenize(role.get("name", ""))
-    name_score = jaccard(query_tokens, name_tokens)
+    name_match_tokens = specific_tokens if specific_tokens else query_tokens
+    name_score = jaccard(name_match_tokens, name_tokens)
+    if name_score > 0 and len(specific_tokens) == 0:
+        name_score *= penalty
     if name_score > 0:
         reasons.append("name_match")
     total += WEIGHTS["name"] * name_score
 
-    # 4. vibe — token overlap with vibe phrase
+    # 4. vibe - use specific tokens if available
     vibe_tokens = tokenize(role.get("vibe", ""))
-    vibe_score = jaccard(query_tokens, vibe_tokens)
+    vibe_match_tokens = specific_tokens if specific_tokens else query_tokens
+    vibe_score = jaccard(vibe_match_tokens, vibe_tokens)
+    if vibe_score > 0 and len(specific_tokens) == 0:
+        vibe_score *= penalty
     if vibe_score > 0:
         reasons.append("vibe_match")
     total += WEIGHTS["vibe"] * vibe_score
 
-    # 5. Task-type bonus: if role matches detected task type
-    if task_type:
-        role_category = role.get("category", "").lower()
-        role_name = role.get("name", "").lower()
-        role_id = role.get("id", "").lower()
-        
-        type_bonus = 0.0
-        if task_type == "code":
-            if any(x in role_id for x in ["engineer", "developer", "coder", "programmer"]):
-                type_bonus = 0.1
-                reasons.append(f"task_type_bonus:{task_type}")
-        elif task_type == "research":
-            if "researcher" in role_id or "analyst" in role_id:
-                type_bonus = 0.1
-                reasons.append(f"task_type_bonus:{task_type}")
-        elif task_type == "write":
-            if "writer" in role_id or "author" in role_id or "documentation" in role_id:
-                type_bonus = 0.1
-                reasons.append(f"task_type_bonus:{task_type}")
-        elif task_type == "design":
-            if "architect" in role_id or "designer" in role_id:
-                type_bonus = 0.1
-                reasons.append(f"task_type_bonus:{task_type}")
-        elif task_type == "test":
-            if "testing" in role_id or "tester" in role_id or "QA" in role_name:
-                type_bonus = 0.1
-                reasons.append(f"task_type_bonus:{task_type}")
-        elif task_type == "operation":
-            if "devops" in role_id or "operator" in role_id or "maintainer" in role_id:
-                type_bonus = 0.1
-                reasons.append(f"task_type_bonus:{task_type}")
-        
-        total += type_bonus
-
-    # Normalize by sum of weights to get 0-1 range
-    weight_sum = sum(WEIGHTS.values()) + 0.1  # add task-type bonus potential
-    return total / weight_sum, reasons
+    return total, reasons
 
 
 def detect_task_type(task_keywords: list[str]) -> Optional[Literal["code", "research", "write", "design", "test", "operation"]]:
