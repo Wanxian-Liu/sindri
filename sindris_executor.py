@@ -1722,13 +1722,22 @@ final_result = {
             cleanup_team(self.worker_manager)
             self.worker_manager = None
 
-    async def auto_run(self, task: str, max_workers: int = 3) -> Dict[str, Any]:
+    async def auto_run(self, task: str, max_workers: int = 3, max_subtasks: int = 10) -> Dict[str, Any]:
         """
         自动执行完整Round1-4流程（使用DeepSeek API执行）
+
+        Args:
+            max_subtasks: 限制最大subtask数量（默认10），避免超时
         """
         try:
             # Round1: 规划
             ctx = await self.round1_planning(task)
+
+            # 限制subtasks数量避免超时
+            if len(ctx.tasks) > max_subtasks:
+                print(f"[sindris.auto_run] 限制subtasks: {len(ctx.tasks)} -> {max_subtasks}")
+                ctx.tasks = ctx.tasks[:max_subtasks]
+
             print(f"[sindris.auto_run] Round1完成，生成了 {len(ctx.tasks)} 个subtasks")
 
             if not ctx.tasks:
@@ -1749,19 +1758,28 @@ final_result = {
                 )
                 self.workers.append(worker)
 
-            results = []
-            for i, t in enumerate(self.tasks):
-                print(f"[sindris.auto_run] 执行subtask {i+1}/{len(self.tasks)}: {t.title[:50]}...")
-                worker = self.workers[i % len(self.workers)]
+            # Round2: 并行执行subtasks
+            async def execute_one(t, worker, idx):
+                print(f"[sindris.auto_run] 执行subtask {idx+1}/{len(self.tasks)}: {t.title[:50]}...")
                 result = await self._execute_via_agent_executor(worker, t)
-                results.append({
+                print(f"[sindris.auto_run]   -> {'成功' if result.success else '失败'}")
+                return {
                     "task_id": t.id,
                     "title": t.title,
                     "success": result.success,
                     "output": result.output.get("content", "")[:500] if result.success else None,
                     "error": result.error,
-                })
-                print(f"[sindris.auto_run]   -> {'成功' if result.success else '失败'}")
+                }
+
+            # 使用asyncio.gather并行执行（max_workers个一组）
+            results = []
+            for i in range(0, len(self.tasks), max_workers):
+                batch = self.tasks[i:i+max_workers]
+                batch_results = await asyncio.gather(*[
+                    execute_one(t, self.workers[j % len(self.workers)], i+j)
+                    for j, t in enumerate(batch)
+                ])
+                results.extend(batch_results)
 
             # Round3: 审查
             approved = sum(1 for r in results if r["success"] and len(r.get("output", "")) > 20)
