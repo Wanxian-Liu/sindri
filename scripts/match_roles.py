@@ -61,7 +61,8 @@ TASK_TYPE_KEYWORDS = {
         "code", "coding", "program", "develop", "implement", "build", "fix", "bug",
         "debug", "refactor", "api", "function", "class", "module", "script",
         "python", "javascript", "java", "rust", "golang", "后端", "前端", "全栈",
-        "代码", "开发", "实现", "修复", "重构"
+        "代码", "开发", "实现", "修复", "重构",
+        "设计并实现", "实现方案", "开发系统"
     ],
     "research": [
         "research", "investigate", "analyze", "survey", "study", "find", "search",
@@ -90,7 +91,7 @@ TASK_TYPE_KEYWORDS = {
 # 任务类型 -> 偏好角色类别（严格匹配）
 CATEGORY_PREFERENCE = {
     "code": ["engineering", "testing"],
-    "research": ["academic", "strategy"],  # 移除product，只保留真正研究相关
+    "research": ["academic", "strategy"],  
     "write": ["product", "coordination"],
     "design": ["design", "game-development"],
     "test": ["testing"],
@@ -188,6 +189,9 @@ ZH_TO_EN = {
     "进化": "evolution improve",
     "自进化": "self-improvement automation",
     "自我进化": "self-improvement automation testing",
+    
+    # Design and architecture
+    "设计": "design architecture architect system",
     
     # Research and analysis
     "研究": "research investigate analyze study",
@@ -334,7 +338,7 @@ def score_role(query_tokens: set[str], role: dict, task_type: Optional[str] = No
 
     # 应用category_penalty（更严格的过滤）
     if "category_penalty" in reasons:
-        total *= 0.1
+        total *= 0.2
     
     return total, reasons
 
