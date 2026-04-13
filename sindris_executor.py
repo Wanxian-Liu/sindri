@@ -1722,6 +1722,70 @@ final_result = {
             cleanup_team(self.worker_manager)
             self.worker_manager = None
 
+    async def auto_run(self, task: str, max_workers: int = 3) -> Dict[str, Any]:
+        """
+        自动执行完整Round1-4流程（使用DeepSeek API执行）
+        """
+        try:
+            # Round1: 规划
+            ctx = await self.round1_planning(task)
+            print(f"[sindris.auto_run] Round1完成，生成了 {len(ctx.tasks)} 个subtasks")
+
+            if not ctx.tasks:
+                return {"success": False, "error": "Round1未能生成subtasks", "session_id": self.session_id}
+
+            # Round2: 执行
+            self.tasks = ctx.tasks
+
+            self.workers = []
+            for i, t in enumerate(self.tasks[:max_workers]):
+                role = t.metadata.get("role", {})
+                worker = Worker(
+                    id=f"auto_worker_{i}",
+                    agent_id=role.get("id", f"worker_{i}"),
+                    role=role.get("name", role.get("id", "unknown")),
+                    role_type=self._infer_role_type(role),
+                    status=WorkerStatus.IDLE
+                )
+                self.workers.append(worker)
+
+            results = []
+            for i, t in enumerate(self.tasks):
+                print(f"[sindris.auto_run] 执行subtask {i+1}/{len(self.tasks)}: {t.title[:50]}...")
+                worker = self.workers[i % len(self.workers)]
+                result = await self._execute_via_agent_executor(worker, t)
+                results.append({
+                    "task_id": t.id,
+                    "title": t.title,
+                    "success": result.success,
+                    "output": result.output.get("content", "")[:500] if result.success else None,
+                    "error": result.error,
+                })
+                print(f"[sindris.auto_run]   -> {'成功' if result.success else '失败'}")
+
+            # Round3: 审查
+            approved = sum(1 for r in results if r["success"] and len(r.get("output", "")) > 20)
+            rejected = len(results) - approved
+            print(f"[sindris.auto_run] Round3审查: {approved}通过, {rejected}拒绝")
+
+            # Round4: 完成
+            return {
+                "success": rejected == 0,
+                "session_id": self.session_id,
+                "total_tasks": len(results),
+                "successful": approved,
+                "failed": rejected,
+                "results": results,
+            }
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return {"success": False, "error": str(e), "session_id": self.session_id}
+        finally:
+            self.shutdown()
+
+
     async def run_with_consensus(
         self,
         task: str,
