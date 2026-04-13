@@ -1110,7 +1110,20 @@ Report to analyze:
 
 Task: {task.title}"""
         else:
-            role_prompt = f"""You are a {worker.role}.
+            # 根据角色类型选择不同的prompt
+            if worker.role_type == "developer":
+                role_prompt = f"""You are {worker.role}.
+
+You are an expert developer. When given a coding task:
+1. Write ACTUAL code in markdown code blocks
+2. Include filename declaration: filename = "xxx.py"
+3. Make the code complete and runnable
+4. Do NOT output architecture diagrams or bullet points
+5. ONLY output code in ```python blocks
+
+Task: {task.title}"""
+            else:
+                role_prompt = f"""You are a {worker.role}.
 
 Role Description:
 {worker.role} - Expert in analysis and design.
