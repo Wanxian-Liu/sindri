@@ -1164,7 +1164,7 @@ Task:"""
                 json={
                     "model": "deepseek-chat",
                     "messages": messages,
-                    "max_tokens": 2000
+                    "max_tokens": 4000
                 },
                 timeout=60
             )
@@ -1738,6 +1738,17 @@ final_result = {
                 print(f"[sindris.auto_run] 限制subtasks: {len(ctx.tasks)} -> {max_subtasks}")
                 ctx.tasks = ctx.tasks[:max_subtasks]
 
+            # 任务历史检查（避免重复执行相同任务）
+            import hashlib
+            task_hash = hashlib.md5(task.encode()).hexdigest()[:8]
+            history_file = f"/tmp/sindris_history_{task_hash}.json"
+            import os
+            if os.path.exists(history_file):
+                print(f"[sindris.auto_run] 任务已存在，跳过执行")
+                import json
+                with open(history_file) as f:
+                    return json.load(f)
+
             print(f"[sindris.auto_run] Round1完成，生成了 {len(ctx.tasks)} 个subtasks")
 
             if not ctx.tasks:
@@ -1817,7 +1828,9 @@ final_result = {
             except Exception as e:
                 print(f"[sindris.auto_run] Git提交跳过: {e}")
 
-            return {
+            # 保存任务历史
+            import json
+            result_data = {
                 "success": rejected == 0,
                 "session_id": self.session_id,
                 "total_tasks": len(results),
@@ -1826,6 +1839,10 @@ final_result = {
                 "results": results,
                 "git_commit": git_commit,
             }
+            with open(history_file, 'w') as f:
+                json.dump(result_data, f)
+
+            return result_data
 
         except Exception as e:
             import traceback
