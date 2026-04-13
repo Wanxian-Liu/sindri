@@ -87,10 +87,10 @@ TASK_TYPE_KEYWORDS = {
     ],
 }
 
-# 任务类型 -> 偏好角色类别（使用实际存在的category）
+# 任务类型 -> 偏好角色类别（严格匹配）
 CATEGORY_PREFERENCE = {
     "code": ["engineering", "testing"],
-    "research": ["academic", "strategy", "product"],
+    "research": ["academic", "strategy"],  # 移除product，只保留真正研究相关
     "write": ["product", "coordination"],
     "design": ["design", "game-development"],
     "test": ["testing"],
@@ -332,9 +332,9 @@ def score_role(query_tokens: set[str], role: dict, task_type: Optional[str] = No
         reasons.append("vibe_match")
     total += WEIGHTS["vibe"] * vibe_score
 
-    # 应用category_penalty
+    # 应用category_penalty（更严格的过滤）
     if "category_penalty" in reasons:
-        total *= 0.3
+        total *= 0.1
     
     return total, reasons
 
