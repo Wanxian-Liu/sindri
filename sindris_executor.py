@@ -1773,6 +1773,21 @@ final_result = {
                 )
                 self.workers.append(worker)
 
+            # OMX: Round2开始
+            actions = [
+                {"action_id": t.id, "action_name": t.title[:30], "agent_id": f"auto_worker_{i % max_workers}", "role": self.workers[i % max_workers].role if i < len(self.workers) else "unknown"}
+                for i, t in enumerate(self.tasks)
+            ]
+            self.omx.on_round2_start(task_id=ctx.tasks[0].id if ctx.tasks else None, actions=actions)
+
+            # 辅助函数：确保output是字符串才取len
+            def safe_len(x):
+                if x is None:
+                    return 0
+                if isinstance(x, str):
+                    return len(x)
+                return 0
+
             # Round2: 并行执行subtasks
             async def execute_one(t, worker, idx):
                 print(f"[sindris.auto_run] 执行subtask {idx+1}/{len(self.tasks)}: {t.title[:50]}...")
@@ -1794,20 +1809,31 @@ final_result = {
                     execute_one(t, self.workers[j % len(self.workers)], i+j)
                     for j, t in enumerate(batch)
                 ])
+                for j, r in enumerate(batch_results):
+                    # OMX: 记录每个action完成
+                    self.omx.on_action_complete(
+                        action_id=self.tasks[i+j].id,
+                        verified=r.get('success', False) and safe_len(r.get('output', '')) > 20,
+                        verify_results={"output_valid": r.get('success', False) and safe_len(r.get('output', '')) > 20},
+                        task_id=ctx.tasks[0].id if ctx.tasks else None,
+                    )
                 results.extend(batch_results)
 
+            # OMX: Round2完成
+            self.omx.on_round2_complete(task_id=ctx.tasks[0].id if ctx.tasks else None)
+
             # Round3: 审查
-            # 确保output是字符串才取len
-            def safe_len(x):
-                if x is None:
-                    return 0
-                if isinstance(x, str):
-                    return len(x)
-                return 0
-            
             approved = sum(1 for r in results if r["success"] and safe_len(r.get("output")) > 20)
             rejected = len(results) - approved
             print(f"[sindris.auto_run] Round3审查: {approved}通过, {rejected}拒绝")
+
+            # OMX: Round3审查
+            reviews = [
+                {"task_id": r.get("task_id"), "reviewer": "auto_reviewer", "summary": "通过" if r.get("success") and safe_len(r.get("output", "")) > 20 else "拒绝"}
+                for r in results
+            ]
+            self.omx.on_round3_start(task_id=ctx.tasks[0].id if ctx.tasks else None, reviews=reviews)
+            self.omx.on_round3_complete(task_id=ctx.tasks[0].id if ctx.tasks else None, all_approved=(rejected == 0))
 
             # Round4: 完成
             # Git自动提交（如果有修改）
