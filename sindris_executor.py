@@ -1190,7 +1190,8 @@ Task:"""
                 
                 # 禁用代理避免socks问题
                 session = requests.Session()
-                session.trust_env = False  # 忽略环境变量中的代理设置
+                session.trust_env = False
+                session.proxies = {}  # 完全禁用代理
                 
                 response = session.post(
                     "https://api.deepseek.com/chat/completions",
