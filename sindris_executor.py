@@ -1147,43 +1147,54 @@ Task:"""
                 {"role": "user", "content": task.title}
             ]
         
-        # 直接调用DeepSeek API
-        try:
-            import requests
-            
-            # 禁用代理避免socks问题
-            session = requests.Session()
-            session.trust_env = False  # 忽略环境变量中的代理设置
-            
-            response = session.post(
-                "https://api.deepseek.com/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {api_key}",
-                    "Content-Type": "application/json"
-                },
-                json={
-                    "model": "deepseek-chat",
-                    "messages": messages,
-                    "max_tokens": 4000
-                },
-                timeout=60
-            )
-            response.raise_for_status()
-            data = response.json()
-            
-            content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
-            
-            return ExecutionResult(
-                success=True,
-                task_id=task.id,
-                output={"content": content, "model": "deepseek-chat"},
-            )
-        except Exception as e:
-            return ExecutionResult(
-                success=False,
-                task_id=task.id,
-                error=str(e),
-            )
+        # 直接调用DeepSeek API（带重试机制）
+        import time
+        max_retries = 3
+        retry_delay = 2  # 秒
+        
+        for attempt in range(max_retries):
+            try:
+                import requests
+                
+                # 禁用代理避免socks问题
+                session = requests.Session()
+                session.trust_env = False  # 忽略环境变量中的代理设置
+                
+                response = session.post(
+                    "https://api.deepseek.com/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {api_key}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "model": "deepseek-chat",
+                        "messages": messages,
+                        "max_tokens": 4000
+                    },
+                    timeout=60
+                )
+                response.raise_for_status()
+                data = response.json()
+                
+                content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+                
+                return ExecutionResult(
+                    success=True,
+                    task_id=task.id,
+                    output={"content": content, "model": "deepseek-chat"},
+                )
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    print(f"[sindris] API调用失败，{retry_delay}秒后重试 ({attempt+1}/{max_retries}): {str(e)[:80]}")
+                    time.sleep(retry_delay)
+                    retry_delay *= 2  # 指数退避
+                    continue
+                else:
+                    return ExecutionResult(
+                        success=False,
+                        task_id=task.id,
+                        error=f"重试{max_retries}次后仍失败: {str(e)}",
+                    )
 
     def _infer_role_type(self, role: Dict) -> str:
         """从角色信息推断类型"""
