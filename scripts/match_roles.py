@@ -62,7 +62,8 @@ TASK_TYPE_KEYWORDS = {
         "debug", "refactor", "api", "function", "class", "module", "script",
         "python", "javascript", "java", "rust", "golang", "后端", "前端", "全栈",
         "代码", "开发", "实现", "修复", "重构",
-        "设计并实现", "实现方案", "开发系统"
+        "设计并实现", "实现方案", "开发系统",
+        "系统", "进化", "方案", "v2", "记忆殿堂"
     ],
     "research": [
         "research", "investigate", "analyze", "survey", "study", "find", "search",
@@ -90,7 +91,7 @@ TASK_TYPE_KEYWORDS = {
 
 # 任务类型 -> 偏好角色类别（严格匹配）
 CATEGORY_PREFERENCE = {
-    "code": ["engineering", "testing"],
+    "code": ["engineering"],  # 只匹配engineering
     "research": ["academic", "strategy"],  
     "write": ["product", "coordination"],
     "design": ["design", "game-development"],
@@ -192,6 +193,8 @@ ZH_TO_EN = {
     
     # Design and architecture
     "设计": "design architecture architect system",
+    "设计并实现": "architect system engineering implement",
+    "架构": "architecture system design",
     "分析": "analysis research evaluate",
     "写文章": "write article documentation author",
     "技术文章": "technical article documentation",
@@ -262,8 +265,13 @@ def score_role(query_tokens: set[str], role: dict, task_type: Optional[str] = No
         
         matched = category_match or id_match
         
-        # 如果不匹配，标记category_penalty
-        if not matched:
+        # 标记category匹配状态
+        if matched:
+            reasons.append("category_match_bonus")
+            # engineering类型额外bonus
+            if role.get("category") == "engineering":
+                reasons.append("engineering_bonus")
+        else:
             reasons.append("category_penalty")
 
     # Identify general vs specific tokens
@@ -339,9 +347,15 @@ def score_role(query_tokens: set[str], role: dict, task_type: Optional[str] = No
         reasons.append("vibe_match")
     total += WEIGHTS["vibe"] * vibe_score
 
-    # 应用category_penalty（更严格的过滤）
-    if "category_penalty" in reasons:
-        total *= 0.2
+    # 根据reason应用不同的乘数
+    bonus_multiplier = 1.0
+    if "category_match_bonus" in reasons:
+        bonus_multiplier = 1.5
+        if "engineering_bonus" in reasons:
+            bonus_multiplier = 2.0  # engineering额外bonus
+    elif "category_penalty" in reasons:
+        bonus_multiplier = 0.2  # category不匹配时0.2倍
+    total *= bonus_multiplier
     
     return total, reasons
 
@@ -350,6 +364,12 @@ def detect_task_type(task_keywords: list[str]) -> Optional[Literal["code", "rese
     """Detect task type from keywords."""
     query_text = " ".join(task_keywords).lower()
     query_tokens = tokenize(query_text)
+    
+    # 优先检测中文组合词
+    code_indicators = ["实现", "开发", "设计并", "系统设计", "方案设计"]
+    for indicator in code_indicators:
+        if indicator in query_text:
+            return "code"
     
     type_scores = {}
     for task_type, type_keywords in TASK_TYPE_KEYWORDS.items():
