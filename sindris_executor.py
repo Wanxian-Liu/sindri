@@ -1840,6 +1840,28 @@ final_result = {
             except Exception as e:
                 print(f"[sindris.auto_run] Git提交跳过: {e}")
 
+            # 写入结果文件
+            try:
+                result_file = os.path.join(self.workspace_root, "result.md")
+                with open(result_file, 'w', encoding='utf-8') as f:
+                    f.write(f"# Sindris执行结果\n\n")
+                    f.write(f"- 总任务数: {len(results)}\n")
+                    f.write(f"- 成功: {approved}\n")
+                    f.write(f"- 失败: {rejected}\n\n")
+                    f.write(f"---\n\n")
+                    for i, r in enumerate(results):
+                        f.write(f"## 任务 {i+1}: {r.get('title', 'Unknown')[:60]}\n\n")
+                        f.write(f"- 状态: {'✅ 成功' if r.get('success') else '❌ 失败'}\n")
+                        output = r.get('output', '')
+                        if output:
+                            f.write(f"- 输出:\n\n```\n{output[:2000]}\n```\n\n")
+                        else:
+                            error = r.get('error', 'Unknown')
+                            f.write(f"- 错误: {error}\n\n")
+                print(f"[sindris.auto_run] 结果写入: {result_file}")
+            except Exception as e:
+                print(f"[sindris.auto_run] 写入结果文件失败: {e}")
+
             # 保存任务历史
             import json
             result_data = {
