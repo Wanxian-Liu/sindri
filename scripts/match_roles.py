@@ -131,6 +131,8 @@ GENERAL_TERMS = {
     # Chinese
     "代码", "程序", "编程", "开发", "修复", "问题", "错误",
     "添加", "更新", "创建", "生成", "运行", "执行",
+    # Ralph修复: manager是通用词，会被filename中的manager干扰正确匹配
+    "manager", "management", "managing",
 }
 
 GENERAL_TERMS_PENALTY = 0.15  # heavily penalize roles matched only on general terms
