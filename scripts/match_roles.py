@@ -192,6 +192,9 @@ ZH_TO_EN = {
     
     # Design and architecture
     "设计": "design architecture architect system",
+    "分析": "analysis research evaluate",
+    "写文章": "write article documentation author",
+    "技术文章": "technical article documentation",
     
     # Research and analysis
     "研究": "research investigate analyze study",
