@@ -62,7 +62,10 @@ class AgentExecutor:
                 import importlib.util
                 # 确保DEEPSEEK_API_KEY环境变量已设置
                 if not os.environ.get('DEEPSEEK_API_KEY'):
-                    os.environ['DEEPSEEK_API_KEY'] = 'sk-478c1dd983e44adb974876e438776898'
+                    raise EnvironmentError(
+                        "DEEPSEEK_API_KEY environment variable is not set. "
+                        "Please set it before using DeepSeek execution backend."
+                    )
                 
                 spec = importlib.util.spec_from_file_location(
                     "deepseek_client", DEEPSEEK_CLIENT_PATH

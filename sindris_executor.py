@@ -1107,8 +1107,13 @@ class SindrisExecutor:
         """
         import httpx
         
-        # 确保API key已设置
-        api_key = os.environ.get('DEEPSEEK_API_KEY') or 'sk-478c1dd983e44adb974876e438776898'
+        # 确保API key已设置（不再硬编码fallback）
+        api_key = os.environ.get('DEEPSEEK_API_KEY')
+        if not api_key:
+            raise EnvironmentError(
+                "DEEPSEEK_API_KEY environment variable is not set. "
+                "Please set it before using DeepSeek execution backend."
+            )
         
         # 检查是否是报告分析任务
         is_report_analysis = task.metadata.get("is_report_analysis", False)
