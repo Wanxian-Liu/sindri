@@ -219,14 +219,37 @@ class SindrisExecutor:
                         }
                         for i, st in enumerate(subtasks)
                     ],
+                    "result_collection": {
+                        "collect_from": "每个subtask执行后的sessions_send响应",
+                        "store_in": "execution_results[]",
+                        "fields": ["success", "output", "error", "duration_ms"],
+                    },
                 },
                 "round3": {
-                    "action": "使用 round3_prompt 进行审查",
-                    "prompt_template": "round3_review",
+                    "action": "审查Round2执行结果",
+                    "verify_steps": [
+                        "检查每个subtask的success状态",
+                        "验证output是否包含预期交付物",
+                        "检查error是否有blocking问题",
+                        "汇总通过/失败统计",
+                    ],
+                    "review_roles": [
+                        {"name": "API Tester", "task": "验证API/接口正确性"},
+                        {"name": "Reality Checker", "task": "验证实现与需求一致"},
+                    ],
+                    "pass_criteria": "所有subtask成功 或 失败项不影响整体",
+                    "fail_action": "重启失败的subtask（最多3次重试）",
                 },
                 "round4": {
-                    "action": "使用 round4_prompt 完成",
-                    "prompt_template": "round4_complete",
+                    "action": "完成并交付",
+                    "steps": [
+                        "汇总所有执行结果",
+                        "生成最终报告",
+                        "执行git commit",
+                        "更新MEMORY.md",
+                        "git push（如需要）",
+                    ],
+                    "git_commit_message": "feat: {task} - {summary}",
                 },
             },
             "instructions": [

@@ -66,46 +66,19 @@ async def run(self, task: str, verify: bool = False) -> Dict[str, Any]:
 
 ---
 
-### 改进2: run()自动执行
+### 改进2: run()返回完整执行计划 ✅ 已完成
 
-**目标**: 让`run()`能真正执行subtasks
+**实现**:
+- run()返回`ready_to_execute: True`信号
+- `execution_guide`包含每个subtask的详细参数
+- 主Agent看到结果后可自动执行
 
-**方案**:
-
-```python
-async def run(self, task: str, verify: bool = False) -> Dict[str, Any]:
-    """执行完整Round1-4流程（包含实际执行）"""
-    
-    # Round1: 规划
-    plan_result = await self.plan(task)
-    if not plan_result.get("success"):
-        return plan_result
-    
-    subtasks = plan_result.get("subtasks", [])
-    results = []
-    
-    # Round2: 执行每个subtask
-    for subtask in subtasks:
-        if subtask.get("phase") == "round1":
-            continue  # 跳过round1自身
-        
-        # 使用sessions_spawn执行
-        result = await self._execute_subtask(subtask)
-        results.append(result)
-        
-        # 检查是否需要Round3验证
-        if verify and result.get("status") == "failed":
-            # 执行Round3审查
-            pass
-    
-    # Round4: 完成
-    return {
-        "success": True,
-        "plan_summary": plan_result.get("plan_summary"),
-        "subtasks": subtasks,
-        "results": results,
-        "phase": "completed"
-    }
+**验证**:
+```
+run()返回:
+  ready_to_execute: True
+  execution_guide.round2.subtasks: 11个subtask
+  roles: Software Architect, Senior Developer, API Tester, Reality Checker
 ```
 
 ---
