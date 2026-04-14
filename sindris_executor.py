@@ -181,10 +181,10 @@ class SindrisExecutor:
     
     async def run(self, task: str, verify: bool = False) -> Dict[str, Any]:
         """
-        执行完整Round1-4流程
+        执行完整Round1-4流程（自动执行版）
         
-        注意：这个方法返回执行计划，不是自动执行。
-        真正的执行需要主Agent调用 sessions_spawn 工具。
+        返回完整的执行计划，包含所有必要信息。
+        主Agent看到返回结果后应自动执行Round2-4。
         """
         # Round1: 规划
         plan_result = await self.plan(task)
@@ -192,21 +192,52 @@ class SindrisExecutor:
         if not plan_result.get("success"):
             return plan_result
         
-        # 返回执行计划
-        return {
+        subtasks = plan_result.get("subtasks", [])
+        roles = plan_result.get("roles", [])
+        
+        # 构建完整的执行计划
+        execution_plan = {
             "success": True,
             "session_id": self.session_id,
+            "task": task,
             "plan_summary": plan_result.get("plan_summary"),
-            "subtasks": plan_result.get("subtasks", []),
-            "total_tasks": len(plan_result.get("subtasks", [])),
+            "roles": plan_result.get("roles", []),
+            "subtasks": subtasks,
+            "total_tasks": len(subtasks),
             "phase": "planned",
+            "ready_to_execute": True,  # 信号：主Agent可以自动执行
+            "execution_guide": {
+                "round2": {
+                    "action": "对每个subtask调用 sessions_spawn",
+                    "subtasks": [
+                        {
+                            "index": i,
+                            "title": st.get("title"),
+                            "role": st.get("role"),
+                            "timeout": st.get("timeout", 300),
+                            "allowed_tools": self.get_role_allowed_tools(st.get("role", "")),
+                        }
+                        for i, st in enumerate(subtasks)
+                    ],
+                },
+                "round3": {
+                    "action": "使用 round3_prompt 进行审查",
+                    "prompt_template": "round3_review",
+                },
+                "round4": {
+                    "action": "使用 round4_prompt 完成",
+                    "prompt_template": "round4_complete",
+                },
+            },
             "instructions": [
-                "【Round1】sindris.plan() 返回此计划",
-                "【Round2】对每个subtask调用 sessions_spawn",
-                "【Round3】使用 round3_prompt 进行审查",
-                "【Round4】使用 round4_prompt 完成",
+                "Round1 ✅ 规划完成",
+                "Round2 → 对每个subtask调用 sessions_spawn",
+                "Round3 → 审查",
+                "Round4 → 完成",
             ],
         }
+        
+        return execution_plan
     
     def get_role_allowed_tools(self, role_name: str) -> List[str]:
         """获取角色允许的工具"""

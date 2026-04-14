@@ -50,43 +50,18 @@ async def run(self, task: str, verify: bool = False) -> Dict[str, Any]:
 
 ## 改进方案
 
-### 改进1: 任务类型自动识别
+### 改进1: 任务类型自动识别 ✅ 已完成
 
-**目标**: 让TaskDecomposer准确识别任务类型
+**实现**: 
+- 新增 `modules/task_classifier.py`
+- TaskClassifier支持6种任务类型
+- RoleMatcher集成TaskClassifier
 
-**方案**:
-
-```python
-# 在TaskDecomposer中添加任务类型识别
-
-TASK_TYPE_PATTERNS = {
-    "engineering": [
-        "实现", "开发", "代码", "Python", "修复", "优化",
-        "模块", "组件", "系统", "架构", "接口",
-        "记忆殿堂", "sindris", "Mimir", "进化", "融合"
-    ],
-    "design": [
-        "界面", "UI", "UX", "设计", "布局", "配色"
-    ],
-    "research": [
-        "分析", "调研", "研究", "学习", "对比"
-    ],
-    "testing": [
-        "测试", "验证", "检查", "审查"
-    ]
-}
-
-def classify_task(self, task: str) -> str:
-    """根据关键词识别任务类型"""
-    task_lower = task.lower()
-    scores = {}
-    
-    for task_type, keywords in TASK_TYPE_PATTERNS.items():
-        score = sum(1 for kw in keywords if kw in task_lower)
-        scores[task_type] = score
-    
-    # 返回最高分的类型
-    return max(scores, key=scores.get)
+**验证**:
+```
+记忆殿堂设计流程 → engineering → 固定团队 ✅
+优化sindris → engineering → 固定团队 ✅
+设计界面 → design → UI Designer ✅
 ```
 
 ---
