@@ -6,6 +6,7 @@ V1.0.0 - 基于织界中枢熔断规则 V2.0
 """
 
 import time
+import asyncio
 import functools
 import logging
 from typing import Callable, Any, Optional, Dict
@@ -135,67 +136,17 @@ class CircuitBreaker:
         """检查是否可以执行"""
         if self.state == CircuitState.CLOSED:
             return True
-        
+
         if self.state == CircuitState.OPEN:
             if self._should_attemptRecovery():
                 self._transition_to_half_open()
                 return True
             return False
-        
+
         if self.state == CircuitState.HALF_OPEN:
             return self.half_open_calls < self.half_open_max_calls
-        
+
         return False
-    
-    def call(self, func: Callable, *args, **kwargs) -> Any:
-        """
-        通过熔断器执行函数
-        
-        Args:
-            func: 要执行的函数
-            *args: 位置参数
-            **kwargs: 关键字参数
-            
-        Returns:
-            函数执行结果
-            
-        Raises:
-            CircuitOpenError: 熔断器打开时抛出
-            TimeoutError: 执行超时时抛出
-        """
-        if not self.can_execute():
-            raise CircuitOpenError(
-                f"CircuitBreaker [{self.role_type}] is OPEN. "
-                f"Try again in {self.recovery_timeout}s."
-            )
-        
-        start_time = time.time()
-        attempt = 0
-        last_error = None
-        
-        while True:
-            try:
-                result = func(*args, **kwargs)
-                self.record_success()
-                return result
-            except Exception as e:
-                last_error = e
-                self.record_failure()
-                
-                # 如果熔断器打开或达到最大重试次数，抛出异常
-                if not self.can_execute():
-                    raise CircuitOpenError(
-                        f"CircuitBreaker [{self.role_type}] opened after failures"
-                    ) from last_error
-                
-                # 计算延迟并等待
-                delay = self._calculate_delay(attempt)
-                logger.warning(
-                    f"[CircuitBreaker:{self.role_type}] 调用失败 (attempt={attempt}), "
-                    f"{delay:.1f}s 后重试"
-                )
-                time.sleep(delay)
-                attempt += 1
 
 
 class CircuitOpenError(Exception):
@@ -203,30 +154,9 @@ class CircuitOpenError(Exception):
     pass
 
 
-def with_circuit_breaker(
-    role_type: str,
-    failure_threshold: int = DEFAULT_FAILURE_THRESHOLD,
-    recovery_timeout: int = DEFAULT_RECOVERY_TIMEOUT
-):
-    """
-    装饰器：为函数添加熔断器保护
-    
-    Args:
-        role_type: 角色类型（researcher/developer/verifier/recorder）
-        failure_threshold: 失败次数阈值
-        recovery_timeout: 恢复超时(秒)
-    """
-    def decorator(func: Callable) -> Callable:
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            cb = CircuitBreaker(
-                role_type=role_type,
-                failure_threshold=failure_threshold,
-                recovery_timeout=recovery_timeout
-            )
-            return cb.call(func, *args, **kwargs)
-        return wrapper
-    return decorator
+# 注意：with_circuit_breaker 装饰器已移除
+# 请使用 execute_with_circuit_breaker_async() 异步版本
+# 或直接使用 CircuitBreaker 类的 can_execute() / record_success() / record_failure() 方法
 
 
 # 全局熔断器实例缓存
@@ -240,7 +170,7 @@ def get_circuit_breaker(role_type: str) -> CircuitBreaker:
     return _circuit_breakers[role_type]
 
 
-def execute_with_circuit_breaker(
+async def execute_with_circuit_breaker(
     session_key: str,
     role_type: str,
     func: Callable,
@@ -325,7 +255,7 @@ def execute_with_circuit_breaker(
             # 指数退避
             delay = cb._calculate_delay(attempt)
             logger.info(f"[execute_with_circuit_breaker] {delay:.1f}s 后重试...")
-            time.sleep(delay)
+            await asyncio.sleep(delay)
             attempt += 1
 
 

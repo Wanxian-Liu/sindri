@@ -8,6 +8,7 @@ round_manager.py - Round流程管理模块
 """
 
 import asyncio
+import os
 from typing import Dict, List, Any, Optional, Callable
 from dataclasses import dataclass, field
 
@@ -212,7 +213,14 @@ class RoundManager:
         
         for task in tasks:
             try:
-                result = await spawn_callback(task)
+                # 检查callback是否是协程函数
+                if asyncio.iscoroutinefunction(spawn_callback):
+                    result = await spawn_callback(task)
+                else:
+                    # 同步callback，在线程池中执行
+                    loop = asyncio.get_event_loop()
+                    result = await loop.run_in_executor(None, lambda: spawn_callback(task))
+                
                 results.append(ExecutionResult(
                     task_id=task.id,
                     title=task.title,
