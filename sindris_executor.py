@@ -36,31 +36,15 @@ except ImportError as e:
     print(f"[sindris] Warning: New modules not available ({e}), using legacy mode")
     MODULES_AVAILABLE = False
 
-# 织界中枢模块（备用）
-try:
-    from consensus_officer import ConsensusOfficer
-    from circuit_breaker import CircuitBreaker
-    from safety_policy import SafetyPolicy, DangerLevel
-    from review_logger import ReviewLogger, ResultSignal
-    from telemetry_collector import TelemetryCollector, TelemetryEvent
-    from memory_manager import MemoryManager
-    from task_queue import TaskQueue, BlockReason
-    from sindris_hud import SindrisHUD, HUDStyle, HUDData, TaskDisplay
-except ImportError:
-    # 备用路径
-    _ZHONG_SHU_PATH = os.path.join(SCRIPT_DIR, "..", "织界中枢", "scripts")
-    sys.path.insert(0, _ZHONG_SHU_PATH)
-    try:
-        from consensus_officer import ConsensusOfficer
-        from circuit_breaker import CircuitBreaker
-        from safety_policy import SafetyPolicy, DangerLevel
-        from review_logger import ReviewLogger, ResultSignal
-        from telemetry_collector import TelemetryCollector, TelemetryEvent
-        from memory_manager import MemoryManager
-        from task_queue import TaskQueue, BlockReason
-        from sindris_hud import SindrisHUD, HUDStyle, HUDData, TaskDisplay
-    except ImportError:
-        pass  # 模块可能不可用
+# sindris自有模块（独立运行，不依赖织界中枢）
+from consensus_officer import ConsensusOfficer
+from circuit_breaker import CircuitBreaker
+from safety_policy import SafetyPolicy, DangerLevel
+from review_logger import ReviewLogger, ResultSignal
+from telemetry_collector import TelemetryCollector, TelemetryEvent
+from memory_manager import MemoryManager
+from task_queue import TaskQueue, BlockReason
+from sindris_hud import SindrisHUD, HUDStyle, HUDData, TaskDisplay
 
 
 class TaskStatus:
