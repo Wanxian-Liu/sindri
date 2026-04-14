@@ -2,9 +2,10 @@
 role_matcher.py - 角色匹配器（混合方案）
 
 结合：
-1. 向量相似度（语义匹配）
-2. oh-my-codex claim机制（动态调整）
-3. 固定小组（编程任务优先）
+1. 任务类型识别（TaskClassifier）
+2. 固定小组（工程/测试任务）
+3. 向量相似度（语义匹配）
+4. oh-my-codex claim机制（动态调整）
 """
 
 import os
@@ -12,6 +13,8 @@ import json
 import math
 from typing import List, Dict, Optional, Tuple
 from dataclasses import dataclass
+
+from .task_classifier import TaskClassifier, TaskType
 
 
 # 固定小组配置
@@ -23,9 +26,15 @@ FIXED_TEAM = [
 ]
 
 FIXED_TEAM_TRIGGERS = [
-    "编程", "开发", "进化", "mimir", "sindris", "代码", "code",
-    "python", "java", "javascript", "typescript", "修改", "优化",
-    "修复", "bug", "feature", "重构", "refactor"
+    # 编程/开发类
+    "编程", "开发", "代码", "code",
+    "python", "java", "javascript", "typescript",
+    "修改", "优化", "修复", "bug", "feature", "重构", "refactor",
+    # 自研系统类
+    "记忆殿堂", "mimir", "sindris", "进化",
+    # 工程类关键词
+    "模块", "组件", "系统", "架构", "接口", "实现",
+    "自动化", "流程", "设计", "开发",
 ]
 
 
@@ -55,6 +64,7 @@ class RoleMatcher:
         self._registry_path = os.path.expanduser(
             "~/.openclaw/skills/sindris/scripts/roles_registry.json"
         )
+        self._task_classifier = TaskClassifier()  # 任务类型识别器
         self._load_roles()
     
     def _load_roles(self) -> None:
@@ -76,9 +86,12 @@ class RoleMatcher:
             print(f"[RoleMatcher] Failed to load roles: {e}")
     
     def should_use_fixed_team(self, task: str) -> bool:
-        """判断是否使用固定小组"""
-        task_lower = task.lower()
-        return any(trigger in task_lower for trigger in FIXED_TEAM_TRIGGERS)
+        """判断是否使用固定小组（使用TaskClassifier）"""
+        return self._task_classifier.should_use_fixed_team(task)
+    
+    def classify_task_type(self, task: str) -> TaskType:
+        """获取任务类型"""
+        return self._task_classifier.classify(task)
     
     def match(self, task: str, top_k: int = 4) -> List[RoleMatch]:
         """
@@ -90,8 +103,10 @@ class RoleMatcher:
         3. claim覆盖
         4. 关键词匹配
         """
-        # 1. 固定小组优先
+        # 1. 任务类型识别 + 固定小组
         if self.should_use_fixed_team(task):
+            task_type = self.classify_task_type(task)
+            print(f"[RoleMatcher] 任务类型: {task_type.value}, 使用固定团队")
             return [
                 RoleMatch(role=r, similarity=1.0, source="fixed_team")
                 for r in FIXED_TEAM
