@@ -1,10 +1,10 @@
 ---
 name: sindris
-version: "1.9"
+version: "2.21"
 license: MIT
 copyright: "2026 琬弦 (Wanxian)"
 description: |
-  织界统一协调系统 v1.9 - 多Agent协作执行引擎
+  织界统一协调系统 v2.21 - 多Agent协作执行引擎
   
   基于sindris Round1-4流程，参考oh-my-codex v2设计，
   整合织界中枢模块（熔断/投票/worktree）和OMX持久化。
