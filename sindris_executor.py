@@ -28,8 +28,8 @@ sys.path.insert(0, SCRIPT_DIR)
 try:
     from consensus_officer import ConsensusOfficer
     from worktree_officer import WorktreeOfficer
-    # monitor.py 包含 CircuitBreaker
-    from monitor import CircuitBreaker
+    # circuit_breaker.py 包含 CircuitBreaker
+    from circuit_breaker import CircuitBreaker
     # Phase1新增模块
     from safety_policy import SafetyPolicy, DangerLevel
     from review_logger import ReviewLogger, ResultSignal
@@ -46,7 +46,7 @@ except ImportError:
     sys.path.insert(0, _ZHONG_SHU_PATH)
     from consensus_officer import ConsensusOfficer
     from worktree_officer import WorktreeOfficer
-    from monitor import CircuitBreaker
+    from circuit_breaker import CircuitBreaker
     # Phase1+2+3新增模块（备用路径）
     try:
         from safety_policy import SafetyPolicy, DangerLevel
