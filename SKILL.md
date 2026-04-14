@@ -151,6 +151,20 @@ for subtask in plan['subtasks']:
 
 ### 角色匹配规则
 
+#### 规则一：固定小组优先
+
+**编程开发类任务**，直接使用**固定小组**，不自动匹配：
+
+| 小组 | 角色 | 用途 |
+|------|------|------|
+| **架构组** | engineering_software_architect | 系统架构设计 |
+| **开发组** | engineering_senior_developer | 核心代码开发 |
+| **验证组** | testing_api_tester + testing_reality_checker | 测试验证 |
+
+**触发词**：编程开发 / sindris进化 / MIMIR升级 / 代码任务
+
+#### 规则二：其他任务类型自动匹配
+
 | 任务类型 | 自动匹配 |
 |----------|----------|
 | 架构设计类 | Software Architect |
