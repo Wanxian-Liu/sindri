@@ -14,8 +14,11 @@ sindris_executor.py - 织界统一协调系统执行引擎 (纯规划器版)
 VERSION = "3.5"
 
 import uuid
+import json
+import logging
 from pathlib import Path
 from typing import Optional, List, Dict, Any
+from datetime import datetime
 
 import sys
 import os
@@ -37,7 +40,34 @@ class SindrisExecutor:
     
     def __init__(self, workspace_root: Optional[str] = None):
         self.workspace_root = workspace_root or str(Path.home() / ".openclaw" / "workspace")
-        self.session_id = f"sindris_{uuid.uuid4().hex[:12]}"
+        self.session_id = f"sindris_{uuid.uuid4().hex[:12]}"        
+        self._setup_jsonl_logger()
+    
+    def _setup_jsonl_logger(self):
+        """初始化JSONL日志记录器"""
+        self.jsonl_dir = Path(SCRIPT_DIR) / ".logs"
+        self.jsonl_dir.mkdir(exist_ok=True)
+        self.jsonl_file = self.jsonl_dir / f"sindris_{datetime.now().strftime('%Y%m%d')}.jsonl"
+        
+        # 配置日志
+        logging.basicConfig(
+            level=logging.INFO,
+            format='%(asctime)s - %(levelname)s - %(message)s',
+            handlers=[
+                logging.FileHandler(self.jsonl_file, encoding='utf-8'),
+            ]
+        )
+        self.logger = logging.getLogger("sindris")
+    
+    def _log_jsonl(self, event_type: str, data: Dict[str, Any]):
+        """写入JSONL日志"""
+        log_entry = {
+            "timestamp": datetime.now().isoformat(),
+            "session_id": self.session_id,
+            "event_type": event_type,
+            **data
+        }
+        self.logger.info(json.dumps(log_entry, ensure_ascii=False))
     
     async def plan(self, task: str) -> Dict[str, Any]:
         """
@@ -71,6 +101,9 @@ class SindrisExecutor:
         except ImportError:
             return await self._plan_fallback(task)
         
+        # 记录规划开始
+        self._log_jsonl("plan_start", {"task": task[:100]})
+        
         # 任务分解
         roles = task_decomposer.get_roles(task, [])
         decomposed = task_decomposer.decompose_by_round(task, roles)
@@ -103,7 +136,7 @@ class SindrisExecutor:
                 "verify": t.verify,  # 验证条件
             })
         
-        return {
+        result = {
             "success": True,
             "task_id": self.session_id,
             "subtasks": subtasks,
@@ -111,6 +144,15 @@ class SindrisExecutor:
             "phase": "planned",
             "roles": roles,
         }
+        
+        # 记录规划完成
+        self._log_jsonl("plan_complete", {
+            "task_id": self.session_id,
+            "subtasks_count": len(subtasks),
+            "subtasks": [{"id": s["task_id"], "role": s["role"], "phase": s.get("phase")} for s in subtasks]
+        })
+        
+        return result
     
     async def _plan_fallback(self, task: str) -> Dict[str, Any]:
         """备用规划：使用固定小组"""
@@ -167,6 +209,27 @@ class SindrisExecutor:
             except:
                 pass
         return f"You are {role_name}."
+    
+    def log_execution(self, task_id: str, phase: str, status: str, details: Dict[str, Any] = None):
+        """
+        记录子代理执行结果
+        
+        主代理在每次spawn/yield后调用此方法记录执行状态。
+        
+        用法：
+            executor.log_execution(
+                task_id="task_abc123",
+                phase="round2",
+                status="complete",
+                details={"role": "Senior Developer", "duration": 120}
+            )
+        """
+        self._log_jsonl("execution", {
+            "task_id": task_id,
+            "phase": phase,
+            "status": status,
+            "details": details or {}
+        })
 
 
 # 兼容性别名

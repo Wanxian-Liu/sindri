@@ -839,8 +839,21 @@ verifier_config = RoleConfig(
 ### 6.2 日志位置
 
 ```
-~/.openclaw/sessions/{session_id}/sindris_log.jsonl
+~/.openclaw/skills/sindris/.logs/sindris_YYYYMMDD.jsonl
 ```
+
+**日志格式**：
+```json
+{"timestamp": "2026-04-18T03:31:18.166161", "session_id": "sindris_xxx", "event_type": "plan_complete", ...}
+{"timestamp": "2026-04-18T03:31:18.166503", "session_id": "sindris_xxx", "event_type": "execution", ...}
+```
+
+**事件类型**：
+- `plan_start` - 规划开始
+- `plan_complete` - 规划完成
+- `execution` - 子代理执行
+- `verification` - 验收结果
+- `error` - 错误
 
 ---
 
