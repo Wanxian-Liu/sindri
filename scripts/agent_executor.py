@@ -1,14 +1,10 @@
 """
-agent_executor.py - 三级降级执行器
+agent_executor.py - 两级降级执行器（简化版）
 
-为sindris提供可靠的任务执行能力：
 Level 1: sessions_spawn（OpenClaw内置）
-Level 2: DeepSeek API直接调用
-Level 3: 本地代码执行（兜底）
+Level 2: 本地模板（兜底）
 
-使用示例：
-    executor = AgentExecutor()
-    result = await executor.execute(task, role)
+移除了DeepSeek API依赖，简化架构。
 """
 
 import asyncio
@@ -20,23 +16,17 @@ from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, field
 from enum import Enum
 
-# DeepSeek客户端路径
-DEEPSEEK_CLIENT_PATH = os.path.expanduser("~/.openclaw/projects/MimirAether/mimicore/utils/deepseek_client.py")
-
 @dataclass
 class ExecutionResult:
-    """执行结果（兼容report_generator和agent_executor两个版本）"""
-    # agent_executor字段
+    """执行结果"""
     success: bool = True
     task_id: str = ""
     output: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
-    backend: str = "unknown"  # sessions_spawn / deepseek / local / mock
+    backend: str = "unknown"  # sessions_spawn / local
     execution_time_ms: int = 0
-    # report_generator字段（兼容）
     title: str = ""
     role: str = ""
-    status: str = ""  # "success" / "failed"
     duration_ms: int = 0
     verify_passed: bool = False
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -44,59 +34,21 @@ class ExecutionResult:
 class ExecutionBackend(Enum):
     """执行后端"""
     SESSIONS_SPAWN = "sessions_spawn"
-    DEEPSEEK = "deepseek"
     LOCAL = "local"
-    MOCK = "mock"
 
 class AgentExecutor:
     """
-    三级降级执行器
+    两级降级执行器
     
-    按优先级尝试：
-    1. sessions_spawn - OpenClaw内置子Agent
-    2. DeepSeek API - 直接LLM调用
-    3. Local exec - 本地代码执行（最后兜底）
+    Level 1: sessions_spawn（OpenClaw内置，真实执行）
+    Level 2: 本地模板（兜底）
     """
     
     def __init__(self, workspace_root: str = "/tmp/sindris-exec"):
         self.workspace_root = workspace_root
-        self._deepseek_client = None
-        self._init_deepseek_client()
-    
-    def _init_deepseek_client(self):
-        """初始化DeepSeek客户端"""
-        try:
-            if os.path.exists(DEEPSEEK_CLIENT_PATH):
-                import importlib.util
-                # 确保DEEPSEEK_API_KEY环境变量已设置
-                if not os.environ.get('DEEPSEEK_API_KEY'):
-                    raise EnvironmentError(
-                        "DEEPSEEK_API_KEY environment variable is not set. "
-                        "Please set it before using DeepSeek execution backend."
-                    )
-                
-                spec = importlib.util.spec_from_file_location(
-                    "deepseek_client", DEEPSEEK_CLIENT_PATH
-                )
-                module = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(module)
-                # 直接创建实例，避免单例问题
-                self._deepseek_client = module.DeepSeekClient()
-        except Exception as e:
-            print(f"[AgentExecutor] DeepSeek客户端初始化失败: {e}")
-            self._deepseek_client = None
     
     async def execute(self, task: str, role: Dict[str, Any]) -> ExecutionResult:
-        """
-        执行任务，使用三级降级策略
-        
-        Args:
-            task: 任务描述
-            role: 角色信息（包含id, name, description等）
-            
-        Returns:
-            ExecutionResult: 执行结果
-        """
+        """执行任务，使用两级降级策略"""
         start_time = time.time()
         task_id = f"exec_{int(start_time * 1000)}"
         
@@ -109,22 +61,13 @@ class AgentExecutor:
         except Exception as e:
             print(f"[AgentExecutor] Level 1 (sessions_spawn) 失败: {e}")
         
-        # Level 2: 尝试DeepSeek API
-        try:
-            result = await self._execute_via_deepseek(task, role, task_id)
-            if result.success:
-                result.execution_time_ms = int((time.time() - start_time) * 1000)
-                return result
-        except Exception as e:
-            print(f"[AgentExecutor] Level 2 (DeepSeek) 失败: {e}")
-        
-        # Level 3: 本地代码执行（兜底）
+        # Level 2: 本地模板（兜底）
         try:
             result = await self._execute_via_local(task, role, task_id)
             result.execution_time_ms = int((time.time() - start_time) * 1000)
             return result
         except Exception as e:
-            print(f"[AgentExecutor] Level 3 (local) 也失败: {e}")
+            print(f"[AgentExecutor] Level 2 (local) 也失败: {e}")
             return ExecutionResult(
                 success=False,
                 task_id=task_id,
@@ -138,61 +81,26 @@ class AgentExecutor:
         """
         Level 1: 通过sessions_spawn执行
         
-        注意：这个方法在AgentExecutor中不可用（需要OpenClaw内核）
-        直接抛出异常让调用方知道需要降级
+        注意：这个方法需要OpenClaw内核支持。
+        如果不可用，抛出NotImplementedError让调用方降级。
         """
+        # 在OpenClaw上下文中，应该使用sessions_spawn工具
+        # 但这里无法直接调用工具，需要依赖调用方
         raise NotImplementedError(
-            "sessions_spawn requires OpenClaw kernel - use DeepSeek instead"
-        )
-    
-    async def _execute_via_deepseek(
-        self, task: str, role: Dict, task_id: str
-    ) -> ExecutionResult:
-        """
-        Level 2: 通过DeepSeek API直接执行
-        
-        DeepSeek可以处理任何类型的任务，包括分析、设计、规划等
-        """
-        if not self._deepseek_client:
-            raise RuntimeError("DeepSeek client not initialized")
-        
-        # 构造角色提示词
-        role_prompt = self._build_role_prompt(role)
-        
-        # 构造消息
-        messages = [
-            {"role": "system", "content": role_prompt},
-            {"role": "user", "content": task}
-        ]
-        
-        # 调用DeepSeek
-        response = self._deepseek_client.chat(
-            messages=messages,
-            model="deepseek-chat"
-        )
-        
-        content = response.get("choices", [{}])[0].get("message", {}).get("content", "")
-        
-        return ExecutionResult(
-            success=True,
-            task_id=task_id,
-            output={"content": content, "model": "deepseek-chat"},
-            backend=ExecutionBackend.DEEPSEEK.value
+            "sessions_spawn需要OpenClaw内核，请使用sessions_spawn工具"
         )
     
     async def _execute_via_local(
         self, task: str, role: Dict, task_id: str
     ) -> ExecutionResult:
         """
-        Level 3: 本地代码执行（兜底方案）
+        Level 2: 本地模板（兜底方案）
         
-        对于分析类任务，使用角色提示模板生成结构化分析。
-        不依赖外部API，直接生成结果。
+        生成基于角色的结构化分析模板。
         """
         role_name = role.get("name", role.get("id", "Specialist"))
         role_desc = role.get("description", "")
         
-        # 构建基于角色的分析模板
         analysis = self._generate_local_analysis(task, role_name, role_desc)
         
         return ExecutionResult(
@@ -208,11 +116,9 @@ class AgentExecutor:
     
     def _generate_local_analysis(self, task: str, role_name: str, role_desc: str) -> str:
         """生成基于角色的本地分析（不依赖API）"""
-        # 简单的时间戳
         from datetime import datetime
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
         
-        # 角色分析模板
         templates = {
             "Psychologist": f"""## [{role_name}] 心理分析与任务规划
 
@@ -237,8 +143,8 @@ class AgentExecutor:
 **任务**: {task}
 
 ### 1. 技术分析
-- 技术可行性：高
-- 实现复杂度：中等
+- 技术可行性：待评估
+- 实现复杂度：待评估
 - 依赖关系：需确认
 
 ### 2. 实现建议
@@ -263,12 +169,10 @@ class AgentExecutor:
 """,
         }
         
-        # 返回对应角色的模板或通用模板
         template = templates.get(role_name)
         if template:
             return template
         
-        # 通用模板
         return f"""## [{role_name}] 任务分析
 
 **分析时间**: {timestamp}
@@ -282,37 +186,4 @@ class AgentExecutor:
 基于角色 [{role_name}] 的专业分析已完成。
 请在后续环节进行深度验证。
 """
-    
-    def _build_role_prompt(self, role: Dict) -> str:
-        """构建角色提示词"""
-        role_name = role.get("name", role.get("id", "Specialist"))
-        role_desc = role.get("description", "")
-        capabilities = role.get("capabilities", [])
-        
-        prompt = f"""You are a {role_name}.
 
-Role Description:
-{role_desc}
-
-Your Capabilities:
-{', '.join(capabilities) if isinstance(capabilities, list) else capabilities}
-
-Instructions:
-1. Analyze the task carefully
-2. Provide a clear, structured response
-3. If code is requested, write clean, working code
-4. Include explanations where helpful
-
-Task:"""
-        return prompt
-
-
-# 全局实例
-_global_executor: Optional[AgentExecutor] = None
-
-def get_global_executor(workspace_root: str = "/tmp/sindris-exec") -> AgentExecutor:
-    """获取全局AgentExecutor实例"""
-    global _global_executor
-    if _global_executor is None:
-        _global_executor = AgentExecutor(workspace_root)
-    return _global_executor
