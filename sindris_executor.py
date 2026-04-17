@@ -6,7 +6,7 @@ sindris_executor.py - 织界统一协调系统执行引擎 (模块化重构版)
 - v3.0: 模块化重构，按职责拆分为独立模块
 """
 
-VERSION = "3.1"
+VERSION = "3.3"
 
 import asyncio
 import uuid
