@@ -5,14 +5,40 @@ task_decomposer.py - 任务分解模块
 - 按Round阶段分解任务
 - 固定小组角色分配
 - 精确slice生成
+
+v3.5修复：
+- 配置化ROUND_STAGES
+- 错误处理和降级策略
+- 无slices时的fallback处理
 """
 
 import os
-import re
+import logging
 from typing import List, Dict, Optional, Any
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from .role_matcher import RoleMatcher, FIXED_TEAM
+
+# 配置化的Round阶段
+ROUND_STAGES = {
+    "round1": {
+        "name": "规划",
+        "role_key": "architect",
+        "fallback_role_index": 2,  # Software Architect
+    },
+    "round2": {
+        "name": "执行",
+        "role_key": "developer",
+        "fallback_role_index": 3,  # Senior Developer
+    },
+    "round3": {
+        "name": "审查",
+        "role_key": "tester",
+        "fallback_role_index": 5,  # API Tester
+    },
+}
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -43,24 +69,27 @@ class TaskDecomposer:
     
     def get_roles(self, task: str, auto_matched_roles: List[Dict]) -> List[Dict]:
         """
-        获取任务角色（使用RoleMatcher混合方案）
+        获取任务角色（使用RoleMatcher混合方案，带错误处理）
         
         优先级：
         1. RoleMatcher.match() 返回的角色（固定小组/向量/claim）
         2. 自动匹配的角色
         3. 默认固定小组
         """
-        matches = self.role_matcher.match(task)
-        if matches:
-            print(f"[TaskDecomposer] RoleMatcher匹配到{len(matches)}个角色")
-            return [m.role for m in matches]
+        try:
+            matches = self.role_matcher.match(task)
+            if matches:
+                logger.info(f"[TaskDecomposer] RoleMatcher匹配到{len(matches)}个角色")
+                return [m.role for m in matches]
+        except Exception as e:
+            logger.warning(f"[TaskDecomposer] RoleMatcher错误: {e}，使用fallback")
         
         if auto_matched_roles:
-            print(f"[TaskDecomposer] 使用自动匹配的角色")
+            logger.info(f"[TaskDecomposer] 使用自动匹配的角色")
             return auto_matched_roles
         
         # 默认使用固定小组
-        print(f"[TaskDecomposer] 默认使用固定小组")
+        logger.info(f"[TaskDecomposer] 默认使用固定小组")
         return FIXED_TEAM
     
     def decompose_by_round(
@@ -71,10 +100,6 @@ class TaskDecomposer:
         """
         按Round阶段分解任务
         
-        Round1: 规划 → Software Architect
-        Round2: 执行 → Senior Developer
-        Round3: 审查 → API Tester + Reality Checker
-        
         Returns:
             {
                 "round1": [Task, ...],
@@ -82,15 +107,16 @@ class TaskDecomposer:
                 "round3": [Task, ...],
             }
         """
-        slices = self._generate_slices(task)
+        # 生成slices（可能失败，返回空列表）
+        slices = self._generate_slices_safe(task)
         
         # Round1: 规划任务
         round1_tasks = self._create_round1_tasks(task, roles, slices)
         
-        # Round2: 执行任务（分配给Developer）
+        # Round2: 执行任务
         round2_tasks = self._create_round2_tasks(slices)
         
-        # Round3: 审查任务（分配给Tester）
+        # Round3: 审查任务
         round3_tasks = self._create_round3_tasks(slices)
         
         return {
@@ -98,6 +124,16 @@ class TaskDecomposer:
             "round2": round2_tasks,
             "round3": round3_tasks,
         }
+    
+    def _generate_slices_safe(self, task: str) -> List[Dict]:
+        """生成代码slice（带错误处理）"""
+        try:
+            slices = self._generate_slices(task)
+            logger.info(f"[TaskDecomposer] 生成了{len(slices)}个slices")
+            return slices
+        except Exception as e:
+            logger.error(f"[TaskDecomposer] Slice生成失败: {e}")
+            return []
     
     def _generate_slices(self, task: str) -> List[Dict]:
         """生成代码slice"""
@@ -127,8 +163,23 @@ class TaskDecomposer:
                 })
             return slices
         except Exception as e:
-            print(f"[TaskDecomposer] SliceGenerator failed: {e}")
+            logger.warning(f"[TaskDecomposer] SliceGenerator unavailable: {e}")
             return []
+    
+    def _get_role_from_team(self, roles: List[Dict], key: str, fallback_index: int) -> Dict:
+        """从团队中获取角色"""
+        # 尝试通过key匹配
+        for r in roles:
+            role_id = r.get('id', '').lower()
+            if key in role_id:
+                return r
+        
+        # fallback到FIXED_TEAM
+        if 0 <= fallback_index < len(FIXED_TEAM):
+            return FIXED_TEAM[fallback_index]
+        
+        # 最后的fallback
+        return FIXED_TEAM[0]
     
     def _create_round1_tasks(
         self,
@@ -138,96 +189,64 @@ class TaskDecomposer:
     ) -> List[Task]:
         """创建Round1任务（规划）"""
         tasks = []
-        
-        # Round1任务：根据任务类型选择（优先级从高到低）
-        # 1. 产品管理任务 → Product Manager
-        # 2. 工程任务（编程/代码/架构/修复/优化）→ Software Architect
-        # 3. 协调/编排任务（编排/协调/工作流）→ Agents Orchestrator
-        
         task_lower = task.lower()
         
-        # 产品管理任务
+        # 产品管理任务 → Product Manager
         if '产品' in task or '路线图' in task or 'pm' in task_lower or 'product' in task_lower:
-            pm_role = next((r for r in roles if 'product_manager' in r.get('id', '').lower()), None)
-            if pm_role:
-                tasks.append(Task(
-                    id=self._gen_id("task"),
-                    title="产品规划与需求分析",
-                    kind="round1_planning",
-                    phase="round1",
-                    priority="high",
-                    verify=["检查PRD文档是否完整"],
-                    metadata={
-                        "role": pm_role,
-                        "task_context": task,
-                    }
-                ))
-                return tasks
+            pm_role = self._get_role_from_team(roles, 'product_manager', 0)
+            tasks.append(Task(
+                id=self._gen_id("task"),
+                title="产品规划与需求分析",
+                kind="round1_planning",
+                phase="round1",
+                priority="high",
+                verify=["PRD文档完整", "利益相关者确认"],
+                metadata={
+                    "role": pm_role,
+                    "task_context": task,
+                    "stage": "planning",
+                }
+            ))
+            return tasks
         
-        # 工程任务（编程、代码、架构、修复、优化等）
+        # 工程任务 → Software Architect
         engineering_keywords = [
-            '编程', '开发', '代码', 'code', 'python', 'java', 'javascript', 'typescript',
+            '编程', '开发', '代码', 'python', 'java', 'javascript', 'typescript',
             '修改', '优化', '修复', 'bug', '重构', 'refactor', 'feature',
             '模块', '组件', '系统', '架构', '接口', '实现',
             'mimir', 'sindris', '进化', '记忆殿堂',
         ]
-        if any(kw in task_lower for kw in engineering_keywords) or any(kw in task for kw in ['模块', '组件', '系统', '架构', '接口', '修改', '优化', '修复', '编程', '开发', '代码']):
-            architect_role = next(
-                (r for r in roles if 'architect' in r.get('id', '').lower()),
-                roles[0] if roles else FIXED_TEAM[0]
-            )
+        if any(kw in task_lower for kw in engineering_keywords):
+            architect_role = self._get_role_from_team(roles, 'architect', 2)
             tasks.append(Task(
                 id=self._gen_id("task"),
                 title="架构分析与任务规划",
                 kind="round1_planning",
                 phase="round1",
                 priority="high",
-                verify=["检查规划文档是否完整"],
+                verify=["规划文档完整", "技术方案可行"],
                 metadata={
                     "role": architect_role,
                     "task_context": task,
                     "slices_count": len(slices),
+                    "stage": "planning",
                 }
             ))
             return tasks
         
-        # 协调/编排任务（默认fallback）
-        orchestrator_role = next(
-            (r for r in roles if 'orchestrator' in r.get('id', '').lower()),
-            None
-        )
-        if orchestrator_role:
-            tasks.append(Task(
-                id=self._gen_id("task"),
-                title="工作流编排与协调",
-                kind="round1_planning",
-                phase="round1",
-                priority="high",
-                verify=["检查编排方案是否完整"],
-                metadata={
-                    "role": orchestrator_role,
-                    "task_context": task,
-                }
-            ))
-            return tasks
-        
-        # 默认：Software Architect
-        architect_role = next(
-            (r for r in roles if 'architect' in r.get('id', '').lower()),
-            roles[0] if roles else FIXED_TEAM[0]
-        )
-        
+        # 协调/编排任务 → Agents Orchestrator
+        orchestrator_role = self._get_role_from_team(roles, 'orchestrator', 1)
         tasks.append(Task(
             id=self._gen_id("task"),
-            title="架构分析与任务规划",
+            title="工作流编排与协调",
             kind="round1_planning",
             phase="round1",
             priority="high",
-            verify=["检查规划文档是否完整"],
+            verify=["编排方案完整", "资源分配合理"],
             metadata={
-                "role": architect_role,
+                "role": orchestrator_role,
                 "task_context": task,
-                "slices_count": len(slices),
+                "stage": "planning",
             }
         ))
         
@@ -236,20 +255,37 @@ class TaskDecomposer:
     def _create_round2_tasks(self, slices: List[Dict]) -> List[Task]:
         """创建Round2任务（执行）"""
         tasks = []
-        
         developer_role = FIXED_TEAM[3]  # Senior Developer
         
-        for i, slice in enumerate(slices[:20]):  # 限制最多20个
+        # 如果有slices，按slice创建任务
+        if slices:
+            for slice_info in slices[:20]:  # 限制最多20个
+                tasks.append(Task(
+                    id=self._gen_id("task"),
+                    title=f"{slice_info['file']}::{slice_info['function']}",
+                    kind="round2_execution",
+                    phase="round2",
+                    priority=slice_info.get('priority', 'medium'),
+                    verify=[slice_info.get('test_cmd', '代码审查通过')],
+                    metadata={
+                        "role": developer_role,
+                        "slice": slice_info,
+                        "stage": "execution",
+                    }
+                ))
+        else:
+            # 无slices时的fallback任务
             tasks.append(Task(
                 id=self._gen_id("task"),
-                title=f"{slice['file']}::{slice['function']}",
+                title="执行任务分析",
                 kind="round2_execution",
                 phase="round2",
-                priority=slice.get('priority', 'medium'),
-                verify=[slice.get('test_cmd', '')],
+                priority="high",
+                verify=["任务理解正确", "执行方案明确"],
                 metadata={
                     "role": developer_role,
-                    "slice": slice,
+                    "stage": "execution",
+                    "fallback": True,
                 }
             ))
         
@@ -258,8 +294,6 @@ class TaskDecomposer:
     def _create_round3_tasks(self, slices: List[Dict]) -> List[Task]:
         """创建Round3任务（审查）"""
         tasks = []
-        
-        # API Tester
         tester_role = FIXED_TEAM[5]  # API Tester
         checker_role = FIXED_TEAM[6]  # Reality Checker
         
@@ -270,11 +304,12 @@ class TaskDecomposer:
             kind="round3_review",
             phase="round3",
             priority="high",
-            verify=["pytest tests/ -v"],
+            verify=["功能测试通过", "边界条件覆盖"],
             metadata={
                 "role": tester_role,
                 "review_type": "functional",
                 "slices_count": len(slices),
+                "stage": "review",
             }
         ))
         
@@ -285,11 +320,12 @@ class TaskDecomposer:
             kind="round3_review",
             phase="round3",
             priority="high",
-            verify=["代码质量检查通过"],
+            verify=["代码质量达标", "无严重问题"],
             metadata={
                 "role": checker_role,
                 "review_type": "quality",
                 "slices_count": len(slices),
+                "stage": "review",
             }
         ))
         
