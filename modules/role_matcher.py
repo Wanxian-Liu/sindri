@@ -20,6 +20,8 @@ from .role_hierarchical_matcher import classify_domain, RoleHierarchicalMatcher
 
 # 固定小组配置
 FIXED_TEAM = [
+    {"id": "product_product_manager", "name": "Product Manager", "category": "product"},
+    {"id": "coordination_agents_orchestrator", "name": "Agents Orchestrator", "category": "coordination"},
     {"id": "engineering_software_architect", "name": "Software Architect", "category": "engineering"},
     {"id": "engineering_senior_developer", "name": "Senior Developer", "category": "engineering"},
     {"id": "engineering_frontend_developer", "name": "Frontend Developer", "category": "engineering"},

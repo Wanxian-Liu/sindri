@@ -139,7 +139,48 @@ class TaskDecomposer:
         """创建Round1任务（规划）"""
         tasks = []
         
-        # Round1主要任务：架构设计
+        # Round1任务：根据任务类型选择
+        # 产品管理任务 → Product Manager
+        # 协调/编排任务 → Agents Orchestrator
+        # 工程任务 → Software Architect
+        
+        task_lower = task.lower()
+        if '产品' in task or '路线图' in task or 'pm' in task_lower or 'product' in task_lower:
+            pm_role = next((r for r in roles if 'product_manager' in r.get('id', '').lower()), None)
+            if pm_role:
+                tasks.append(Task(
+                    id=self._gen_id("task"),
+                    title="产品规划与需求分析",
+                    kind="round1_planning",
+                    phase="round1",
+                    priority="high",
+                    verify=["检查PRD文档是否完整"],
+                    metadata={
+                        "role": pm_role,
+                        "task_context": task,
+                    }
+                ))
+                return tasks
+        
+        orchestrator_role = next(
+            (r for r in roles if 'orchestrator' in r.get('id', '').lower()),
+            None
+        )
+        if orchestrator_role:
+            tasks.append(Task(
+                id=self._gen_id("task"),
+                title="工作流编排与协调",
+                kind="round1_planning",
+                phase="round1",
+                priority="high",
+                verify=["检查编排方案是否完整"],
+                metadata={
+                    "role": orchestrator_role,
+                    "task_context": task,
+                }
+            ))
+            return tasks
+        
         architect_role = next(
             (r for r in roles if 'architect' in r.get('id', '').lower()),
             roles[0] if roles else FIXED_TEAM[0]
