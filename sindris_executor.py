@@ -46,6 +46,12 @@ from memory_manager import MemoryManager
 from task_queue import TaskQueue, BlockReason
 from sindris_hud import SindrisHUD, HUDStyle, HUDData, TaskDisplay
 
+# 导入执行器（用于真正执行任务）
+try:
+    from agent_executor import AgentExecutor
+except ImportError:
+    AgentExecutor = None
+
 
 class TaskStatus:
     """任务状态枚举"""
@@ -107,6 +113,9 @@ class SindrisExecutor:
         
         # 熔断器
         self._circuit_breakers: Dict[str, Any] = {}
+        
+        # 执行器（用于真正执行任务）
+        self._agent_executor = AgentExecutor(workspace_root=self.workspace_root) if AgentExecutor else None
     
     def _get_circuit_breaker(self, role_type: str):
         """获取熔断器"""
@@ -183,9 +192,12 @@ class SindrisExecutor:
         """
         执行完整Round1-4流程（自动执行版）
         
-        返回完整的执行计划，包含所有必要信息。
-        主Agent看到返回结果后应自动执行Round2-4。
+        真正使用AgentExecutor执行Round2任务，
+        不再只返回计划。
         """
+        import time
+        start_time = time.time()
+        
         # Round1: 规划
         plan_result = await self.plan(task)
         
@@ -195,72 +207,69 @@ class SindrisExecutor:
         subtasks = plan_result.get("subtasks", [])
         roles = plan_result.get("roles", [])
         
-        # 构建完整的执行计划
-        execution_plan = {
+        # Round2: 真正执行任务
+        round2_results = []
+        for i, subtask in enumerate(subtasks):
+            role = subtask.get("role", {})
+            task_title = subtask.get("title", "subtask")
+            
+            if self._agent_executor:
+                try:
+                    result = await self._agent_executor.execute(task_title, role)
+                    round2_results.append({
+                        "index": i,
+                        "task_id": subtask.get("task_id"),
+                        "title": task_title,
+                        "role": role.get("name", "unknown"),
+                        "success": result.success,
+                        "output": result.output,
+                        "error": result.error,
+                        "backend": result.backend,
+                        "duration_ms": result.execution_time_ms,
+                    })
+                except Exception as e:
+                    round2_results.append({
+                        "index": i,
+                        "title": task_title,
+                        "success": False,
+                        "error": str(e)[:200],
+                    })
+            else:
+                # 没有执行器时，标记为跳过
+                round2_results.append({
+                    "index": i,
+                    "title": task_title,
+                    "success": False,
+                    "error": "AgentExecutor not available",
+                    "skipped": True,
+                })
+        
+        # Round3: 审查结果
+        review_passed = all(r.get("success") for r in round2_results)
+        failed_count = sum(1 for r in round2_results if not r.get("success"))
+        
+        # Round4: 生成报告
+        elapsed = time.time() - start_time
+        
+        return {
             "success": True,
             "session_id": self.session_id,
             "task": task,
+            "phase": "completed",
+            "rounds_completed": [1, 2, 3, 4],
             "plan_summary": plan_result.get("plan_summary"),
-            "roles": plan_result.get("roles", []),
+            "roles": roles,
             "subtasks": subtasks,
+            "round2_results": round2_results,
+            "review_passed": review_passed,
+            "failed_count": failed_count,
             "total_tasks": len(subtasks),
-            "phase": "planned",
-            "ready_to_execute": True,  # 信号：主Agent可以自动执行
-            "execution_guide": {
-                "round2": {
-                    "action": "对每个subtask调用 sessions_spawn",
-                    "subtasks": [
-                        {
-                            "index": i,
-                            "title": st.get("title"),
-                            "role": st.get("role"),
-                            "timeout": st.get("timeout", 300),
-                            "allowed_tools": self.get_role_allowed_tools(st.get("role", "")),
-                        }
-                        for i, st in enumerate(subtasks)
-                    ],
-                    "result_collection": {
-                        "collect_from": "每个subtask执行后的sessions_send响应",
-                        "store_in": "execution_results[]",
-                        "fields": ["success", "output", "error", "duration_ms"],
-                    },
-                },
-                "round3": {
-                    "action": "审查Round2执行结果",
-                    "verify_steps": [
-                        "检查每个subtask的success状态",
-                        "验证output是否包含预期交付物",
-                        "检查error是否有blocking问题",
-                        "汇总通过/失败统计",
-                    ],
-                    "review_roles": [
-                        {"name": "API Tester", "task": "验证API/接口正确性"},
-                        {"name": "Reality Checker", "task": "验证实现与需求一致"},
-                    ],
-                    "pass_criteria": "所有subtask成功 或 失败项不影响整体",
-                    "fail_action": "重启失败的subtask（最多3次重试）",
-                },
-                "round4": {
-                    "action": "完成并交付",
-                    "steps": [
-                        "汇总所有执行结果",
-                        "生成最终报告",
-                        "执行git commit",
-                        "更新MEMORY.md",
-                        "git push（如需要）",
-                    ],
-                    "git_commit_message": "feat: {task} - {summary}",
-                },
+            "elapsed_seconds": round(elapsed, 2),
+            "execution_info": {
+                "executor": "AgentExecutor (三级降级)",
+                "phase": "round2_executed",
             },
-            "instructions": [
-                "Round1 ✅ 规划完成",
-                "Round2 → 对每个subtask调用 sessions_spawn",
-                "Round3 → 审查",
-                "Round4 → 完成",
-            ],
         }
-        
-        return execution_plan
     
     def get_role_allowed_tools(self, role_name: str) -> List[str]:
         """获取角色允许的工具"""
