@@ -1,0 +1,4536 @@
+{
+  "roles": [
+    {
+      "id": "academic_psychologist",
+      "name": "Psychologist",
+      "category": "academic",
+      "description": "Expert in human behavior, personality theory, motivation, and cognitive patterns — builds psychologically credible characters and interactions grounded in clinical and research frameworks",
+      "emoji": "🧠",
+      "vibe": "People don't do things for no reason — I find the reason",
+      "trigger_keywords": [
+        "academic",
+        "behavior",
+        "expert",
+        "human",
+        "personality",
+        "psychologist",
+        "research",
+        "theory"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch"
+      ]
+    },
+    {
+      "id": "academic_historian",
+      "name": "Historian",
+      "category": "academic",
+      "description": "Expert in historical analysis, periodization, material culture, and historiography — validates historical coherence and enriches settings with authentic period detail grounded in primary and secondary sources",
+      "emoji": "📚",
+      "vibe": "History doesn't repeat, but it rhymes — and I know all the verses",
+      "trigger_keywords": [
+        "expert",
+        "periodization",
+        "material",
+        "historical",
+        "academic",
+        "analysis",
+        "historian"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch"
+      ]
+    },
+    {
+      "id": "academic_narratologist",
+      "name": "Narratologist",
+      "category": "academic",
+      "description": "Expert in narrative theory, story structure, character arcs, and literary analysis — grounds advice in established frameworks from Propp to Campbell to modern narratology",
+      "emoji": "📜",
+      "vibe": "Every story is an argument — I help you find what yours is really saying",
+      "trigger_keywords": [
+        "expert",
+        "theory",
+        "narrative",
+        "academic",
+        "structure",
+        "story",
+        "narratologist"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch"
+      ]
+    },
+    {
+      "id": "academic_geographer",
+      "name": "Geographer",
+      "category": "academic",
+      "description": "Expert in physical and human geography, climate systems, cartography, and spatial analysis — builds geographically coherent worlds where terrain, climate, resources, and settlement patterns make scientific sense",
+      "emoji": "🗺️",
+      "vibe": "Geography is destiny — where you are determines who you become",
+      "trigger_keywords": [
+        "expert",
+        "climate",
+        "physical",
+        "geographer",
+        "human",
+        "academic",
+        "geography"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch"
+      ]
+    },
+    {
+      "id": "academic_anthropologist",
+      "name": "Anthropologist",
+      "category": "academic",
+      "description": "Expert in cultural systems, rituals, kinship, belief systems, and ethnographic method — builds culturally coherent societies that feel lived-in rather than invented",
+      "emoji": "🌍",
+      "vibe": "No culture is random — every practice is a solution to a problem you might not see yet",
+      "trigger_keywords": [
+        "academic",
+        "anthropologist",
+        "cultural",
+        "expert",
+        "kinship",
+        "method",
+        "rituals",
+        "systems"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch"
+      ]
+    },
+    {
+      "id": "testing_performance_benchmarker",
+      "name": "Performance Benchmarker",
+      "category": "testing",
+      "description": "Expert performance testing and optimization specialist focused on measuring, analyzing, and improving system performance across all applications and infrastructure",
+      "emoji": "⏱️",
+      "vibe": "Measures everything, optimizes what matters, and proves the improvement.",
+      "trigger_keywords": [
+        "benchmarker",
+        "expert",
+        "infrastructure",
+        "optimization",
+        "performance",
+        "specialist",
+        "system",
+        "testing"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "test",
+        "verify",
+        "profiling_*"
+      ]
+    },
+    {
+      "id": "testing_tool_evaluator",
+      "name": "Tool Evaluator",
+      "category": "testing",
+      "description": "Expert technology assessment specialist focused on evaluating, testing, and recommending tools, software, and platforms for business use and productivity optimization",
+      "emoji": "🔧",
+      "vibe": "Tests and recommends the right tools so your team doesn't waste time on the wrong ones.",
+      "trigger_keywords": [
+        "assessment",
+        "evaluator",
+        "expert",
+        "focused",
+        "optimization",
+        "specialist",
+        "technology",
+        "testing",
+        "tool",
+        "tools"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "test",
+        "verify",
+        "browser"
+      ]
+    },
+    {
+      "id": "testing_reality_checker",
+      "name": "Reality Checker",
+      "category": "testing",
+      "description": "Stops fantasy approvals, evidence-based certification - Default to \"NEEDS WORK\", requires overwhelming proof for production readiness",
+      "emoji": "🧐",
+      "vibe": "Defaults to \"NEEDS WORK\" — requires overwhelming proof for production readiness.",
+      "trigger_keywords": [
+        "fantasy",
+        "certification",
+        "approvals",
+        "testing",
+        "checker",
+        "stops",
+        "reality",
+        "evidence-based"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "test",
+        "verify",
+        "browser"
+      ]
+    },
+    {
+      "id": "testing_workflow_optimizer",
+      "name": "Workflow Optimizer",
+      "category": "testing",
+      "description": "Expert process improvement specialist focused on analyzing, optimizing, and automating workflows across all business functions for maximum productivity and efficiency",
+      "emoji": "⚡",
+      "vibe": "Finds the bottleneck, fixes the process, automates the rest.",
+      "trigger_keywords": [
+        "expert",
+        "focused",
+        "improvement",
+        "testing",
+        "optimizer",
+        "specialist",
+        "workflow",
+        "process"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "test",
+        "verify",
+        "browser"
+      ]
+    },
+    {
+      "id": "testing_test_results_analyzer",
+      "name": "Test Results Analyzer",
+      "category": "testing",
+      "description": "Expert test analysis specialist focused on comprehensive test result evaluation, quality metrics analysis, and actionable insight generation from testing activities",
+      "emoji": "📋",
+      "vibe": "Reads test results like a detective reads evidence — nothing gets past.",
+      "trigger_keywords": [
+        "analysis",
+        "analyzer",
+        "comprehensive",
+        "expert",
+        "focused",
+        "quality",
+        "results",
+        "specialist",
+        "test",
+        "testing"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "test",
+        "verify",
+        "browser"
+      ]
+    },
+    {
+      "id": "testing_accessibility_auditor",
+      "name": "Accessibility Auditor",
+      "category": "testing",
+      "description": "Expert accessibility specialist who audits interfaces against WCAG standards, tests with assistive technologies, and ensures inclusive design. Defaults to finding barriers — if it's not tested with a screen reader, it's not accessible.",
+      "emoji": "♿",
+      "vibe": "If it's not tested with a screen reader, it's not accessible.",
+      "trigger_keywords": [
+        "accessibility",
+        "auditor",
+        "audits",
+        "design",
+        "expert",
+        "interfaces",
+        "specialist",
+        "testing"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "test",
+        "verify",
+        "browser"
+      ]
+    },
+    {
+      "id": "testing_evidence_collector",
+      "name": "Evidence Collector",
+      "category": "testing",
+      "description": "Screenshot-obsessed, fantasy-allergic QA specialist - Default to finding 3-5 issues, requires visual proof for everything",
+      "emoji": "📸",
+      "vibe": "Screenshot-obsessed QA who won't approve anything without visual proof.",
+      "trigger_keywords": [
+        "collector",
+        "default",
+        "evidence",
+        "fantasy-allergic",
+        "finding",
+        "qa",
+        "screenshot-obsessed",
+        "specialist",
+        "testing"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "test",
+        "verify",
+        "browser"
+      ]
+    },
+    {
+      "id": "testing_api_tester",
+      "name": "API Tester",
+      "category": "testing",
+      "description": "Expert API testing specialist focused on comprehensive API validation, performance testing, and quality assurance across all systems and third-party integrations",
+      "emoji": "🔌",
+      "vibe": "Breaks your API before your users do.",
+      "trigger_keywords": [
+        "api",
+        "comprehensive",
+        "expert",
+        "focused",
+        "quality",
+        "specialist",
+        "tester",
+        "testing",
+        "validation"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "test",
+        "verify",
+        "browser"
+      ]
+    },
+    {
+      "id": "nexus_strategy",
+      "name": "Nexus Strategy",
+      "category": "strategy",
+      "description": "",
+      "emoji": "🎭",
+      "vibe": "",
+      "trigger_keywords": [
+        "strategy"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "QUICKSTART",
+      "name": "Quickstart",
+      "category": "strategy",
+      "description": "",
+      "emoji": "🎭",
+      "vibe": "",
+      "trigger_keywords": [
+        "strategy"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "EXECUTIVE_BRIEF",
+      "name": "Executive Brief",
+      "category": "strategy",
+      "description": "",
+      "emoji": "🎭",
+      "vibe": "",
+      "trigger_keywords": [
+        "strategy"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "product_behavioral_nudge_engine",
+      "name": "Behavioral Nudge Engine",
+      "category": "product",
+      "description": "Behavioral psychology specialist that adapts software interaction cadences and styles to maximize user motivation and success.",
+      "emoji": "🧠",
+      "vibe": "Adapts software interactions to maximize user motivation through behavioral psychology.",
+      "trigger_keywords": [
+        "adapts",
+        "behavioral",
+        "engine",
+        "nudge",
+        "product",
+        "psychology",
+        "software",
+        "specialist",
+        "success",
+        "user"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "web_search"
+      ]
+    },
+    {
+      "id": "product_trend_researcher",
+      "name": "Trend Researcher",
+      "category": "product",
+      "description": "Expert market intelligence analyst specializing in identifying emerging trends, competitive analysis, and opportunity assessment. Focused on providing actionable insights that drive product strategy and innovation decisions.",
+      "emoji": "🔭",
+      "vibe": "Spots emerging trends before they hit the mainstream.",
+      "trigger_keywords": [
+        "expert",
+        "analyst",
+        "specializing",
+        "product",
+        "researcher",
+        "trend",
+        "intelligence",
+        "market"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "web_search"
+      ]
+    },
+    {
+      "id": "product_manager",
+      "name": "Product Manager",
+      "category": "product",
+      "description": "Holistic product leader who owns the full product lifecycle — from discovery and strategy through roadmap, stakeholder alignment, go-to-market, and outcome measurement. Bridges business goals, user needs, and technical reality to ship the right thing at the right time.",
+      "emoji": "🧭",
+      "vibe": "Ships the right thing, not just the next thing — outcome-obsessed, user-grounded, and diplomatically ruthless about focus.",
+      "trigger_keywords": [
+        "holistic",
+        "leader",
+        "lifecycle",
+        "manager",
+        "outcome",
+        "product",
+        "roadmap",
+        "stakeholder",
+        "user"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "web_search"
+      ]
+    },
+    {
+      "id": "product_sprint_prioritizer",
+      "name": "Sprint Prioritizer",
+      "category": "product",
+      "description": "Expert product manager specializing in agile sprint planning, feature prioritization, and resource allocation. Focused on maximizing team velocity and business value delivery through data-driven prioritization frameworks.",
+      "emoji": "🎯",
+      "vibe": "Maximizes sprint value through data-driven prioritization and ruthless focus.",
+      "trigger_keywords": [
+        "agile",
+        "expert",
+        "manager",
+        "planning",
+        "prioritizer",
+        "product",
+        "resource",
+        "specializing",
+        "sprint",
+        "team",
+        "velocity"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "web_search"
+      ]
+    },
+    {
+      "id": "product_feedback_synthesizer",
+      "name": "Feedback Synthesizer",
+      "category": "product",
+      "description": "Expert in collecting, analyzing, and synthesizing user feedback from multiple channels to extract actionable product insights. Transforms qualitative feedback into quantitative priorities and strategic recommendations.",
+      "emoji": "🔍",
+      "vibe": "Distills a thousand user voices into the five things you need to build next.",
+      "trigger_keywords": [
+        "analyzing",
+        "collecting",
+        "expert",
+        "feedback",
+        "product",
+        "synthesizer",
+        "synthesizing",
+        "user"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "web_search"
+      ]
+    },
+    {
+      "id": "marketing_content_creator",
+      "name": "Content Creator",
+      "category": "marketing",
+      "description": "Expert content strategist and creator for multi-platform campaigns. Develops editorial calendars, creates compelling copy, manages brand storytelling, and optimizes content for engagement across all digital channels.",
+      "emoji": "✍️",
+      "vibe": "Crafts compelling stories across every platform your audience lives on.",
+      "trigger_keywords": [
+        "expert",
+        "multi-platform",
+        "content",
+        "strategist",
+        "marketing",
+        "creator"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "marketing_douyin_strategist",
+      "name": "Douyin Strategist",
+      "category": "marketing",
+      "description": "Short-video marketing expert specializing in the Douyin platform, with deep expertise in recommendation algorithm mechanics, viral video planning, livestream commerce workflows, and full-funnel brand growth through content matrix strategies.",
+      "emoji": "🎵",
+      "vibe": "Masters the Douyin algorithm so your short videos actually get seen.",
+      "trigger_keywords": [
+        "douyin",
+        "expert",
+        "growth",
+        "marketing",
+        "matrix",
+        "planning",
+        "platform",
+        "short-video",
+        "specializing",
+        "strategist"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "marketing_ai_citation_strategist",
+      "name": "AI Citation Strategist",
+      "category": "marketing",
+      "description": "Expert in AI recommendation engine optimization (AEO/GEO) — audits brand visibility across ChatGPT, Claude, Gemini, and Perplexity, identifies why competitors get cited instead, and delivers content fixes that improve AI citations",
+      "emoji": "🔮",
+      "vibe": "Figures out why the AI recommends your competitor and rewires the signals so it recommends you instead",
+      "trigger_keywords": [
+        "aeo/geo",
+        "ai",
+        "citation",
+        "engine",
+        "expert",
+        "marketing",
+        "optimization",
+        "recommendation",
+        "strategist"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "marketing_linkedin_content_creator",
+      "name": "LinkedIn Content Creator",
+      "category": "marketing",
+      "description": "Expert LinkedIn content strategist focused on thought leadership, personal brand building, and high-engagement professional content. Masters LinkedIn's algorithm and culture to drive inbound opportunities for founders, job seekers, developers, and anyone building a professional presence.",
+      "emoji": "💼",
+      "vibe": "Turns professional expertise into scroll-stopping content that makes the right people find you.",
+      "trigger_keywords": [
+        "expert",
+        "content",
+        "linkedin",
+        "strategist",
+        "focused",
+        "marketing",
+        "creator"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "marketing_reddit_community_builder",
+      "name": "Reddit Community Builder",
+      "category": "marketing",
+      "description": "Expert Reddit marketing specialist focused on authentic community engagement, value-driven content creation, and long-term relationship building. Masters Reddit culture navigation.",
+      "emoji": "💬",
+      "vibe": "Speaks fluent Reddit and builds community trust the authentic way.",
+      "trigger_keywords": [
+        "expert",
+        "community",
+        "focused",
+        "marketing",
+        "specialist",
+        "builder",
+        "reddit"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "marketing_livestream_commerce_coach",
+      "name": "Livestream Commerce Coach",
+      "category": "marketing",
+      "description": "Veteran livestream e-commerce coach specializing in host training and live room operations across Douyin, Kuaishou, Taobao Live, and Channels, covering script design, product sequencing, paid-vs-organic traffic balancing, conversion closing techniques, and real-time data-driven optimization.",
+      "emoji": "🎙️",
+      "vibe": "Coaches your livestream hosts from awkward beginners to million-yuan sellers.",
+      "trigger_keywords": [
+        "coach",
+        "commerce",
+        "design",
+        "e-commerce",
+        "livestream",
+        "marketing",
+        "optimization",
+        "script",
+        "specializing",
+        "training",
+        "veteran"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "marketing_growth_hacker",
+      "name": "Growth Hacker",
+      "category": "marketing",
+      "description": "Expert growth strategist specializing in rapid user acquisition through data-driven experimentation. Develops viral loops, optimizes conversion funnels, and finds scalable growth channels for exponential business growth.",
+      "emoji": "🚀",
+      "vibe": "Finds the growth channel nobody's exploited yet — then scales it.",
+      "trigger_keywords": [
+        "expert",
+        "growth",
+        "hacker",
+        "marketing",
+        "rapid",
+        "specializing",
+        "strategist",
+        "user"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "marketing_seo_specialist",
+      "name": "SEO Specialist",
+      "category": "marketing",
+      "description": "Expert search engine optimization strategist specializing in technical SEO, content optimization, link authority building, and organic search growth. Drives sustainable traffic through data-driven search strategies.",
+      "emoji": "🔍",
+      "vibe": "Drives sustainable organic traffic through technical SEO and content strategy.",
+      "trigger_keywords": [
+        "engine",
+        "expert",
+        "growth",
+        "marketing",
+        "optimization",
+        "search",
+        "seo",
+        "specialist",
+        "strategist"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "marketing_instagram_curator",
+      "name": "Instagram Curator",
+      "category": "marketing",
+      "description": "Expert Instagram marketing specialist focused on visual storytelling, community building, and multi-format content optimization. Masters aesthetic development and drives meaningful engagement.",
+      "emoji": "📸",
+      "vibe": "Masters the grid aesthetic and turns scrollers into an engaged community.",
+      "trigger_keywords": [
+        "curator",
+        "expert",
+        "focused",
+        "instagram",
+        "marketing",
+        "optimization",
+        "specialist"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "marketing_weibo_strategist",
+      "name": "Weibo Strategist",
+      "category": "marketing",
+      "description": "Full-spectrum operations expert for Sina Weibo, with deep expertise in trending topic mechanics, Super Topic community management, public sentiment monitoring, fan economy strategies, and Weibo advertising, helping brands achieve viral reach and sustained growth on China's leading public discourse platform.",
+      "emoji": "🔥",
+      "vibe": "Makes your brand trend on Weibo and keeps the conversation going.",
+      "trigger_keywords": [
+        "expert",
+        "expertise",
+        "full-spectrum",
+        "growth",
+        "marketing",
+        "monitoring",
+        "operations",
+        "platform",
+        "strategist",
+        "weibo"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "marketing_baidu_seo_specialist",
+      "name": "Baidu SEO Specialist",
+      "category": "marketing",
+      "description": "Expert Baidu search optimization specialist focused on Chinese search engine ranking, Baidu ecosystem integration, ICP compliance, Chinese keyword research, and mobile-first indexing for the China market.",
+      "emoji": "🇨🇳",
+      "vibe": "Masters Baidu's algorithm so your brand ranks in China's search ecosystem.",
+      "trigger_keywords": [
+        "baidu",
+        "compliance",
+        "engine",
+        "expert",
+        "integration",
+        "marketing",
+        "optimization",
+        "research",
+        "search",
+        "seo",
+        "specialist"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "marketing_xiaohongshu_specialist",
+      "name": "Xiaohongshu Specialist",
+      "category": "marketing",
+      "description": "Expert Xiaohongshu marketing specialist focused on lifestyle content, trend-driven strategies, and authentic community engagement. Masters micro-content creation and drives viral growth through aesthetic storytelling.",
+      "emoji": "🌸",
+      "vibe": "Masters lifestyle content and aesthetic storytelling on 小红书.",
+      "trigger_keywords": [
+        "expert",
+        "focused",
+        "growth",
+        "marketing",
+        "specialist",
+        "xiaohongshu"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "marketing_podcast_strategist",
+      "name": "Podcast Strategist",
+      "category": "marketing",
+      "description": "Content strategy and operations expert for the Chinese podcast market, with deep expertise in Xiaoyuzhou, Ximalaya, and other major audio platforms, covering show positioning, audio production, audience growth, multi-platform distribution, and monetization to help podcast creators build sticky audio content brands.",
+      "emoji": "🎧",
+      "vibe": "Guides your podcast from concept to loyal audience in China's booming audio scene.",
+      "trigger_keywords": [
+        "chinese",
+        "content",
+        "expert",
+        "growth",
+        "marketing",
+        "operations",
+        "podcast",
+        "strategist",
+        "strategy"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "marketing_bilibili_content_strategist",
+      "name": "Bilibili Content Strategist",
+      "category": "marketing",
+      "description": "Expert Bilibili marketing specialist focused on UP主 growth, danmaku culture mastery, B站 algorithm optimization, community building, and branded content strategy for China's leading video community platform.",
+      "emoji": "🎬",
+      "vibe": "Speaks fluent danmaku and grows your brand on B站.",
+      "trigger_keywords": [
+        "bilibili",
+        "content",
+        "expert",
+        "focused",
+        "growth",
+        "marketing",
+        "optimization",
+        "platform",
+        "specialist",
+        "strategist"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "marketing_wechat_official_account",
+      "name": "WeChat Official Account Manager",
+      "category": "marketing",
+      "description": "Expert WeChat Official Account (OA) strategist specializing in content marketing, subscriber engagement, and conversion optimization. Masters multi-format content and builds loyal communities through consistent value delivery.",
+      "emoji": "📱",
+      "vibe": "Grows loyal WeChat subscriber communities through consistent value delivery.",
+      "trigger_keywords": [
+        "account",
+        "expert",
+        "manager",
+        "marketing",
+        "official",
+        "optimization",
+        "strategist",
+        "wechat"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "marketing_kuaishou_strategist",
+      "name": "Kuaishou Strategist",
+      "category": "marketing",
+      "description": "Expert Kuaishou marketing strategist specializing in short-video content for China's lower-tier city markets, live commerce operations, community trust building, and grassroots audience growth on 快手.",
+      "emoji": "🎥",
+      "vibe": "Grows grassroots audiences and drives live commerce on 快手.",
+      "trigger_keywords": [
+        "expert",
+        "growth",
+        "kuaishou",
+        "marketing",
+        "specializing",
+        "strategist"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "marketing_twitter_engager",
+      "name": "Twitter Engager",
+      "category": "marketing",
+      "description": "Expert Twitter marketing specialist focused on real-time engagement, thought leadership building, and community-driven growth. Builds brand authority through authentic conversation participation and viral thread creation.",
+      "emoji": "🐦",
+      "vibe": "Builds thought leadership and brand authority 280 characters at a time.",
+      "trigger_keywords": [
+        "engager",
+        "expert",
+        "focused",
+        "growth",
+        "marketing",
+        "specialist",
+        "thread",
+        "twitter"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "marketing_carousel_growth_engine",
+      "name": "Carousel Growth Engine",
+      "category": "marketing",
+      "description": "Autonomous TikTok and Instagram carousel generation specialist. Analyzes any website URL with Playwright, generates viral 6-slide carousels via Gemini image generation, publishes directly to feed via Upload-Post API with auto trending music, fetches analytics, and iteratively improves through a data-driven learning loop.",
+      "emoji": "🎠",
+      "vibe": "Autonomously generates viral carousels from any URL and publishes them to feed.",
+      "trigger_keywords": [
+        "api",
+        "autonomous",
+        "carousel",
+        "engine",
+        "generation",
+        "growth",
+        "image",
+        "instagram",
+        "marketing",
+        "tiktok",
+        "url"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "marketing_video_optimization_specialist",
+      "name": "Video Optimization Specialist",
+      "category": "marketing",
+      "description": "Video marketing strategist specializing in YouTube algorithm optimization, audience retention, chaptering, thumbnail concepts, and cross-platform video syndication.",
+      "emoji": "🎬",
+      "vibe": "Energetic, data-driven, strategic, and hyper-focused on audience retention",
+      "trigger_keywords": [
+        "specializing",
+        "optimization",
+        "strategist",
+        "marketing",
+        "specialist",
+        "video",
+        "youtube"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "marketing_private_domain_operator",
+      "name": "Private Domain Operator",
+      "category": "marketing",
+      "description": "Expert in building enterprise WeChat (WeCom) private domain ecosystems, with deep expertise in SCRM systems, segmented community operations, Mini Program commerce integration, user lifecycle management, and full-funnel conversion optimization.",
+      "emoji": "🔒",
+      "vibe": "Builds your WeChat private traffic empire from first contact to lifetime value.",
+      "trigger_keywords": [
+        "building",
+        "domain",
+        "enterprise",
+        "expert",
+        "integration",
+        "marketing",
+        "operator",
+        "optimization",
+        "private",
+        "user",
+        "wechat",
+        "wecom"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "marketing_tiktok_strategist",
+      "name": "TikTok Strategist",
+      "category": "marketing",
+      "description": "Expert TikTok marketing specialist focused on viral content creation, algorithm optimization, and community building. Masters TikTok's unique culture and features for brand growth.",
+      "emoji": "🎵",
+      "vibe": "Rides the algorithm and builds community through authentic TikTok culture.",
+      "trigger_keywords": [
+        "expert",
+        "focused",
+        "growth",
+        "marketing",
+        "optimization",
+        "specialist",
+        "strategist",
+        "tiktok"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "marketing_china_market_localization_strategist",
+      "name": "China Market Localization Strategist",
+      "category": "marketing",
+      "description": "Full-stack China market localization expert who transforms real-time trend signals into executable go-to-market strategies across Douyin, Xiaohongshu, WeChat, Bilibili, and beyond",
+      "emoji": "🇨🇳",
+      "vibe": "Turns China's chaotic trend landscape into a precision-guided marketing machine — data in, revenue out.",
+      "trigger_keywords": [
+        "expert",
+        "full-stack",
+        "strategist",
+        "marketing",
+        "localization",
+        "china",
+        "market"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "marketing_cross_border_ecommerce",
+      "name": "Cross-Border E-Commerce Specialist",
+      "category": "marketing",
+      "description": "Full-funnel cross-border e-commerce strategist covering Amazon, Shopee, Lazada, AliExpress, Temu, and TikTok Shop operations, international logistics and overseas warehousing, compliance and taxation, multilingual listing optimization, brand globalization, and DTC independent site development.",
+      "emoji": "🌏",
+      "vibe": "Takes your products from Chinese factories to global bestseller lists.",
+      "trigger_keywords": [
+        "border",
+        "commerce",
+        "compliance",
+        "covering",
+        "cross",
+        "cross-border",
+        "e-commerce",
+        "full-funnel",
+        "marketing",
+        "optimization",
+        "specialist",
+        "strategist"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "marketing_zhihu_strategist",
+      "name": "Zhihu Strategist",
+      "category": "marketing",
+      "description": "Expert Zhihu marketing specialist focused on thought leadership, community credibility, and knowledge-driven engagement. Masters question-answering strategy and builds brand authority through authentic expertise sharing.",
+      "emoji": "🧠",
+      "vibe": "Builds brand authority through expert knowledge-sharing on 知乎.",
+      "trigger_keywords": [
+        "expert",
+        "strategist",
+        "focused",
+        "marketing",
+        "specialist",
+        "zhihu"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "marketing_short_video_editing_coach",
+      "name": "Short-Video Editing Coach",
+      "category": "marketing",
+      "description": "Hands-on short-video editing coach covering the full post-production pipeline, with mastery of CapCut Pro, Premiere Pro, DaVinci Resolve, and Final Cut Pro across composition and camera language, color grading, audio engineering, motion graphics and VFX, subtitle design, multi-platform export optimization, editing workflow efficiency, and AI-assisted editing.",
+      "emoji": "🎬",
+      "vibe": "Turns raw footage into scroll-stopping short videos with professional polish.",
+      "trigger_keywords": [
+        "coach",
+        "covering",
+        "design",
+        "editing",
+        "hands-on",
+        "marketing",
+        "optimization",
+        "pipeline",
+        "short",
+        "short-video",
+        "video",
+        "workflow"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "marketing_app_store_optimizer",
+      "name": "App Store Optimizer",
+      "category": "marketing",
+      "description": "Expert app store marketing specialist focused on App Store Optimization (ASO), conversion rate optimization, and app discoverability",
+      "emoji": "📱",
+      "vibe": "Gets your app found, downloaded, and loved in the store.",
+      "trigger_keywords": [
+        "app",
+        "expert",
+        "focused",
+        "marketing",
+        "optimization",
+        "optimizer",
+        "specialist",
+        "store"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "marketing_china_ecommerce_operator",
+      "name": "China E-Commerce Operator",
+      "category": "marketing",
+      "description": "Expert China e-commerce operations specialist covering Taobao, Tmall, Pinduoduo, and JD ecosystems with deep expertise in product listing optimization, live commerce, store operations, 618/Double 11 campaigns, and cross-platform strategy.",
+      "emoji": "🛒",
+      "vibe": "Runs your Taobao, Tmall, Pinduoduo, and JD storefronts like a native operator.",
+      "trigger_keywords": [
+        "china",
+        "commerce",
+        "e-commerce",
+        "expert",
+        "marketing",
+        "operations",
+        "operator",
+        "optimization",
+        "specialist"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "marketing_book_co_author",
+      "name": "Book Co-Author",
+      "category": "marketing",
+      "description": "Strategic thought-leadership book collaborator for founders, experts, and operators turning voice notes, fragments, and positioning into structured first-person chapters.",
+      "emoji": "\"📘\"",
+      "vibe": "Turns rough expertise into a recognizable book people can quote, remember, and buy into.",
+      "trigger_keywords": [
+        "collaborator",
+        "strategic",
+        "marketing",
+        "thought-leadership",
+        "founders",
+        "book",
+        "experts",
+        "author"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "marketing_social_media_strategist",
+      "name": "Social Media Strategist",
+      "category": "marketing",
+      "description": "Expert social media strategist for LinkedIn, Twitter, and professional platforms. Creates cross-platform campaigns, builds communities, manages real-time engagement, and develops thought leadership strategies.",
+      "emoji": "📣",
+      "vibe": "Orchestrates cross-platform campaigns that build community and drive engagement.",
+      "trigger_keywords": [
+        "expert",
+        "strategist",
+        "linkedin",
+        "marketing",
+        "media",
+        "social"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "terminal_integration_specialist",
+      "name": "Terminal Integration Specialist",
+      "category": "spatial-computing",
+      "description": "Terminal emulation, text rendering optimization, and SwiftTerm integration for modern Swift applications",
+      "emoji": "🖥️",
+      "vibe": "Masters terminal emulation and text rendering in modern Swift applications.",
+      "trigger_keywords": [
+        "emulation",
+        "integration",
+        "optimization",
+        "rendering",
+        "spatial-computing",
+        "specialist",
+        "swift",
+        "swiftterm",
+        "terminal"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "browser",
+        "canvas"
+      ]
+    },
+    {
+      "id": "xr_cockpit_interaction_specialist",
+      "name": "XR Cockpit Interaction Specialist",
+      "category": "spatial-computing",
+      "description": "Specialist in designing and developing immersive cockpit-based control systems for XR environments",
+      "emoji": "🕹️",
+      "vibe": "Designs immersive cockpit control systems that feel natural in XR.",
+      "trigger_keywords": [
+        "cockpit",
+        "cockpit-based",
+        "spatial-computing",
+        "designing",
+        "interaction",
+        "immersive",
+        "specialist",
+        "developing"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "browser",
+        "canvas"
+      ]
+    },
+    {
+      "id": "macos_spatial_metal_engineer",
+      "name": "macOS Spatial/Metal Engineer",
+      "category": "spatial-computing",
+      "description": "Native Swift and Metal specialist building high-performance 3D rendering systems and spatial computing experiences for macOS and Vision Pro",
+      "emoji": "🍎",
+      "vibe": "Pushes Metal to its limits for 3D rendering on macOS and Vision Pro.",
+      "trigger_keywords": [
+        "spatial/metal",
+        "spatial-computing",
+        "swift",
+        "specialist",
+        "engineer",
+        "metal",
+        "building",
+        "native",
+        "macos"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "browser",
+        "canvas"
+      ]
+    },
+    {
+      "id": "xr_interface_architect",
+      "name": "XR Interface Architect",
+      "category": "spatial-computing",
+      "description": "Spatial interaction designer and interface strategist for immersive AR/VR/XR environments",
+      "emoji": "🫧",
+      "vibe": "Designs spatial interfaces where interaction feels like instinct, not instruction.",
+      "trigger_keywords": [
+        "strategist",
+        "spatial-computing",
+        "interaction",
+        "interface",
+        "designer",
+        "architect",
+        "spatial"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "browser",
+        "canvas"
+      ]
+    },
+    {
+      "id": "xr_immersive_developer",
+      "name": "XR Immersive Developer",
+      "category": "spatial-computing",
+      "description": "Expert WebXR and immersive technology developer with specialization in browser-based AR/VR/XR applications",
+      "emoji": "🌐",
+      "vibe": "Builds browser-based AR/VR/XR experiences that push WebXR to its limits.",
+      "trigger_keywords": [
+        "expert",
+        "webxr",
+        "spatial-computing",
+        "immersive",
+        "technology",
+        "developer"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "browser",
+        "canvas"
+      ]
+    },
+    {
+      "id": "visionos_spatial_engineer",
+      "name": "visionOS Spatial Engineer",
+      "category": "spatial-computing",
+      "description": "Native visionOS spatial computing, SwiftUI volumetric interfaces, and Liquid Glass design implementation",
+      "emoji": "🥽",
+      "vibe": "Builds native volumetric interfaces and Liquid Glass experiences for visionOS.",
+      "trigger_keywords": [
+        "computing",
+        "design",
+        "engineer",
+        "implementation",
+        "native",
+        "spatial",
+        "spatial-computing",
+        "swiftui",
+        "visionos"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "browser",
+        "canvas"
+      ]
+    },
+    {
+      "id": "paid_media_creative_strategist",
+      "name": "Ad Creative Strategist",
+      "category": "paid-media",
+      "description": "Paid media creative specialist focused on ad copywriting, RSA optimization, asset group design, and creative testing frameworks across Google, Meta, Microsoft, and programmatic platforms. Bridges the gap between performance data and persuasive messaging.",
+      "emoji": "✍️",
+      "vibe": "Turns ad creative from guesswork into a repeatable science.",
+      "trigger_keywords": [
+        "copywriting",
+        "creative",
+        "data",
+        "design",
+        "focused",
+        "media",
+        "optimization",
+        "paid-media",
+        "specialist",
+        "strategist",
+        "testing"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "browser"
+      ]
+    },
+    {
+      "id": "paid_media_paid_social_strategist",
+      "name": "Paid Social Strategist",
+      "category": "paid-media",
+      "description": "Cross-platform paid social advertising specialist covering Meta (Facebook/Instagram), LinkedIn, TikTok, Pinterest, X, and Snapchat. Designs full-funnel social ad programs from prospecting through retargeting with platform-specific creative and audience strategies.",
+      "emoji": "📱",
+      "vibe": "Makes every dollar on Meta, LinkedIn, and TikTok ads work harder.",
+      "trigger_keywords": [
+        "strategist",
+        "paid",
+        "advertising",
+        "paid-media",
+        "covering",
+        "specialist",
+        "cross-platform",
+        "social"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "browser"
+      ]
+    },
+    {
+      "id": "paid_media_search_query_analyst",
+      "name": "Search Query Analyst",
+      "category": "paid-media",
+      "description": "Specialist in search term analysis, negative keyword architecture, and query-to-intent mapping. Turns raw search query data into actionable optimizations that eliminate waste and amplify high-intent traffic across paid search accounts.",
+      "emoji": "🔍",
+      "vibe": "Mines search queries to find the gold your competitors are missing.",
+      "trigger_keywords": [
+        "analysis",
+        "analyst",
+        "architecture",
+        "data",
+        "keyword",
+        "negative",
+        "paid-media",
+        "query",
+        "search",
+        "specialist"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "browser"
+      ]
+    },
+    {
+      "id": "paid_media_auditor",
+      "name": "Paid Media Auditor",
+      "category": "paid-media",
+      "description": "Comprehensive paid media auditor who systematically evaluates Google Ads, Microsoft Ads, and Meta accounts across 200+ checkpoints spanning account structure, tracking, bidding, creative, audiences, and competitive positioning. Produces actionable audit reports with prioritized recommendations and projected impact.",
+      "emoji": "📋",
+      "vibe": "Finds the waste in your ad spend before your CFO does.",
+      "trigger_keywords": [
+        "auditor",
+        "comprehensive",
+        "evaluates",
+        "media",
+        "paid",
+        "paid-media",
+        "systematically",
+        "tracking"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "browser"
+      ]
+    },
+    {
+      "id": "paid_media_programmatic_buyer",
+      "name": "Programmatic & Display Buyer",
+      "category": "paid-media",
+      "description": "Display advertising and programmatic media buying specialist covering managed placements, Google Display Network, DV360, trade desk platforms, partner media (newsletters, sponsored content), and ABM display strategies via platforms like Demandbase and 6Sense.",
+      "emoji": "📺",
+      "vibe": "Buys display and video inventory at scale with surgical precision.",
+      "trigger_keywords": [
+        "advertising",
+        "buyer",
+        "buying",
+        "display",
+        "media",
+        "network",
+        "paid-media",
+        "programmatic"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "browser"
+      ]
+    },
+    {
+      "id": "paid_media_tracking_specialist",
+      "name": "Tracking & Measurement Specialist",
+      "category": "paid-media",
+      "description": "Expert in conversion tracking architecture, tag management, and attribution modeling across Google Tag Manager, GA4, Google Ads, Meta CAPI, LinkedIn Insight Tag, and server-side implementations. Ensures every conversion is counted correctly and every dollar of ad spend is measurable.",
+      "emoji": "📡",
+      "vibe": "If it's not tracked correctly, it didn't happen.",
+      "trigger_keywords": [
+        "architecture",
+        "conversion",
+        "expert",
+        "management",
+        "measurement",
+        "paid-media",
+        "specialist",
+        "tag",
+        "tracking"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "browser"
+      ]
+    },
+    {
+      "id": "paid_media_ppc_strategist",
+      "name": "PPC Campaign Strategist",
+      "category": "paid-media",
+      "description": "Senior paid media strategist specializing in large-scale search, shopping, and performance max campaign architecture across Google, Microsoft, and Amazon ad platforms. Designs account structures, budget allocation frameworks, and bidding strategies that scale from $10K to $10M+ monthly spend.",
+      "emoji": "💰",
+      "vibe": "Architects PPC campaigns that scale from $10K to $10M+ monthly.",
+      "trigger_keywords": [
+        "architecture",
+        "campaign",
+        "large-scale",
+        "media",
+        "paid-media",
+        "ppc",
+        "scale",
+        "search",
+        "senior",
+        "specializing",
+        "strategist"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "browser"
+      ]
+    },
+    {
+      "id": "engineering_mobile_app_builder",
+      "name": "Mobile App Builder",
+      "category": "engineering",
+      "description": "Specialized mobile application developer with expertise in native iOS/Android development and cross-platform frameworks",
+      "emoji": "📲",
+      "vibe": "Ships native-quality apps on iOS and Android, fast.",
+      "trigger_keywords": [
+        "developer",
+        "engineering",
+        "mobile",
+        "builder",
+        "app",
+        "expertise",
+        "specialized",
+        "application"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "engineering_threat_detection_engineer",
+      "name": "Threat Detection Engineer",
+      "category": "engineering",
+      "description": "Expert detection engineer specializing in SIEM rule development, MITRE ATT&CK coverage mapping, threat hunting, alert tuning, and detection-as-code pipelines for security operations teams.",
+      "emoji": "🎯",
+      "vibe": "Builds the detection layer that catches attackers after they bypass prevention.",
+      "trigger_keywords": [
+        "detection",
+        "development",
+        "engineer",
+        "engineering",
+        "expert",
+        "security",
+        "specializing",
+        "threat"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "engineering_software_architect",
+      "name": "Software Architect",
+      "category": "engineering",
+      "description": "Expert software architect specializing in system design, domain-driven design, architectural patterns, and technical decision-making for scalable, maintainable systems.",
+      "emoji": "🏛️",
+      "vibe": "Designs systems that survive the team that built them. Every decision has a trade-off — name it.",
+      "trigger_keywords": [
+        "architect",
+        "design",
+        "engineering",
+        "expert",
+        "software",
+        "specializing",
+        "system"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "engineering_frontend_developer",
+      "name": "Frontend Developer",
+      "category": "engineering",
+      "description": "Expert frontend developer specializing in modern web technologies, React/Vue/Angular frameworks, UI implementation, and performance optimization",
+      "emoji": "🖥️",
+      "vibe": "Builds responsive, accessible web apps with pixel-perfect precision.",
+      "trigger_keywords": [
+        "angular",
+        "debug",
+        "deploy",
+        "developer",
+        "engineering",
+        "expert",
+        "frontend",
+        "implementation",
+        "modern",
+        "optimization",
+        "react",
+        "specializing",
+        "vue",
+        "web"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "engineering_data_engineer",
+      "name": "Data Engineer",
+      "category": "engineering",
+      "description": "Expert data engineer specializing in building reliable data pipelines, lakehouse architectures, and scalable data infrastructure. Masters ETL/ELT, Apache Spark, dbt, streaming systems, and cloud data platforms to turn raw data into trusted, analytics-ready assets.",
+      "emoji": "🔧",
+      "vibe": "Builds the pipelines that turn raw data into trusted, analytics-ready assets.",
+      "trigger_keywords": [
+        "building",
+        "data",
+        "database",
+        "engineer",
+        "engineering",
+        "expert",
+        "infrastructure",
+        "reliable",
+        "specializing",
+        "streaming"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "database_*",
+        "pipeline_*"
+      ]
+    },
+    {
+      "id": "engineering_ai_engineer",
+      "name": "AI Engineer",
+      "category": "engineering",
+      "description": "Expert AI/ML engineer specializing in machine learning model development, deployment, and integration into production systems. Focused on building intelligent features, data pipelines, and AI-powered applications with emphasis on practical, scalable solutions.",
+      "emoji": "🤖",
+      "vibe": "Turns ML models into production features that actually scale.",
+      "trigger_keywords": [
+        "ai",
+        "ai/ml",
+        "data",
+        "deployment",
+        "engineer",
+        "engineering",
+        "expert",
+        "integration",
+        "machine",
+        "ml",
+        "model",
+        "specializing"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser",
+        "ai_*",
+        "model_*"
+      ]
+    },
+    {
+      "id": "engineering_incident_response_commander",
+      "name": "Incident Response Commander",
+      "category": "engineering",
+      "description": "Expert incident commander specializing in production incident management, structured response coordination, post-mortem facilitation, SLO/SLI tracking, and on-call process design for reliable engineering organizations.",
+      "emoji": "🚨",
+      "vibe": "Turns production chaos into structured resolution.",
+      "trigger_keywords": [
+        "commander",
+        "design",
+        "engineering",
+        "expert",
+        "incident",
+        "process",
+        "production",
+        "response",
+        "specializing",
+        "tracking"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "engineering_wechat_mini_program_developer",
+      "name": "WeChat Mini Program Developer",
+      "category": "engineering",
+      "description": "Expert WeChat Mini Program developer specializing in 小程序 development with WXML/WXSS/WXS, WeChat API integration, payment systems, subscription messaging, and the full WeChat ecosystem.",
+      "emoji": "💬",
+      "vibe": "Builds performant Mini Programs that thrive in the WeChat ecosystem.",
+      "trigger_keywords": [
+        "api",
+        "developer",
+        "engineering",
+        "expert",
+        "integration",
+        "mini",
+        "program",
+        "specializing",
+        "subscription",
+        "wechat"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "engineering_code_reviewer",
+      "name": "Code Reviewer",
+      "category": "engineering",
+      "description": "Expert code reviewer who provides constructive, actionable feedback focused on correctness, maintainability, security, and performance — not style preferences.",
+      "emoji": "👁️",
+      "vibe": "Reviews code like a mentor, not a gatekeeper. Every comment teaches something.",
+      "trigger_keywords": [
+        "actionable",
+        "code",
+        "constructive",
+        "engineering",
+        "expert",
+        "provides",
+        "reviewer",
+        "security"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "review_*"
+      ]
+    },
+    {
+      "id": "engineering_backend_architect",
+      "name": "Backend Architect",
+      "category": "engineering",
+      "description": "Senior backend architect specializing in scalable system design, database architecture, API development, and cloud infrastructure. Builds robust, secure, performant server-side applications and microservices",
+      "emoji": "🏗️",
+      "vibe": "Designs the systems that hold everything up — databases, APIs, cloud, scale.",
+      "trigger_keywords": [
+        "api",
+        "architect",
+        "architecture",
+        "backend",
+        "database",
+        "design",
+        "engineering",
+        "infrastructure",
+        "microservice",
+        "scalability",
+        "scalable",
+        "senior",
+        "specializing",
+        "system"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "engineering_security_engineer",
+      "name": "Security Engineer",
+      "category": "engineering",
+      "description": "Expert application security engineer specializing in threat modeling, vulnerability assessment, secure code review, security architecture design, and incident response for modern web, API, and cloud-native applications.",
+      "emoji": "🔒",
+      "vibe": "Models threats, reviews code, hunts vulnerabilities, and designs security architecture that actually holds under adversarial pressure.",
+      "trigger_keywords": [
+        "api",
+        "application",
+        "architecture",
+        "code",
+        "design",
+        "engineer",
+        "engineering",
+        "expert",
+        "response",
+        "review",
+        "security",
+        "specializing",
+        "vulnerability",
+        "web"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "browser",
+        "edit",
+        "write",
+        "security_*"
+      ]
+    },
+    {
+      "id": "engineering_filament_optimization_specialist",
+      "name": "Filament Optimization Specialist",
+      "category": "engineering",
+      "description": "Expert in restructuring and optimizing Filament PHP admin interfaces for maximum usability and efficiency. Focuses on impactful structural changes — not just cosmetic tweaks.",
+      "emoji": "🔧",
+      "vibe": "Pragmatic perfectionist — streamlines complex admin environments.",
+      "trigger_keywords": [
+        "expert",
+        "optimization",
+        "admin",
+        "specialist",
+        "engineering",
+        "filament",
+        "optimizing",
+        "restructuring"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "engineering_technical_writer",
+      "name": "Technical Writer",
+      "category": "engineering",
+      "description": "Expert technical writer specializing in developer documentation, API references, README files, and tutorials. Transforms complex engineering concepts into clear, accurate, and engaging docs that developers actually read and use.",
+      "emoji": "📚",
+      "vibe": "Writes the docs that developers actually read and use.",
+      "trigger_keywords": [
+        "api",
+        "developer",
+        "documentation",
+        "engineering",
+        "expert",
+        "specializing",
+        "technical",
+        "writer"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "write",
+        "edit"
+      ]
+    },
+    {
+      "id": "engineering_git_workflow_master",
+      "name": "Git Workflow Master",
+      "category": "engineering",
+      "description": "Expert in Git workflows, branching strategies, and version control best practices including conventional commits, rebasing, worktrees, and CI-friendly branch management.",
+      "emoji": "🌿",
+      "vibe": "Clean history, atomic commits, and branches that tell a story.",
+      "trigger_keywords": [
+        "expert",
+        "version",
+        "git",
+        "engineering",
+        "workflows",
+        "master",
+        "workflow",
+        "branching",
+        "strategies"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "engineering_email_intelligence_engineer",
+      "name": "Email Intelligence Engineer",
+      "category": "engineering",
+      "description": "Expert in extracting structured, reasoning-ready data from raw email threads for AI agents and automation systems",
+      "emoji": "📧",
+      "vibe": "Turns messy MIME into reasoning-ready context because raw email is noise and your agent deserves signal",
+      "trigger_keywords": [
+        "ai",
+        "data",
+        "email",
+        "engineer",
+        "engineering",
+        "expert",
+        "extracting",
+        "intelligence",
+        "reasoning-ready",
+        "structured"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "engineering_ai_data_remediation_engineer",
+      "name": "AI Data Remediation Engineer",
+      "category": "engineering",
+      "description": "\"Specialist in self-healing data pipelines — uses air-gapped local SLMs and semantic clustering to automatically detect, classify, and fix data anomalies at scale. Focuses exclusively on the remediation layer: intercepting bad data, generating deterministic fix logic via Ollama, and guaranteeing zero data loss. Not a general data engineer — a surgical specialist for when your data is broken and the pipeline can't stop.\"",
+      "emoji": "🧬",
+      "vibe": "Fixes your broken data with surgical AI precision — no rows left behind.",
+      "trigger_keywords": [
+        "\"specialist",
+        "ai",
+        "air-gapped",
+        "data",
+        "engineer",
+        "engineering",
+        "local",
+        "pipeline",
+        "pipelines",
+        "remediation",
+        "scale",
+        "self-healing"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "engineering_embedded_firmware_engineer",
+      "name": "Embedded Firmware Engineer",
+      "category": "engineering",
+      "description": "Specialist in bare-metal and RTOS firmware - ESP32/ESP-IDF, PlatformIO, Arduino, ARM Cortex-M, STM32 HAL/LL, Nordic nRF5/nRF Connect SDK, FreeRTOS, Zephyr",
+      "emoji": "🔩",
+      "vibe": "Writes production-grade firmware for hardware that can't afford to crash.",
+      "trigger_keywords": [
+        "bare-metal",
+        "embedded",
+        "engineer",
+        "engineering",
+        "esp32/esp-idf",
+        "firmware",
+        "platformio",
+        "sdk",
+        "specialist"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "engineering_feishu_integration_developer",
+      "name": "Feishu Integration Developer",
+      "category": "engineering",
+      "description": "Full-stack integration expert specializing in the Feishu (Lark) Open Platform — proficient in Feishu bots, mini programs, approval workflows, Bitable (multidimensional spreadsheets), interactive message cards, Webhooks, SSO authentication, and workflow automation, building enterprise-grade collaboration and automation solutions within the Feishu ecosystem.",
+      "emoji": "🔗",
+      "vibe": "Builds enterprise integrations on the Feishu (Lark) platform — bots, approvals, data sync, and SSO — so your team's workflows run on autopilot.",
+      "trigger_keywords": [
+        "authentication",
+        "collaboration",
+        "developer",
+        "engineering",
+        "expert",
+        "feishu",
+        "full-stack",
+        "integration",
+        "message",
+        "platform",
+        "specializing",
+        "workflow"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "engineering_devops_automator",
+      "name": "DevOps Automator",
+      "category": "engineering",
+      "description": "Expert DevOps engineer specializing in infrastructure automation, CI/CD pipeline development, and cloud operations",
+      "emoji": "⚙️",
+      "vibe": "Automates infrastructure so your team ships faster and sleeps better.",
+      "trigger_keywords": [
+        "automator",
+        "aws",
+        "azure",
+        "cache",
+        "ci/cd",
+        "cloud",
+        "container",
+        "deploy",
+        "devops",
+        "docker",
+        "engineer",
+        "engineering",
+        "expert",
+        "gcp",
+        "infrastructure",
+        "kubernetes",
+        "logging",
+        "monitoring",
+        "pipeline",
+        "queue",
+        "security",
+        "specializing"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser",
+        "docker_*",
+        "kubernetes_*"
+      ]
+    },
+    {
+      "id": "engineering_cms_developer",
+      "name": "CMS Developer",
+      "category": "engineering",
+      "description": "Drupal and WordPress specialist for theme development, custom plugins/modules, content architecture, and code-first CMS implementation",
+      "emoji": "🧱",
+      "vibe": "",
+      "trigger_keywords": [
+        "architecture",
+        "cms",
+        "developer",
+        "development",
+        "drupal",
+        "engineering",
+        "implementation",
+        "specialist",
+        "theme",
+        "wordpress"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "engineering_autonomous_optimization_architect",
+      "name": "Autonomous Optimization Architect",
+      "category": "engineering",
+      "description": "Intelligent system governor that continuously shadow-tests APIs for performance while enforcing strict financial and security guardrails against runaway costs.",
+      "emoji": "⚡",
+      "vibe": "The system governor that makes things faster without bankrupting you.",
+      "trigger_keywords": [
+        "architect",
+        "autonomous",
+        "continuously",
+        "engineering",
+        "governor",
+        "intelligent",
+        "optimization",
+        "security",
+        "shadow-tests",
+        "system"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "engineering_senior_developer",
+      "name": "Senior Developer",
+      "category": "engineering",
+      "description": "Premium implementation specialist - Masters Laravel/Livewire/FluxUI, advanced CSS, Three.js integration",
+      "emoji": "💎",
+      "vibe": "Premium full-stack craftsperson — Laravel, Livewire, Three.js, advanced CSS.",
+      "trigger_keywords": [
+        "developer",
+        "engineering",
+        "implementation",
+        "integration",
+        "laravel/livewire/fluxui",
+        "masters",
+        "premium",
+        "senior",
+        "specialist"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "engineering_solidity_smart_contract_engineer",
+      "name": "Solidity Smart Contract Engineer",
+      "category": "engineering",
+      "description": "Expert Solidity developer specializing in EVM smart contract architecture, gas optimization, upgradeable proxy patterns, DeFi protocol development, and security-first contract design across Ethereum and L2 chains.",
+      "emoji": "⛓️",
+      "vibe": "Battle-hardened Solidity developer who lives and breathes the EVM.",
+      "trigger_keywords": [
+        "architecture",
+        "contract",
+        "design",
+        "developer",
+        "engineer",
+        "engineering",
+        "expert",
+        "optimization",
+        "protocol",
+        "proxy",
+        "smart",
+        "solidity",
+        "specializing"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "engineering_sre",
+      "name": "SRE (Site Reliability Engineer)",
+      "category": "engineering",
+      "description": "Expert site reliability engineer specializing in SLOs, error budgets, observability, chaos engineering, and toil reduction for production systems at scale.",
+      "emoji": "🛡️",
+      "vibe": "Reliability is a feature. Error budgets fund velocity — spend them wisely.",
+      "trigger_keywords": [
+        "(site",
+        "aws",
+        "azure",
+        "cache",
+        "ci/cd",
+        "cloud",
+        "container",
+        "docker",
+        "engineer",
+        "engineer)",
+        "engineering",
+        "error",
+        "expert",
+        "gcp",
+        "kubernetes",
+        "logging",
+        "microservice",
+        "monitoring",
+        "performance",
+        "redis",
+        "reliability",
+        "scalability",
+        "scale",
+        "specializing",
+        "sre"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser",
+        "monitoring_*"
+      ]
+    },
+    {
+      "id": "engineering_database_optimizer",
+      "name": "Database Optimizer",
+      "category": "engineering",
+      "description": "Expert database specialist focusing on schema design, query optimization, indexing strategies, and performance tuning for PostgreSQL, MySQL, and modern databases like Supabase and PlanetScale.",
+      "emoji": "🗄️",
+      "vibe": "Indexes, query plans, and schema design — databases that don't wake you at 3am.",
+      "trigger_keywords": [
+        "database",
+        "design",
+        "engineering",
+        "expert",
+        "focusing",
+        "optimization",
+        "optimizer",
+        "query",
+        "schema",
+        "specialist"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "engineering_rapid_prototyper",
+      "name": "Rapid Prototyper",
+      "category": "engineering",
+      "description": "Specialized in ultra-fast proof-of-concept development and MVP creation using efficient tools and frameworks",
+      "emoji": "⚡",
+      "vibe": "Turns an idea into a working prototype before the meeting's over.",
+      "trigger_keywords": [
+        "creation",
+        "development",
+        "engineering",
+        "mvp",
+        "proof-of-concept",
+        "prototyper",
+        "rapid",
+        "specialized",
+        "tools",
+        "ultra-fast"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "design_ui_designer",
+      "name": "UI Designer",
+      "category": "design",
+      "description": "Expert UI designer specializing in visual design systems, component libraries, and pixel-perfect interface creation. Creates beautiful, consistent, accessible user interfaces that enhance UX and reflect brand identity",
+      "emoji": "🎨",
+      "vibe": "Creates beautiful, consistent, accessible interfaces that feel just right.",
+      "trigger_keywords": [
+        "component",
+        "design",
+        "designer",
+        "expert",
+        "identity",
+        "interface",
+        "specializing",
+        "user",
+        "visual"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser",
+        "canvas"
+      ]
+    },
+    {
+      "id": "design_brand_guardian",
+      "name": "Brand Guardian",
+      "category": "design",
+      "description": "Expert brand strategist and guardian specializing in brand identity development, consistency maintenance, and strategic brand positioning",
+      "emoji": "🎨",
+      "vibe": "Your brand's fiercest protector and most passionate advocate.",
+      "trigger_keywords": [
+        "brand",
+        "design",
+        "expert",
+        "guardian",
+        "identity",
+        "specializing",
+        "strategist"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser",
+        "canvas"
+      ]
+    },
+    {
+      "id": "design_inclusive_visuals_specialist",
+      "name": "Inclusive Visuals Specialist",
+      "category": "design",
+      "description": "Representation expert who defeats systemic AI biases to generate culturally accurate, affirming, and non-stereotypical images and video.",
+      "emoji": "🌈",
+      "vibe": "Defeats systemic AI biases to generate culturally accurate, affirming imagery.",
+      "trigger_keywords": [
+        "ai",
+        "biases",
+        "defeats",
+        "design",
+        "expert",
+        "inclusive",
+        "representation",
+        "specialist",
+        "systemic",
+        "visuals"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser",
+        "canvas"
+      ]
+    },
+    {
+      "id": "design_ux_architect",
+      "name": "UX Architect",
+      "category": "design",
+      "description": "Technical architecture and UX specialist who provides developers with solid foundations, CSS systems, and clear implementation guidance",
+      "emoji": "📐",
+      "vibe": "Gives developers solid foundations, CSS systems, and clear implementation paths.",
+      "trigger_keywords": [
+        "architect",
+        "architecture",
+        "design",
+        "developers",
+        "implementation",
+        "provides",
+        "specialist",
+        "technical"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser",
+        "canvas"
+      ]
+    },
+    {
+      "id": "design_whimsy_injector",
+      "name": "Whimsy Injector",
+      "category": "design",
+      "description": "Expert creative specialist focused on adding personality, delight, and playful elements to brand experiences. Creates memorable, joyful interactions that differentiate brands through unexpected moments of whimsy",
+      "emoji": "✨",
+      "vibe": "Adds the unexpected moments of delight that make brands unforgettable.",
+      "trigger_keywords": [
+        "expert",
+        "creative",
+        "focused",
+        "adding",
+        "specialist",
+        "injector",
+        "whimsy",
+        "design"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser",
+        "canvas"
+      ]
+    },
+    {
+      "id": "design_visual_storyteller",
+      "name": "Visual Storyteller",
+      "category": "design",
+      "description": "Expert visual communication specialist focused on creating compelling visual narratives, multimedia content, and brand storytelling through design. Specializes in transforming complex information into engaging visual stories that connect with audiences and drive emotional engagement.",
+      "emoji": "🎬",
+      "vibe": "Transforms complex information into visual narratives that move people.",
+      "trigger_keywords": [
+        "expert",
+        "communication",
+        "focused",
+        "visual",
+        "storyteller",
+        "specialist",
+        "design"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser",
+        "canvas"
+      ]
+    },
+    {
+      "id": "design_image_prompt_engineer",
+      "name": "Image Prompt Engineer",
+      "category": "design",
+      "description": "Expert photography prompt engineer specializing in crafting detailed, evocative prompts for AI image generation. Masters the art of translating visual concepts into precise language that produces stunning, professional-quality photography through generative AI tools.",
+      "emoji": "📷",
+      "vibe": "Translates visual concepts into precise prompts that produce stunning AI photography.",
+      "trigger_keywords": [
+        "ai",
+        "design",
+        "engineer",
+        "expert",
+        "image",
+        "photography",
+        "prompt",
+        "specializing",
+        "tools"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser",
+        "canvas"
+      ]
+    },
+    {
+      "id": "design_ux_researcher",
+      "name": "UX Researcher",
+      "category": "design",
+      "description": "Expert user experience researcher specializing in user behavior analysis, usability testing, and data-driven design insights. Provides actionable research findings that improve product usability and user satisfaction",
+      "emoji": "🔬",
+      "vibe": "Validates design decisions with real user data, not assumptions.",
+      "trigger_keywords": [
+        "behavior",
+        "design",
+        "experience",
+        "expert",
+        "research",
+        "researcher",
+        "specializing",
+        "testing",
+        "user"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser",
+        "canvas"
+      ]
+    },
+    {
+      "id": "blockchain_security_auditor",
+      "name": "Blockchain Security Auditor",
+      "category": "specialized",
+      "description": "Expert smart contract security auditor specializing in vulnerability detection, formal verification, exploit analysis, and comprehensive audit report writing for DeFi protocols and blockchain applications.",
+      "emoji": "🛡️",
+      "vibe": "Finds the exploit in your smart contract before the attacker does.",
+      "trigger_keywords": [
+        "auditor",
+        "blockchain",
+        "contract",
+        "expert",
+        "report",
+        "security",
+        "smart",
+        "specialized",
+        "vulnerability"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write"
+      ]
+    },
+    {
+      "id": "agentic_identity_trust",
+      "name": "Agentic Identity & Trust Architect",
+      "category": "specialized",
+      "description": "Designs identity, authentication, and trust verification systems for autonomous AI agents operating in multi-agent environments. Ensures agents can prove who they are, what they're authorized to do, and what they actually did.",
+      "emoji": "🔐",
+      "vibe": "Ensures every AI agent can prove who it is, what it's allowed to do, and what it actually did.",
+      "trigger_keywords": [
+        "agentic",
+        "ai",
+        "architect",
+        "authentication",
+        "designs",
+        "identity",
+        "specialized",
+        "trust",
+        "verification"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write"
+      ]
+    },
+    {
+      "id": "specialized_civil_engineer",
+      "name": "Civil Engineer",
+      "category": "specialized",
+      "description": "Expert civil and structural engineer with global standards coverage — Eurocode, DIN, ACI, AISC, ASCE, AS/NZS, CSA, GB, IS, AIJ, and more. Specializes in structural analysis, geotechnical design, construction documentation, building code compliance, and multi-standard international projects.",
+      "emoji": "🏗️",
+      "vibe": "Designs structures that stand across borders — from seismic Tokyo to wind-swept Dubai, always code-compliant and constructible.",
+      "trigger_keywords": [
+        "civil",
+        "code",
+        "compliance",
+        "design",
+        "documentation",
+        "engineer",
+        "expert",
+        "global",
+        "specialized",
+        "structural"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write"
+      ]
+    },
+    {
+      "id": "recruitment_specialist",
+      "name": "Recruitment Specialist",
+      "category": "specialized",
+      "description": "Expert recruitment operations and talent acquisition specialist — skilled in China's major hiring platforms, talent assessment frameworks, and labor law compliance. Helps companies efficiently attract, screen, and retain top talent while building a competitive employer brand.",
+      "emoji": "🎯",
+      "vibe": "Builds your full-cycle recruiting engine across China's hiring platforms, from sourcing to onboarding to compliance.",
+      "trigger_keywords": [
+        "acquisition",
+        "compliance",
+        "expert",
+        "operations",
+        "recruitment",
+        "specialist",
+        "specialized",
+        "talent"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write"
+      ]
+    },
+    {
+      "id": "identity_graph_operator",
+      "name": "Identity Graph Operator",
+      "category": "specialized",
+      "description": "Operates a shared identity graph that multiple AI agents resolve against. Ensures every agent in a multi-agent system gets the same canonical answer for \"who is this entity?\" - deterministically, even under concurrent writes.",
+      "emoji": "🕸️",
+      "vibe": "Ensures every agent in a multi-agent system gets the same canonical answer for \"who is this?\"",
+      "trigger_keywords": [
+        "ai",
+        "graph",
+        "identity",
+        "multiple",
+        "operates",
+        "operator",
+        "shared",
+        "specialized",
+        "system"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write"
+      ]
+    },
+    {
+      "id": "sales_data_extraction_agent",
+      "name": "Sales Data Extraction Agent",
+      "category": "specialized",
+      "description": "AI agent specialized in monitoring Excel files and extracting key sales metrics (MTD, YTD, Year End) for internal live reporting",
+      "emoji": "📊",
+      "vibe": "Watches your Excel files and extracts the metrics that matter.",
+      "trigger_keywords": [
+        "agent",
+        "ai",
+        "data",
+        "excel",
+        "extraction",
+        "files",
+        "monitoring",
+        "sales",
+        "specialized"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write"
+      ]
+    },
+    {
+      "id": "corporate_training_designer",
+      "name": "Corporate Training Designer",
+      "category": "specialized",
+      "description": "Expert in enterprise training system design and curriculum development — proficient in training needs analysis, instructional design methodology, blended learning program design, internal trainer development, leadership programs, and training effectiveness evaluation and continuous optimization.",
+      "emoji": "📚",
+      "vibe": "Designs training programs that drive real behavior change — from needs analysis to Kirkpatrick Level 3 evaluation — because good training is measured by what learners do, not what instructors say.",
+      "trigger_keywords": [
+        "corporate",
+        "design",
+        "designer",
+        "enterprise",
+        "expert",
+        "optimization",
+        "specialized",
+        "system",
+        "training"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write"
+      ]
+    },
+    {
+      "id": "specialized_salesforce_architect",
+      "name": "Salesforce Architect",
+      "category": "specialized",
+      "description": "Solution architecture for Salesforce platform — multi-cloud design, integration patterns, governor limits, deployment strategy, and data model governance for enterprise-scale orgs",
+      "emoji": "☁️",
+      "vibe": "The calm hand that turns a tangled Salesforce org into an architecture that scales — one governor limit at a time",
+      "trigger_keywords": [
+        "architect",
+        "architecture",
+        "data",
+        "deployment",
+        "design",
+        "integration",
+        "model",
+        "multi-cloud",
+        "platform",
+        "salesforce",
+        "solution",
+        "specialized"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write"
+      ]
+    },
+    {
+      "id": "accounts_payable_agent",
+      "name": "Accounts Payable Agent",
+      "category": "specialized",
+      "description": "Autonomous payment processing specialist that executes vendor payments, contractor invoices, and recurring bills across any payment rail — crypto, fiat, stablecoins. Integrates with AI agent workflows via tool calls.",
+      "emoji": "💸",
+      "vibe": "Moves money across any rail — crypto, fiat, stablecoins — so you don't have to.",
+      "trigger_keywords": [
+        "accounts",
+        "agent",
+        "ai",
+        "autonomous",
+        "crypto",
+        "executes",
+        "payable",
+        "payment",
+        "processing",
+        "specialist",
+        "specialized",
+        "tool"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write"
+      ]
+    },
+    {
+      "id": "lsp_index_engineer",
+      "name": "LSP/Index Engineer",
+      "category": "specialized",
+      "description": "Language Server Protocol specialist building unified code intelligence systems through LSP client orchestration and semantic indexing",
+      "emoji": "🔎",
+      "vibe": "Builds unified code intelligence through LSP orchestration and semantic indexing.",
+      "trigger_keywords": [
+        "building",
+        "code",
+        "engineer",
+        "index",
+        "language",
+        "lsp/index",
+        "orchestration",
+        "protocol",
+        "server",
+        "specialist",
+        "specialized"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write"
+      ]
+    },
+    {
+      "id": "automation_governance_architect",
+      "name": "Automation Governance Architect",
+      "category": "specialized",
+      "description": "Governance-first architect for business automations (n8n-first) who audits value, risk, and maintainability before implementation.",
+      "emoji": "⚙️",
+      "vibe": "Calm, skeptical, and operations-focused. Prefer reliable systems over automation hype.",
+      "trigger_keywords": [
+        "architect",
+        "automation",
+        "automations",
+        "business",
+        "governance",
+        "governance-first",
+        "implementation",
+        "n8n-first",
+        "risk",
+        "specialized"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write"
+      ]
+    },
+    {
+      "id": "agents_orchestrator",
+      "name": "Agents Orchestrator",
+      "category": "specialized",
+      "description": "Autonomous pipeline manager that orchestrates the entire development workflow. You are the leader of this process.",
+      "emoji": "🎛️",
+      "vibe": "The conductor who runs the entire dev pipeline from spec to ship.",
+      "trigger_keywords": [
+        "agents",
+        "autonomous",
+        "entire",
+        "manager",
+        "orchestrates",
+        "orchestrator",
+        "pipeline",
+        "process",
+        "specialized",
+        "workflow"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write"
+      ]
+    },
+    {
+      "id": "supply_chain_strategist",
+      "name": "Supply Chain Strategist",
+      "category": "specialized",
+      "description": "Expert supply chain management and procurement strategy specialist — skilled in supplier development, strategic sourcing, quality control, and supply chain digitalization. Grounded in China's manufacturing ecosystem, helps companies build efficient, resilient, and sustainable supply chains.",
+      "emoji": "🔗",
+      "vibe": "Builds your procurement engine and supply chain resilience across China's manufacturing ecosystem, from supplier sourcing to risk management.",
+      "trigger_keywords": [
+        "chain",
+        "expert",
+        "management",
+        "procurement",
+        "quality",
+        "specialized",
+        "strategist",
+        "supply"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write"
+      ]
+    },
+    {
+      "id": "zk_steward",
+      "name": "ZK Steward",
+      "category": "specialized",
+      "description": "Knowledge-base steward in the spirit of Niklas Luhmann's Zettelkasten. Default perspective: Luhmann; switches to domain experts (Feynman, Munger, Ogilvy, etc.) by task. Enforces atomic notes, connectivity, and validation loops. Use for knowledge-base building, note linking, complex task breakdown, and cross-domain decision support.",
+      "emoji": "🗃️",
+      "vibe": "Channels Luhmann's Zettelkasten to build connected, validated knowledge bases.",
+      "trigger_keywords": [
+        "breakdown",
+        "knowledge-base",
+        "luhmann's",
+        "niklas",
+        "specialized",
+        "spirit",
+        "steward",
+        "support",
+        "task",
+        "validation"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write"
+      ]
+    },
+    {
+      "id": "specialized_cultural_intelligence_strategist",
+      "name": "Cultural Intelligence Strategist",
+      "category": "specialized",
+      "description": "CQ specialist that detects invisible exclusion, researches global context, and ensures software resonates authentically across intersectional identities.",
+      "emoji": "🌍",
+      "vibe": "Detects invisible exclusion and ensures your software resonates across cultures.",
+      "trigger_keywords": [
+        "cultural",
+        "strategist",
+        "specialist",
+        "exclusion",
+        "invisible",
+        "intelligence",
+        "researches",
+        "specialized",
+        "detects"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write"
+      ]
+    },
+    {
+      "id": "specialized_developer_advocate",
+      "name": "Developer Advocate",
+      "category": "specialized",
+      "description": "Expert developer advocate specializing in building developer communities, creating compelling technical content, optimizing developer experience (DX), and driving platform adoption through authentic engineering engagement. Bridges product and engineering teams with external developers.",
+      "emoji": "🗣️",
+      "vibe": "Bridges your product team and the developer community through authentic engagement.",
+      "trigger_keywords": [
+        "advocate",
+        "building",
+        "developer",
+        "expert",
+        "platform",
+        "specialized",
+        "specializing"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write"
+      ]
+    },
+    {
+      "id": "healthcare_marketing_compliance",
+      "name": "Healthcare Marketing Compliance Specialist",
+      "category": "specialized",
+      "description": "Expert in healthcare marketing compliance in China, proficient in the Advertising Law, Medical Advertisement Management Measures, Drug Administration Law, and related regulations — covering pharmaceuticals, medical devices, medical aesthetics, health supplements, and internet healthcare across content review, risk control, platform rule interpretation, and patient privacy protection, helping enterprises conduct effective health marketing within legal boundaries.",
+      "emoji": "⚕️",
+      "vibe": "Keeps your healthcare marketing legal in China's tightly regulated landscape — reviewing content, flagging violations, and finding creative space within compliance boundaries.",
+      "trigger_keywords": [
+        "china",
+        "compliance",
+        "expert",
+        "health",
+        "healthcare",
+        "marketing",
+        "platform",
+        "privacy",
+        "review",
+        "risk",
+        "specialist",
+        "specialized"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write"
+      ]
+    },
+    {
+      "id": "specialized_korean_business_navigator",
+      "name": "Korean Business Navigator",
+      "category": "specialized",
+      "description": "Korean business culture for foreign professionals — 품의 decision process, nunchi reading, KakaoTalk business etiquette, hierarchy navigation, and relationship-first deal mechanics",
+      "emoji": "🇰🇷",
+      "vibe": "The bridge between Western directness and Korean relationship dynamics — reads the room so you don't torch the deal",
+      "trigger_keywords": [
+        "business",
+        "culture",
+        "foreign",
+        "korean",
+        "navigator",
+        "process",
+        "professionals",
+        "specialized"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write"
+      ]
+    },
+    {
+      "id": "specialized_document_generator",
+      "name": "Document Generator",
+      "category": "specialized",
+      "description": "Expert document creation specialist who generates professional PDF, PPTX, DOCX, and XLSX files using code-based approaches with proper formatting, charts, and data visualization.",
+      "emoji": "📄",
+      "vibe": "Professional documents from code — PDFs, slides, spreadsheets, and reports.",
+      "trigger_keywords": [
+        "creation",
+        "data",
+        "document",
+        "expert",
+        "generates",
+        "generator",
+        "specialist",
+        "specialized"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write"
+      ]
+    },
+    {
+      "id": "report_distribution_agent",
+      "name": "Report Distribution Agent",
+      "category": "specialized",
+      "description": "AI agent that automates distribution of consolidated sales reports to representatives based on territorial parameters",
+      "emoji": "📤",
+      "vibe": "Automates delivery of consolidated sales reports to the right reps.",
+      "trigger_keywords": [
+        "agent",
+        "ai",
+        "automates",
+        "consolidated",
+        "distribution",
+        "report",
+        "sales",
+        "specialized"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write"
+      ]
+    },
+    {
+      "id": "compliance_auditor",
+      "name": "Compliance Auditor",
+      "category": "specialized",
+      "description": "Expert technical compliance auditor specializing in SOC 2, ISO 27001, HIPAA, and PCI-DSS audits — from readiness assessment through evidence collection to certification.",
+      "emoji": "📋",
+      "vibe": "Walks you from readiness assessment through evidence collection to SOC 2 certification.",
+      "trigger_keywords": [
+        "expert",
+        "specializing",
+        "compliance",
+        "auditor",
+        "technical",
+        "specialized"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write"
+      ]
+    },
+    {
+      "id": "government_digital_presales_consultant",
+      "name": "Government Digital Presales Consultant",
+      "category": "specialized",
+      "description": "Presales expert for China's government digital transformation market (ToG), proficient in policy interpretation, solution design, bid document preparation, POC validation, compliance requirements (classified protection/cryptographic assessment/Xinchuang domestic IT), and stakeholder management — helping technical teams efficiently win government IT projects.",
+      "emoji": "🏛️",
+      "vibe": "Navigates the Chinese government IT procurement maze — from policy signals to winning bids — so your team lands digital transformation projects.",
+      "trigger_keywords": [
+        "china's",
+        "compliance",
+        "consultant",
+        "design",
+        "digital",
+        "expert",
+        "government",
+        "presales",
+        "specialized",
+        "stakeholder",
+        "validation"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write"
+      ]
+    },
+    {
+      "id": "specialized_workflow_architect",
+      "name": "Workflow Architect",
+      "category": "specialized",
+      "description": "Workflow design specialist who maps complete workflow trees for every system, user journey, and agent interaction — covering happy paths, all branch conditions, failure modes, recovery paths, handoff contracts, and observable states to produce build-ready specs that agents can implement against and QA can test against.",
+      "emoji": "\"\\U0001F5FA\\uFE0F\"",
+      "vibe": "Every path the system can take — mapped, named, and specified before a single line is written.",
+      "trigger_keywords": [
+        "architect",
+        "complete",
+        "design",
+        "implement",
+        "qa",
+        "specialist",
+        "specialized",
+        "system",
+        "test",
+        "user",
+        "workflow"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write"
+      ]
+    },
+    {
+      "id": "specialized_model_qa",
+      "name": "Model QA Specialist",
+      "category": "specialized",
+      "description": "Independent model QA expert who audits ML and statistical models end-to-end - from documentation review and data reconstruction to replication, calibration testing, interpretability analysis, performance monitoring, and audit-grade reporting.",
+      "emoji": "🔬",
+      "vibe": "Audits ML models end-to-end — from data reconstruction to calibration testing.",
+      "trigger_keywords": [
+        "audits",
+        "data",
+        "documentation",
+        "expert",
+        "independent",
+        "ml",
+        "model",
+        "monitoring",
+        "qa",
+        "review",
+        "specialist",
+        "specialized",
+        "statistical",
+        "testing"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write"
+      ]
+    },
+    {
+      "id": "specialized_mcp_builder",
+      "name": "MCP Builder",
+      "category": "specialized",
+      "description": "Expert Model Context Protocol developer who designs, builds, and tests MCP servers that extend AI agent capabilities with custom tools, resources, and prompts.",
+      "emoji": "🔌",
+      "vibe": "Builds the tools that make AI agents actually useful in the real world.",
+      "trigger_keywords": [
+        "ai",
+        "builder",
+        "context",
+        "developer",
+        "expert",
+        "mcp",
+        "model",
+        "protocol",
+        "specialized",
+        "tools"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write"
+      ]
+    },
+    {
+      "id": "specialized_french_consulting_market",
+      "name": "French Consulting Market Navigator",
+      "category": "specialized",
+      "description": "Navigate the French ESN/SI freelance ecosystem — margin models, platform mechanics (Malt, collective.work), portage salarial, rate positioning, and payment cycle realities",
+      "emoji": "🇫🇷",
+      "vibe": "The insider who decodes the opaque French consulting food chain so freelancers stop leaving money on the table",
+      "trigger_keywords": [
+        "consulting",
+        "ecosystem",
+        "esn/si",
+        "freelance",
+        "french",
+        "market",
+        "navigate",
+        "navigator",
+        "platform",
+        "specialized"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write"
+      ]
+    },
+    {
+      "id": "study_abroad_advisor",
+      "name": "Study Abroad Advisor",
+      "category": "specialized",
+      "description": "Full-spectrum study abroad planning expert covering the US, UK, Canada, Australia, Europe, Hong Kong, and Singapore — proficient in undergraduate, master's, and PhD application strategy, school selection, essay coaching, profile enhancement, standardized test planning, visa preparation, and overseas life adaptation, helping Chinese students craft personalized end-to-end study abroad plans.",
+      "emoji": "🎓",
+      "vibe": "Guides Chinese students through the entire study abroad journey — from school selection and essays to visas — with data-driven advice and zero anxiety selling.",
+      "trigger_keywords": [
+        "abroad",
+        "advisor",
+        "application",
+        "expert",
+        "full-spectrum",
+        "planning",
+        "specialized",
+        "study",
+        "test"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write"
+      ]
+    },
+    {
+      "id": "data_consolidation_agent",
+      "name": "Data Consolidation Agent",
+      "category": "specialized",
+      "description": "AI agent that consolidates extracted sales data into live reporting dashboards with territory, rep, and pipeline summaries",
+      "emoji": "🗄️",
+      "vibe": "Consolidates scattered sales data into live reporting dashboards.",
+      "trigger_keywords": [
+        "agent",
+        "ai",
+        "consolidates",
+        "consolidation",
+        "data",
+        "extracted",
+        "pipeline",
+        "reporting",
+        "sales",
+        "specialized"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write"
+      ]
+    },
+    {
+      "id": "project_management_studio_producer",
+      "name": "Studio Producer",
+      "category": "project-management",
+      "description": "Senior strategic leader specializing in high-level creative and technical project orchestration, resource allocation, and multi-project portfolio management. Focused on aligning creative vision with business objectives while managing complex cross-functional initiatives and ensuring optimal studio operations.",
+      "emoji": "🎬",
+      "vibe": "Aligns creative vision with business objectives across complex initiatives.",
+      "trigger_keywords": [
+        "high-level",
+        "leader",
+        "orchestration",
+        "producer",
+        "project-management",
+        "resource",
+        "senior",
+        "specializing",
+        "strategic",
+        "studio"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "task_*"
+      ]
+    },
+    {
+      "id": "project_management_studio_operations",
+      "name": "Studio Operations",
+      "category": "project-management",
+      "description": "Expert operations manager specializing in day-to-day studio efficiency, process optimization, and resource coordination. Focused on ensuring smooth operations, maintaining productivity standards, and supporting all teams with the tools and processes needed for success.",
+      "emoji": "🏭",
+      "vibe": "Keeps the studio running smoothly — processes, tools, and people in sync.",
+      "trigger_keywords": [
+        "day-to-day",
+        "expert",
+        "manager",
+        "operations",
+        "optimization",
+        "process",
+        "project-management",
+        "resource",
+        "specializing",
+        "studio",
+        "success",
+        "tools"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "task_*"
+      ]
+    },
+    {
+      "id": "project_management_project_shepherd",
+      "name": "Project Shepherd",
+      "category": "project-management",
+      "description": "Expert project manager specializing in cross-functional project coordination, timeline management, and stakeholder alignment. Focused on shepherding projects from conception to completion while managing resources, risks, and communications across multiple teams and departments.",
+      "emoji": "🐑",
+      "vibe": "Herds cross-functional chaos into on-time, on-scope delivery.",
+      "trigger_keywords": [
+        "cross-functional",
+        "expert",
+        "manager",
+        "project",
+        "project-management",
+        "shepherd",
+        "specializing",
+        "stakeholder",
+        "timeline"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "task_*"
+      ]
+    },
+    {
+      "id": "project_manager_senior",
+      "name": "Senior Project Manager",
+      "category": "project-management",
+      "description": "Converts specs to tasks and remembers previous projects. Focused on realistic scope, no background processes, exact spec requirements",
+      "emoji": "📝",
+      "vibe": "Converts specs to tasks with realistic scope — no gold-plating, no fantasy.",
+      "trigger_keywords": [
+        "agile",
+        "converts",
+        "manager",
+        "previous",
+        "project",
+        "project-management",
+        "remembers",
+        "scope",
+        "scrum",
+        "senior",
+        "specs",
+        "tasks"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "task_*"
+      ]
+    },
+    {
+      "id": "project_management_experiment_tracker",
+      "name": "Experiment Tracker",
+      "category": "project-management",
+      "description": "Expert project manager specializing in experiment design, execution tracking, and data-driven decision making. Focused on managing A/B tests, feature experiments, and hypothesis validation through systematic experimentation and rigorous analysis.",
+      "emoji": "🧪",
+      "vibe": "Designs experiments, tracks results, and lets the data decide.",
+      "trigger_keywords": [
+        "design",
+        "experiment",
+        "expert",
+        "hypothesis",
+        "manager",
+        "project",
+        "project-management",
+        "specializing",
+        "tracker",
+        "tracking",
+        "validation"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "task_*"
+      ]
+    },
+    {
+      "id": "project_management_jira_workflow_steward",
+      "name": "Jira Workflow Steward",
+      "category": "project-management",
+      "description": "Expert delivery operations specialist who enforces Jira-linked Git workflows, traceable commits, structured pull requests, and release-safe branch strategy across software teams.",
+      "emoji": "📋",
+      "vibe": "Enforces traceable commits, structured PRs, and release-safe branch strategy.",
+      "trigger_keywords": [
+        "delivery",
+        "enforces",
+        "expert",
+        "git",
+        "jira",
+        "operations",
+        "project-management",
+        "specialist",
+        "steward",
+        "workflow"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "task_*"
+      ]
+    },
+    {
+      "id": "sales_discovery_coach",
+      "name": "Discovery Coach",
+      "category": "sales",
+      "description": "Coaches sales teams on elite discovery methodology — question design, current-state mapping, gap quantification, and call structure that surfaces real buying motivation.",
+      "emoji": "🔍",
+      "vibe": "Asks one more question than everyone else — and that's the one that closes the deal.",
+      "trigger_keywords": [
+        "coach",
+        "coaches",
+        "design",
+        "discovery",
+        "elite",
+        "sales",
+        "teams"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "sales_deal_strategist",
+      "name": "Deal Strategist",
+      "category": "sales",
+      "description": "Senior deal strategist specializing in MEDDPICC qualification, competitive positioning, and win planning for complex B2B sales cycles. Scores opportunities, exposes pipeline risk, and builds deal strategies that survive forecast review.",
+      "emoji": "♟️",
+      "vibe": "Qualifies deals like a surgeon and kills happy ears on contact.",
+      "trigger_keywords": [
+        "deal",
+        "meddpicc",
+        "pipeline",
+        "planning",
+        "qualification",
+        "review",
+        "risk",
+        "sales",
+        "senior",
+        "specializing",
+        "strategist"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "sales_coach",
+      "name": "Sales Coach",
+      "category": "sales",
+      "description": "Expert sales coaching specialist focused on rep development, pipeline review facilitation, call coaching, deal strategy, and forecast accuracy. Makes every rep and every deal better through structured coaching methodology and behavioral feedback.",
+      "emoji": "🏋️",
+      "vibe": "Asks the question that makes the rep rethink the entire deal.",
+      "trigger_keywords": [
+        "coach",
+        "coaching",
+        "expert",
+        "focused",
+        "pipeline",
+        "review",
+        "sales",
+        "specialist"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "sales_account_strategist",
+      "name": "Account Strategist",
+      "category": "sales",
+      "description": "Expert post-sale account strategist specializing in land-and-expand execution, stakeholder mapping, QBR facilitation, and net revenue retention. Turns closed deals into long-term platform relationships through systematic expansion planning and multi-threaded account development.",
+      "emoji": "🗺️",
+      "vibe": "Maps the org, finds the whitespace, and turns customers into platforms.",
+      "trigger_keywords": [
+        "account",
+        "expert",
+        "planning",
+        "platform",
+        "post-sale",
+        "sales",
+        "specializing",
+        "stakeholder",
+        "strategist"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "sales_pipeline_analyst",
+      "name": "Pipeline Analyst",
+      "category": "sales",
+      "description": "Revenue operations analyst specializing in pipeline health diagnostics, deal velocity analysis, forecast accuracy, and data-driven sales coaching. Turns CRM data into actionable pipeline intelligence that surfaces risks before they become missed quarters.",
+      "emoji": "📊",
+      "vibe": "Tells you your forecast is wrong before you realize it yourself.",
+      "trigger_keywords": [
+        "analyst",
+        "data",
+        "health",
+        "operations",
+        "pipeline",
+        "revenue",
+        "sales",
+        "specializing",
+        "velocity"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "sales_engineer",
+      "name": "Sales Engineer",
+      "category": "sales",
+      "description": "Senior pre-sales engineer specializing in technical discovery, demo engineering, POC scoping, competitive battlecards, and bridging product capabilities to business outcomes. Wins the technical decision so the deal can close.",
+      "emoji": "🛠️",
+      "vibe": "Wins the technical decision before the deal even hits procurement.",
+      "trigger_keywords": [
+        "demo",
+        "engineer",
+        "pre-sales",
+        "sales",
+        "senior",
+        "specializing",
+        "technical"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "sales_proposal_strategist",
+      "name": "Proposal Strategist",
+      "category": "sales",
+      "description": "Strategic proposal architect who transforms RFPs and sales opportunities into compelling win narratives. Specializes in win theme development, competitive positioning, executive summary craft, and building proposals that persuade rather than merely comply.",
+      "emoji": "🏹",
+      "vibe": "Turns RFP responses into stories buyers can't put down.",
+      "trigger_keywords": [
+        "architect",
+        "proposal",
+        "sales",
+        "strategic",
+        "strategist",
+        "summary",
+        "transforms"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "sales_outbound_strategist",
+      "name": "Outbound Strategist",
+      "category": "sales",
+      "description": "Signal-based outbound specialist who designs multi-channel prospecting sequences, defines ICPs, and builds pipeline through research-driven personalization — not volume.",
+      "emoji": "🎯",
+      "vibe": "Turns buying signals into booked meetings before the competition even notices.",
+      "trigger_keywords": [
+        "designs",
+        "multi-channel",
+        "outbound",
+        "pipeline",
+        "sales",
+        "signal-based",
+        "specialist",
+        "strategist"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "web_search",
+        "web_fetch",
+        "write"
+      ]
+    },
+    {
+      "id": "game_designer",
+      "name": "Game Designer",
+      "category": "game-development",
+      "description": "Systems and mechanics architect - Masters GDD authorship, player psychology, economy balancing, and gameplay loop design across all engines and genres",
+      "emoji": "🎮",
+      "vibe": "Thinks in loops, levers, and player motivations to architect compelling gameplay.",
+      "trigger_keywords": [
+        "architect",
+        "authorship",
+        "design",
+        "designer",
+        "game",
+        "game-development",
+        "masters",
+        "mechanics",
+        "systems"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "level_designer",
+      "name": "Level Designer",
+      "category": "game-development",
+      "description": "Spatial storytelling and flow specialist - Masters layout theory, pacing architecture, encounter design, and environmental narrative across all game engines",
+      "emoji": "🗺️",
+      "vibe": "Treats every level as an authored experience where space tells the story.",
+      "trigger_keywords": [
+        "architecture",
+        "design",
+        "designer",
+        "flow",
+        "game-development",
+        "layout",
+        "level",
+        "masters",
+        "spatial",
+        "specialist",
+        "storytelling"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "game_audio_engineer",
+      "name": "Game Audio Engineer",
+      "category": "game-development",
+      "description": "Interactive audio specialist - Masters FMOD/Wwise integration, adaptive music systems, spatial audio, and audio performance budgeting across all game engines",
+      "emoji": "🎵",
+      "vibe": "Makes every gunshot, footstep, and musical cue feel alive in the game world.",
+      "trigger_keywords": [
+        "audio",
+        "engineer",
+        "fmod/wwise",
+        "game",
+        "game-development",
+        "integration",
+        "interactive",
+        "masters",
+        "specialist"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "technical_artist",
+      "name": "Technical Artist",
+      "category": "game-development",
+      "description": "Art-to-engine pipeline specialist - Masters shaders, VFX systems, LOD pipelines, performance budgeting, and cross-engine asset optimization",
+      "emoji": "🎨",
+      "vibe": "The bridge between artistic vision and engine reality.",
+      "trigger_keywords": [
+        "art-to-engine",
+        "artist",
+        "game-development",
+        "masters",
+        "optimization",
+        "pipeline",
+        "shaders",
+        "specialist",
+        "technical"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "narrative_designer",
+      "name": "Narrative Designer",
+      "category": "game-development",
+      "description": "Story systems and dialogue architect - Masters GDD-aligned narrative design, branching dialogue, lore architecture, and environmental storytelling across all game engines",
+      "emoji": "📖",
+      "vibe": "Architects story systems where narrative and gameplay are inseparable.",
+      "trigger_keywords": [
+        "architect",
+        "architecture",
+        "design",
+        "designer",
+        "dialogue",
+        "game-development",
+        "masters",
+        "narrative",
+        "story",
+        "systems"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "support_infrastructure_maintainer",
+      "name": "Infrastructure Maintainer",
+      "category": "support",
+      "description": "Expert infrastructure specialist focused on system reliability, performance optimization, and technical operations management. Maintains robust, scalable infrastructure supporting business operations with security, performance, and cost efficiency.",
+      "emoji": "🏢",
+      "vibe": "Keeps the lights on, the servers humming, and the alerts quiet.",
+      "trigger_keywords": [
+        "expert",
+        "focused",
+        "infrastructure",
+        "maintainer",
+        "optimization",
+        "security",
+        "specialist",
+        "support",
+        "system"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "write"
+      ]
+    },
+    {
+      "id": "support_analytics_reporter",
+      "name": "Analytics Reporter",
+      "category": "support",
+      "description": "Expert data analyst transforming raw data into actionable business insights. Creates dashboards, performs statistical analysis, tracks KPIs, and provides strategic decision support through data visualization and reporting.",
+      "emoji": "📊",
+      "vibe": "Transforms raw data into the insights that drive your next decision.",
+      "trigger_keywords": [
+        "actionable",
+        "analyst",
+        "analytics",
+        "business",
+        "data",
+        "expert",
+        "reporter",
+        "support",
+        "transforming"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "write"
+      ]
+    },
+    {
+      "id": "support_executive_summary_generator",
+      "name": "Executive Summary Generator",
+      "category": "support",
+      "description": "Consultant-grade AI specialist trained to think and communicate like a senior strategy consultant. Transforms complex business inputs into concise, actionable executive summaries using McKinsey SCQA, BCG Pyramid Principle, and Bain frameworks for C-suite decision-makers.",
+      "emoji": "📝",
+      "vibe": "Thinks like a McKinsey consultant, writes for the C-suite.",
+      "trigger_keywords": [
+        "ai",
+        "communicate",
+        "consultant-grade",
+        "executive",
+        "generator",
+        "specialist",
+        "summary",
+        "support",
+        "think",
+        "trained"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "write"
+      ]
+    },
+    {
+      "id": "support_legal_compliance_checker",
+      "name": "Legal Compliance Checker",
+      "category": "support",
+      "description": "Expert legal and compliance specialist ensuring business operations, data handling, and content creation comply with relevant laws, regulations, and industry standards across multiple jurisdictions.",
+      "emoji": "⚖️",
+      "vibe": "Ensures your operations comply with the law across every jurisdiction that matters.",
+      "trigger_keywords": [
+        "checker",
+        "compliance",
+        "data",
+        "ensuring",
+        "expert",
+        "legal",
+        "specialist",
+        "support"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "write"
+      ]
+    },
+    {
+      "id": "support_finance_tracker",
+      "name": "Finance Tracker",
+      "category": "support",
+      "description": "Expert financial analyst and controller specializing in financial planning, budget management, and business performance analysis. Maintains financial health, optimizes cash flow, and provides strategic financial insights for business growth.",
+      "emoji": "💰",
+      "vibe": "Keeps the books clean, the cash flowing, and the forecasts honest.",
+      "trigger_keywords": [
+        "analyst",
+        "controller",
+        "expert",
+        "finance",
+        "financial",
+        "flow",
+        "growth",
+        "health",
+        "planning",
+        "specializing",
+        "support",
+        "tracker"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "write"
+      ]
+    },
+    {
+      "id": "support_support_responder",
+      "name": "Support Responder",
+      "category": "support",
+      "description": "Expert customer support specialist delivering exceptional customer service, issue resolution, and user experience optimization. Specializes in multi-channel support, proactive customer care, and turning support interactions into positive brand experiences.",
+      "emoji": "💬",
+      "vibe": "Turns frustrated users into loyal advocates, one interaction at a time.",
+      "trigger_keywords": [
+        "customer",
+        "delivering",
+        "expert",
+        "optimization",
+        "responder",
+        "service",
+        "specialist",
+        "support",
+        "user"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "write"
+      ]
+    },
+    {
+      "id": "handoff_templates",
+      "name": "Handoff Templates",
+      "category": "coordination",
+      "description": "",
+      "emoji": "🎭",
+      "vibe": "",
+      "trigger_keywords": [
+        "coordination"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "write",
+        "sessions_*",
+        "subagents_*"
+      ]
+    },
+    {
+      "id": "agent_activation_prompts",
+      "name": "Agent Activation Prompts",
+      "category": "coordination",
+      "description": "",
+      "emoji": "🎭",
+      "vibe": "",
+      "trigger_keywords": [
+        "coordination"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "write",
+        "sessions_*",
+        "subagents_*"
+      ]
+    },
+    {
+      "id": "phase_6_operate",
+      "name": "Phase 6 Operate",
+      "category": "playbooks",
+      "description": "",
+      "emoji": "🎭",
+      "vibe": "",
+      "trigger_keywords": [
+        "playbooks"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "write"
+      ]
+    },
+    {
+      "id": "phase_3_build",
+      "name": "Phase 3 Build",
+      "category": "playbooks",
+      "description": "",
+      "emoji": "🎭",
+      "vibe": "",
+      "trigger_keywords": [
+        "playbooks"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "write"
+      ]
+    },
+    {
+      "id": "phase_2_foundation",
+      "name": "Phase 2 Foundation",
+      "category": "playbooks",
+      "description": "",
+      "emoji": "🎭",
+      "vibe": "",
+      "trigger_keywords": [
+        "playbooks"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "write"
+      ]
+    },
+    {
+      "id": "phase_5_launch",
+      "name": "Phase 5 Launch",
+      "category": "playbooks",
+      "description": "",
+      "emoji": "🎭",
+      "vibe": "",
+      "trigger_keywords": [
+        "launch",
+        "playbooks"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "write"
+      ]
+    },
+    {
+      "id": "phase_4_hardening",
+      "name": "Phase 4 Hardening",
+      "category": "playbooks",
+      "description": "",
+      "emoji": "🎭",
+      "vibe": "",
+      "trigger_keywords": [
+        "playbooks"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "write"
+      ]
+    },
+    {
+      "id": "phase_1_strategy",
+      "name": "Phase 1 Strategy",
+      "category": "playbooks",
+      "description": "",
+      "emoji": "🎭",
+      "vibe": "",
+      "trigger_keywords": [
+        "playbooks"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "write"
+      ]
+    },
+    {
+      "id": "phase_0_discovery",
+      "name": "Phase 0 Discovery",
+      "category": "playbooks",
+      "description": "",
+      "emoji": "🎭",
+      "vibe": "",
+      "trigger_keywords": [
+        "playbooks"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "write"
+      ]
+    },
+    {
+      "id": "scenario_incident_response",
+      "name": "Scenario Incident Response",
+      "category": "runbooks",
+      "description": "",
+      "emoji": "🎭",
+      "vibe": "",
+      "trigger_keywords": [
+        "response",
+        "runbooks"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "write"
+      ]
+    },
+    {
+      "id": "scenario_enterprise_feature",
+      "name": "Scenario Enterprise Feature",
+      "category": "runbooks",
+      "description": "",
+      "emoji": "🎭",
+      "vibe": "",
+      "trigger_keywords": [
+        "runbooks"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "write"
+      ]
+    },
+    {
+      "id": "scenario_marketing_campaign",
+      "name": "Scenario Marketing Campaign",
+      "category": "runbooks",
+      "description": "",
+      "emoji": "🎭",
+      "vibe": "",
+      "trigger_keywords": [
+        "runbooks"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "write"
+      ]
+    },
+    {
+      "id": "scenario_startup_mvp",
+      "name": "Scenario Startup Mvp",
+      "category": "runbooks",
+      "description": "",
+      "emoji": "🎭",
+      "vibe": "",
+      "trigger_keywords": [
+        "runbooks",
+        "mvp",
+        "viable",
+        "lean",
+        "minimum",
+        "product",
+        "startup"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "write"
+      ]
+    },
+    {
+      "id": "roblox_avatar_creator",
+      "name": "Roblox Avatar Creator",
+      "category": "roblox-studio",
+      "description": "Roblox UGC and avatar pipeline specialist - Masters Roblox's avatar system, UGC item creation, accessory rigging, texture standards, and the Creator Marketplace submission pipeline",
+      "emoji": "👤",
+      "vibe": "Masters the UGC pipeline from rigging to Creator Marketplace submission.",
+      "trigger_keywords": [
+        "avatar",
+        "creator",
+        "masters",
+        "pipeline",
+        "roblox",
+        "roblox-studio",
+        "specialist",
+        "system"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "roblox_experience_designer",
+      "name": "Roblox Experience Designer",
+      "category": "roblox-studio",
+      "description": "Roblox platform UX and monetization specialist - Masters engagement loop design, DataStore-driven progression, Roblox monetization systems (Passes, Developer Products, UGC), and player retention for Roblox experiences",
+      "emoji": "🎪",
+      "vibe": "Designs engagement loops and monetization systems that keep players coming back.",
+      "trigger_keywords": [
+        "design",
+        "designer",
+        "experience",
+        "masters",
+        "monetization",
+        "platform",
+        "roblox",
+        "roblox-studio",
+        "specialist"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "roblox_systems_scripter",
+      "name": "Roblox Systems Scripter",
+      "category": "roblox-studio",
+      "description": "Roblox platform engineering specialist - Masters Luau, the client-server security model, RemoteEvents/RemoteFunctions, DataStore, and module architecture for scalable Roblox experiences",
+      "emoji": "🔧",
+      "vibe": "Builds scalable Roblox experiences with rock-solid Luau and client-server security.",
+      "trigger_keywords": [
+        "architecture",
+        "engineering",
+        "masters",
+        "model",
+        "module",
+        "platform",
+        "roblox",
+        "roblox-studio",
+        "scripter",
+        "security",
+        "specialist",
+        "systems"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "unreal_multiplayer_architect",
+      "name": "Unreal Multiplayer Architect",
+      "category": "unreal-engine",
+      "description": "Unreal Engine networking specialist - Masters Actor replication, GameMode/GameState architecture, server-authoritative gameplay, network prediction, and dedicated server setup for UE5",
+      "emoji": "🌐",
+      "vibe": "Architects server-authoritative Unreal multiplayer that feels lag-free.",
+      "trigger_keywords": [
+        "architect",
+        "architecture",
+        "engine",
+        "masters",
+        "multiplayer",
+        "network",
+        "networking",
+        "server",
+        "specialist",
+        "unreal",
+        "unreal-engine"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "unreal_systems_engineer",
+      "name": "Unreal Systems Engineer",
+      "category": "unreal-engine",
+      "description": "Performance and hybrid architecture specialist - Masters C++/Blueprint continuum, Nanite geometry, Lumen GI, and Gameplay Ability System for AAA-grade Unreal Engine projects",
+      "emoji": "⚙️",
+      "vibe": "Masters the C++/Blueprint continuum for AAA-grade Unreal Engine projects.",
+      "trigger_keywords": [
+        "architecture",
+        "engine",
+        "engineer",
+        "hybrid",
+        "masters",
+        "performance",
+        "specialist",
+        "system",
+        "systems",
+        "unreal",
+        "unreal-engine"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "unreal_world_builder",
+      "name": "Unreal World Builder",
+      "category": "unreal-engine",
+      "description": "Open-world and environment specialist - Masters UE5 World Partition, Landscape, procedural foliage, HLOD, and large-scale level streaming for seamless open-world experiences",
+      "emoji": "🌍",
+      "vibe": "Builds seamless open worlds with World Partition, Nanite, and procedural foliage.",
+      "trigger_keywords": [
+        "builder",
+        "environment",
+        "masters",
+        "open-world",
+        "specialist",
+        "streaming",
+        "unreal",
+        "unreal-engine",
+        "world"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "unreal_technical_artist",
+      "name": "Unreal Technical Artist",
+      "category": "unreal-engine",
+      "description": "Unreal Engine visual pipeline specialist - Masters the Material Editor, Niagara VFX, Procedural Content Generation, and the art-to-engine pipeline for UE5 projects",
+      "emoji": "🎨",
+      "vibe": "Bridges Niagara VFX, Material Editor, and PCG into polished UE5 visuals.",
+      "trigger_keywords": [
+        "pipeline",
+        "unreal",
+        "visual",
+        "artist",
+        "specialist",
+        "technical",
+        "engine",
+        "unreal-engine"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "unity_shader_graph_artist",
+      "name": "Unity Shader Graph Artist",
+      "category": "unity",
+      "description": "Visual effects and material specialist - Masters Unity Shader Graph, HLSL, URP/HDRP rendering pipelines, and custom pass authoring for real-time visual effects",
+      "emoji": "✨",
+      "vibe": "Crafts real-time visual magic through Shader Graph and custom render passes.",
+      "trigger_keywords": [
+        "material",
+        "unity",
+        "visual",
+        "artist",
+        "specialist",
+        "shader",
+        "graph",
+        "masters",
+        "effects"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "unity_multiplayer_engineer",
+      "name": "Unity Multiplayer Engineer",
+      "category": "unity",
+      "description": "Networked gameplay specialist - Masters Netcode for GameObjects, Unity Gaming Services (Relay/Lobby), client-server authority, lag compensation, and state synchronization",
+      "emoji": "🔗",
+      "vibe": "Makes networked Unity gameplay feel local through smart sync and prediction.",
+      "trigger_keywords": [
+        "engineer",
+        "gameplay",
+        "masters",
+        "multiplayer",
+        "netcode",
+        "networked",
+        "specialist",
+        "state",
+        "unity"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "unity_editor_tool_developer",
+      "name": "Unity Editor Tool Developer",
+      "category": "unity",
+      "description": "Unity editor automation specialist - Masters custom EditorWindows, PropertyDrawers, AssetPostprocessors, ScriptedImporters, and pipeline automation that saves teams hours per week",
+      "emoji": "🛠️",
+      "vibe": "Builds custom Unity editor tools that save teams hours every week.",
+      "trigger_keywords": [
+        "automation",
+        "developer",
+        "editor",
+        "masters",
+        "pipeline",
+        "specialist",
+        "tool",
+        "unity"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "unity_architect",
+      "name": "Unity Architect",
+      "category": "unity",
+      "description": "Data-driven modularity specialist - Masters ScriptableObjects, decoupled systems, and single-responsibility component design for scalable Unity projects",
+      "emoji": "🏛️",
+      "vibe": "Designs data-driven, decoupled Unity systems that scale without spaghetti.",
+      "trigger_keywords": [
+        "architect",
+        "component",
+        "data-driven",
+        "design",
+        "masters",
+        "modularity",
+        "scriptableobjects",
+        "specialist",
+        "unity"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "godot_shader_developer",
+      "name": "Godot Shader Developer",
+      "category": "godot",
+      "description": "Godot 4 visual effects specialist - Masters the Godot Shading Language (GLSL-like), VisualShader editor, CanvasItem and Spatial shaders, post-processing, and performance optimization for 2D/3D effects",
+      "emoji": "💎",
+      "vibe": "Bends light and pixels through Godot's shading language to create stunning effects.",
+      "trigger_keywords": [
+        "developer",
+        "effects",
+        "godot",
+        "masters",
+        "optimization",
+        "shader",
+        "specialist",
+        "visual"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "godot_gameplay_scripter",
+      "name": "Godot Gameplay Scripter",
+      "category": "godot",
+      "description": "Composition and signal integrity specialist - Masters GDScript 2.0, C# integration, node-based architecture, and type-safe signal design for Godot 4 projects",
+      "emoji": "🎯",
+      "vibe": "Builds Godot 4 gameplay systems with the discipline of a software architect.",
+      "trigger_keywords": [
+        "architecture",
+        "composition",
+        "design",
+        "gameplay",
+        "godot",
+        "integration",
+        "integrity",
+        "masters",
+        "scripter",
+        "signal",
+        "specialist"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "godot_multiplayer_engineer",
+      "name": "Godot Multiplayer Engineer",
+      "category": "godot",
+      "description": "Godot 4 networking specialist - Masters the MultiplayerAPI, scene replication, ENet/WebRTC transport, RPCs, and authority models for real-time multiplayer games",
+      "emoji": "🌐",
+      "vibe": "Masters Godot's MultiplayerAPI to make real-time netcode feel seamless.",
+      "trigger_keywords": [
+        "networking",
+        "multiplayerapi",
+        "multiplayer",
+        "specialist",
+        "engineer",
+        "masters",
+        "godot"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    },
+    {
+      "id": "blender_addon_engineer",
+      "name": "Blender Add-on Engineer",
+      "category": "blender",
+      "description": "Blender tooling specialist - Builds Python add-ons, asset validators, exporters, and pipeline automations that turn repetitive DCC work into reliable one-click workflows",
+      "emoji": "🧩",
+      "vibe": "Turns repetitive Blender pipeline work into reliable one-click tools that artists actually use.",
+      "trigger_keywords": [
+        "add",
+        "blender",
+        "builds",
+        "engineer",
+        "pipeline",
+        "python",
+        "specialist",
+        "tooling"
+      ],
+      "allowedTools": [
+        "read",
+        "exec",
+        "edit",
+        "write",
+        "browser"
+      ]
+    }
+  ],
+  "total": 178,
+  "categories": {
+    "academic": 5,
+    "testing": 8,
+    "strategy": 3,
+    "product": 5,
+    "marketing": 29,
+    "spatial-computing": 6,
+    "paid-media": 7,
+    "engineering": 26,
+    "design": 8,
+    "specialized": 28,
+    "project-management": 6,
+    "sales": 8,
+    "game-development": 5,
+    "support": 6,
+    "coordination": 2,
+    "playbooks": 7,
+    "runbooks": 4,
+    "roblox-studio": 3,
+    "unreal-engine": 4,
+    "unity": 4,
+    "godot": 3,
+    "blender": 1
+  },
+  "source": "agency-agents",
+  "url": "https://github.com/msitarzewski/agency-agents"
+}
