@@ -1,13 +1,17 @@
 ---
 name: sindris
-version: "3.4"
+version: "3.5"
 license: MIT
 copyright: "2026 琬弦 (Wanxian)"
 description: |
-  织界统一协调系统 v2.21 - 多Agent协作执行引擎
+  织界统一协调系统 v3.5 - 多Agent协作执行引擎
   
   基于sindris Round1-4流程，参考oh-my-codex v2设计，
   整合织界中枢模块（熔断/投票/worktree）和OMX持久化。
+  
+  ⚠️ 重要：sindris是规划器+协调器，执行必须由主代理调用sessions_spawn
+  ⚠️ 重要：启动子代理后必须调用sessions_yield()等待结果
+  ⚠️ 重要：OMX锤炼在每次子代理完成后自动触发
   
   核心组件：
   1. sindris_executor.py - 唯一执行引擎（含plan/run两个方法）
@@ -337,48 +341,144 @@ def execute_with_worker(task, config):
 
 ---
 
-## 二、Agent操作指南（实际执行）
+## 二、完整执行流程（⚠️ 必须严格执行）
 
-### sessions_spawn 使用方法
+### ⚠️ 核心原则
 
-主Agent在 Round2 阶段使用 `sessions_spawn` 工具启动子Agent：
+**sindris执行必须由主代理（你）协调，不能只调用plan()就结束！**
+
+### 2.1 完整流程图
 
 ```
-sessions_spawn 参数：
-- agentId: 子代理类型（如 "default", "code", "research"）
-- task: 子代理要执行的任务描述
-- model: 可选，指定模型
-- thinking: 可选，思维级别
+主代理（琬弦）
+    ↓
+① 调用 sindris.plan(task)
+    ↓ 获取subtasks列表（含role/title/verify）
+    ↓
+② Round1：sessions_spawn(Round1任务)
+    ↓ 启动Software Architect/Product Manager
+    ↓
+③ sessions_yield() ← 等待子代理完成
+    ↓ 接收completion事件
+    ↓
+④ 收集Round1结果 → 决定Round2
+    ↓
+⑤ Round2：sessions_spawn(Round2任务)
+    ↓ 启动Senior Developer（可并行多个）
+    ↓
+⑥ sessions_yield() ← 等待子代理完成
+    ↓
+⑦ OMX锤炼：自动触发GStackPro Review
+    ↓
+⑧ 收集Round2结果 → 决定Round3
+    ↓
+⑨ Round3：sessions_spawn(Round3任务)
+    ↓ 启动API Tester + Reality Checker
+    ↓
+⑩ sessions_yield() ← 等待子代理完成
+    ↓
+⑪ 收集Round3结果 → 最终报告
+    ↓
+⑫ 更新MEMORY.md + Git提交
 ```
 
-### 实际执行示例
+### 2.2 关键点：sessions_yield()
+
+**这是我一直忘记调用的！**
+
+`sessions_yield()` 的作用：
+- 故意结束当前turn
+- 等待子代理的completion事件
+- 结果作为下一条消息返回
+
+**错误做法：**
+```
+plan() → spawn() → 直接返回 → 子代理还在跑
+```
+
+**正确做法：**
+```
+plan() → spawn() → yield() → 等待completion → 收集结果 → 继续
+```
+
+### 2.3 OMX锤炼集成
+
+每次子代理完成后自动触发：
+```python
+# gstack_hook.on_worker_complete() 自动调用
+# 触发GStackPro Paranoid Review
+# 审查代码质量和安全问题
+```
+
+### 2.4 实际代码模板
 
 ```python
-# sindris_executor 返回的配置
-plan = {
-    "workers": [
-        {"role": "engineering_senior_developer", "task": "创建interfaces目录"},
-        {"role": "engineering_senior_developer", "task": "创建imemory_vault.py"},
-    ],
-    "tasks": [
-        {"id": "t1", "title": "创建interfaces目录", "owner": "worker_1"},
-        {"id": "t2", "title": "创建imemory_vault.py", "owner": "worker_2"},
-    ]
-}
+# ===== sindris完整执行模板 =====
 
-# 主Agent执行：
-# 1. 先创建目录（串行）
-# 2. 然后并行启动子代理创建文件
-# 3. 使用 sessions_spawn 工具
+# ① 规划
+plan = await sindris.plan("你的任务描述")
+print(f"生成了 {len(plan['subtasks'])} 个子任务")
+
+# ② Round1：规划阶段
+round1_tasks = [s for s in plan['subtasks'] if s['phase'] == 'round1']
+for task in round1_tasks:
+    spawn(
+        task=f"你是{task['role']}。请完成：{task['title']}",
+        runtime="subagent",
+        timeoutSeconds=task.get('timeout', 300)
+    )
+
+# ③ 必须yield！
+yield()  # 等待Round1完成
+
+# ④ Round2：执行阶段
+round2_tasks = [s for s in plan['subtasks'] if s['phase'] == 'round2']
+for task in round2_tasks:
+    spawn(
+        task=f"你是{task['role']}。请完成：{task['title']}",
+        runtime="subagent",
+        timeoutSeconds=task.get('timeout', 600)
+    )
+
+# ⑤ 必须yield！
+yield()  # 等待Round2完成 + OMX锤炼自动触发
+
+# ⑥ Round3：审查阶段
+round3_tasks = [s for s in plan['subtasks'] if s['phase'] == 'round3']
+for task in round3_tasks:
+    spawn(
+        task=f"你是{task['role']}。请验证：{task['title']}",
+        runtime="subagent",
+        timeoutSeconds=task.get('timeout', 300)
+    )
+
+# ⑦ 必须yield！
+yield()  # 等待Round3完成
+
+# ⑧ 完成！
+print("sindris执行完成")
 ```
 
-### 重要约束
+### 2.5 会话工具对照表
+
+| 工具 | 作用 | 何时使用 |
+|------|------|----------|
+| `sessions_spawn` | 启动子代理 | 每个Round开始时 |
+| `sessions_yield` | 等待completion | 启动子代理后必须调用！|
+| `sessions_send` | 向子代理发消息 | 需要干预时 |
+| `sessions_list` | 查看子代理状态 | 调试时 |
+| `sessions_history` | 获取执行历史 | 审查结果时 |
+| `subagents` | 控制子代理 | steer/kill时 |
+
+### 2.6 重要约束
 
 | 约束 | 说明 |
 |------|------|
-| 会话管理 | 子Agent在独立session运行，完成后通知主Agent |
+| sessions_yield | 启动子代理后必须调用，否则结果丢失 |
+| 会话管理 | 子Agent在独立session运行，完成后announce |
 | 工具限制 | 子Agent工具由 agentId 决定，不是 sindris 决定 |
 | 生命周期 | 主Agent监控子Agent状态，失败时决定重试或放弃 |
+| OMX锤炼 | 每次子代理完成后自动触发GStackPro Review |
 
 ---
 
