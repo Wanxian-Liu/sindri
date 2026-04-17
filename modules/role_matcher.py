@@ -22,6 +22,7 @@ from .role_hierarchical_matcher import classify_domain, RoleHierarchicalMatcher
 FIXED_TEAM = [
     {"id": "engineering_software_architect", "name": "Software Architect", "category": "engineering"},
     {"id": "engineering_senior_developer", "name": "Senior Developer", "category": "engineering"},
+    {"id": "engineering_frontend_developer", "name": "Frontend Developer", "category": "engineering"},
     {"id": "testing_api_tester", "name": "API Tester", "category": "testing"},
     {"id": "testing_reality_checker", "name": "Reality Checker", "category": "testing"},
 ]
@@ -100,7 +101,7 @@ class RoleMatcher:
         匹配角色
         
         策略优先级：
-        1. 固定小组（编程任务，但creative域除外）
+        1. 固定小组（通用编程任务，creative和specialized域除外）
         2. 分层域判断 + 向量相似度
         3. claim覆盖
         4. 关键词匹配
@@ -108,8 +109,8 @@ class RoleMatcher:
         # 0. 分层域判断（优先）
         task_domain = classify_domain(task)
         
-        # 1. 任务类型识别 + 固定小组（creative域不用固定团队）
-        if task_domain != "creative" and self.should_use_fixed_team(task):
+        # 1. 任务类型识别 + 固定小组（creative/specialized域不用固定团队）
+        if task_domain not in ["creative", "data", "research"] and self.should_use_fixed_team(task):
             task_type = self.classify_task_type(task)
             print(f"[RoleMatcher] 任务类型: {task_type.value}, 使用固定团队")
             return [
@@ -174,7 +175,10 @@ class RoleMatcher:
             
             # 分类匹配增强
             category_keywords = {
-                'engineering': ['开发', '代码', 'python', 'java', '编程', 'code', 'develop', 'software', '架构', 'architect', '系统'],
+                'engineering': [
+                    '开发', '代码', 'python', 'java', '编程', 'code', 'develop', 'software', '架构', 'architect', '系统', 'react', '前端', 'frontend', 'machine learning', 'ai', 'ml',
+                    '机器学习', '模型训练', 'ai工程师', '深度学习', '神经网络', '训练', '模型', 'AI', 'ML'
+                ],
                 'testing': ['测试', '验证', 'test', 'verify', 'qa', '检查'],
                 'marketing': ['营销', '增长', '推广', 'marketing', 'growth', '用户'],
                 'design': ['设计', 'design', 'ui', 'ux', '界面'],
@@ -189,7 +193,18 @@ class RoleMatcher:
                         if kw in task_lower:
                             keyword_boost += 0.15
             
-            final_score = min(1.0, similarity + keyword_boost)
+            # 角色名精确匹配：如果角色名包含任务相关关键词，加分（不cap）
+            role_name_lower = role.get('name', '').lower()
+            name_boost = 0
+            if preferred_domain == 'engineering':
+                if 'ai engineer' in role_name_lower and any(kw in task_lower for kw in ['机器学习', 'ai', 'ml', 'machine', '深度学习', '模型训练']):
+                    name_boost += 0.8
+                elif 'machine learning' in role_name_lower or ' ml ' in f' {role_name_lower} ':
+                    if any(kw in task_lower for kw in ['机器学习', '模型训练', 'machine', 'ml']):
+                        name_boost += 0.6
+            keyword_boost += name_boost
+            
+            final_score = similarity + keyword_boost  # 不cap，让专业角色分数更高
             scores.append((role, final_score))
         
         # 排序返回top_k

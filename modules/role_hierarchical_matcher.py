@@ -10,14 +10,14 @@ from typing import List, Dict, Optional
 
 # L1任务域关键词
 DOMAIN_KEYWORDS = {
-    "engineering": ["api", "backend", "frontend", "server", "database", "架构", "函数", "类", "模块", "代码", "开发"],
+    "engineering": ["api", "backend", "frontend", "server", "database", "架构", "函数", "类", "模块", "代码", "开发", "机器学习", "AI", "模型训练", "深度学习"],
     "creative": ["blender", "unity", "3d", "建模", "渲染", "动画", "设计", "创意", "素材", "材质", "灯光", "角色模型", "场景", "godot"],
     "research": ["研究", "分析", "调研", "论文", "学术", "探索", "调查", "学术论文"],
     "product": ["产品", "需求", "feature", "用户", "体验", "优先级", "sprint", "roadmap"],
     "marketing": ["营销", "推广", "内容", "文案", "运营", "增长"],
     "testing": ["测试", "验证", "QA", "验收", "测试用例"],
     "devops": ["部署", "CI/CD", "docker", "k8s", "运维", "监控"],
-    "data": ["数据", "分析", "机器学习", "AI", "模型", "训练", "深度学习"],
+    "data": ["数据分析", "数据挖掘", "商业智能"],
 }
 
 # 角色category到域的映射
@@ -30,6 +30,9 @@ CATEGORY_TO_DOMAIN = {
     "product": "product",
     "marketing": "marketing",
     "engineering": "engineering",
+    "data": "data",
+    "ai": "data",
+    "specialized": "engineering",  # specialized分类多为工程类
 }
 
 # 强排除关键词
