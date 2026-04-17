@@ -210,17 +210,23 @@ class SindrisExecutor:
         # Round2: 真正执行任务
         round2_results = []
         for i, subtask in enumerate(subtasks):
-            role = subtask.get("role", {})
+            role_data = subtask.get("role", {})
             task_title = subtask.get("title", "subtask")
+            
+            # role可能是字符串，转换为Dict格式
+            if isinstance(role_data, str):
+                role_dict = {"name": role_data, "id": role_data, "description": ""}
+            else:
+                role_dict = role_data or {}
             
             if self._agent_executor:
                 try:
-                    result = await self._agent_executor.execute(task_title, role)
+                    result = await self._agent_executor.execute(task_title, role_dict)
                     round2_results.append({
                         "index": i,
                         "task_id": subtask.get("task_id"),
                         "title": task_title,
-                        "role": role.get("name", "unknown"),
+                        "role": role_dict.get("name", "unknown"),
                         "success": result.success,
                         "output": result.output,
                         "error": result.error,
@@ -231,6 +237,7 @@ class SindrisExecutor:
                     round2_results.append({
                         "index": i,
                         "title": task_title,
+                        "role": role_dict.get("name", "unknown"),
                         "success": False,
                         "error": str(e)[:200],
                     })
@@ -239,6 +246,7 @@ class SindrisExecutor:
                 round2_results.append({
                     "index": i,
                     "title": task_title,
+                    "role": role_dict.get("name", "unknown"),
                     "success": False,
                     "error": "AgentExecutor not available",
                     "skipped": True,
