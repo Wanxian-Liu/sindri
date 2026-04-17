@@ -139,12 +139,14 @@ class TaskDecomposer:
         """创建Round1任务（规划）"""
         tasks = []
         
-        # Round1任务：根据任务类型选择
-        # 产品管理任务 → Product Manager
-        # 协调/编排任务 → Agents Orchestrator
-        # 工程任务 → Software Architect
+        # Round1任务：根据任务类型选择（优先级从高到低）
+        # 1. 产品管理任务 → Product Manager
+        # 2. 工程任务（编程/代码/架构/修复/优化）→ Software Architect
+        # 3. 协调/编排任务（编排/协调/工作流）→ Agents Orchestrator
         
         task_lower = task.lower()
+        
+        # 产品管理任务
         if '产品' in task or '路线图' in task or 'pm' in task_lower or 'product' in task_lower:
             pm_role = next((r for r in roles if 'product_manager' in r.get('id', '').lower()), None)
             if pm_role:
@@ -162,6 +164,34 @@ class TaskDecomposer:
                 ))
                 return tasks
         
+        # 工程任务（编程、代码、架构、修复、优化等）
+        engineering_keywords = [
+            '编程', '开发', '代码', 'code', 'python', 'java', 'javascript', 'typescript',
+            '修改', '优化', '修复', 'bug', '重构', 'refactor', 'feature',
+            '模块', '组件', '系统', '架构', '接口', '实现',
+            'mimir', 'sindris', '进化', '记忆殿堂',
+        ]
+        if any(kw in task_lower for kw in engineering_keywords) or any(kw in task for kw in ['模块', '组件', '系统', '架构', '接口', '修改', '优化', '修复', '编程', '开发', '代码']):
+            architect_role = next(
+                (r for r in roles if 'architect' in r.get('id', '').lower()),
+                roles[0] if roles else FIXED_TEAM[0]
+            )
+            tasks.append(Task(
+                id=self._gen_id("task"),
+                title="架构分析与任务规划",
+                kind="round1_planning",
+                phase="round1",
+                priority="high",
+                verify=["检查规划文档是否完整"],
+                metadata={
+                    "role": architect_role,
+                    "task_context": task,
+                    "slices_count": len(slices),
+                }
+            ))
+            return tasks
+        
+        # 协调/编排任务（默认fallback）
         orchestrator_role = next(
             (r for r in roles if 'orchestrator' in r.get('id', '').lower()),
             None
@@ -181,6 +211,7 @@ class TaskDecomposer:
             ))
             return tasks
         
+        # 默认：Software Architect
         architect_role = next(
             (r for r in roles if 'architect' in r.get('id', '').lower()),
             roles[0] if roles else FIXED_TEAM[0]
@@ -206,7 +237,7 @@ class TaskDecomposer:
         """创建Round2任务（执行）"""
         tasks = []
         
-        developer_role = FIXED_TEAM[1]  # Senior Developer
+        developer_role = FIXED_TEAM[3]  # Senior Developer
         
         for i, slice in enumerate(slices[:20]):  # 限制最多20个
             tasks.append(Task(
@@ -229,8 +260,8 @@ class TaskDecomposer:
         tasks = []
         
         # API Tester
-        tester_role = FIXED_TEAM[2]  # API Tester
-        checker_role = FIXED_TEAM[3]  # Reality Checker
+        tester_role = FIXED_TEAM[5]  # API Tester
+        checker_role = FIXED_TEAM[6]  # Reality Checker
         
         # 功能验证任务
         tasks.append(Task(
