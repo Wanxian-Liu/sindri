@@ -1081,3 +1081,70 @@ mgr.shutdown()
 ```
 
 *Sindri's v1.1 — OMX持久化集成*
+
+---
+
+## 五、Sindri OpenClaw执行模式（v2.22新增）
+
+### 问题
+
+`sindris_executor.run()`在Python脚本中无法使用sessions_spawn（因为sessions_spawn是OpenClaw工具）。
+
+### 解决方案
+
+在OpenClaw会话中，主Agent调用`sindris.plan()`后，使用sessions_spawn执行subtasks。
+
+### 执行流程
+
+```
+主Agent (我)
+    ↓
+sindris.plan("任务") → 获取subtasks列表
+    ↓
+for subtask in subtasks:
+    sessions_spawn(
+        task=subtask['title'],
+        runtime="subagent",
+        timeoutSeconds=subtask.get('timeout', 300)
+    )
+    ↓
+sessions_yield() → 等待子Agent完成
+    ↓
+收集结果，继续Round3-4
+```
+
+### 触发词
+
+| 触发词 | 说明 |
+|--------|------|
+| `Sindri执行` | 执行完整Round1-4流程 |
+| `Sindri规划` | 仅执行Round1规划 |
+| `Sindri审查` | 执行Round3审查 |
+
+### 代码示例
+
+```python
+# 在OpenClaw会话中执行
+plan = await sindris.plan("分析并改进 context_compressor")
+
+# 检查规划结果
+print(f"生成了 {len(plan['subtasks'])} 个子任务")
+
+# 使用sessions_spawn执行
+for subtask in plan['subtasks']:
+    spawn_result = sessions_spawn(
+        task=subtask['title'],
+        runtime="subagent",
+        timeoutSeconds=subtask.get('timeout', 300)
+    )
+    # 记录run_id
+    print(f"启动: {subtask['role']} - {subtask['title'][:30]}...")
+```
+
+### Level降级说明
+
+| Level | 执行方式 | 状态 |
+|-------|---------|------|
+| Level 1 | sessions_spawn | ✅ OpenClaw中可用 |
+| Level 2 | DeepSeek API | ⚠️ API配置问题 |
+| Level 3 | 本地模板 | ✅ 兜底可用 |
