@@ -42,6 +42,8 @@ class SindrisExecutor:
         self.workspace_root = workspace_root or str(Path.home() / ".openclaw" / "workspace")
         self.session_id = f"sindris_{uuid.uuid4().hex[:12]}"        
         self._setup_jsonl_logger()
+        self._setup_fastpath_cache()
+        self._setup_subagent_state_machine()
     
     def _setup_jsonl_logger(self):
         """初始化JSONL日志记录器"""
@@ -58,6 +60,64 @@ class SindrisExecutor:
             ]
         )
         self.logger = logging.getLogger("sindris")
+    
+    def _setup_fastpath_cache(self):
+        """初始化FastPath缓存"""
+        self.cache_dir = Path(SCRIPT_DIR) / ".cache"
+        self.cache_dir.mkdir(exist_ok=True)
+        self.cache_ttl_hours = 24  # 缓存24小时有效
+    
+    def _get_cache_key(self, task: str) -> str:
+        """生成缓存key（基于任务文本的hash）"""
+        import hashlib
+        return hashlib.md5(task.encode()).hexdigest()[:12]
+    
+    def _check_fastpath_cache(self, task: str) -> Optional[Dict[str, Any]]:
+        """检查FastPath缓存"""
+        cache_key = self._get_cache_key(task)
+        cache_file = self.cache_dir / f"{cache_key}.json"
+        
+        if not cache_file.exists():
+            return None
+        
+        # 检查是否过期
+        import time
+        cache_age = time.time() - cache_file.stat().st_mtime
+        if cache_age > self.cache_ttl_hours * 3600:
+            cache_file.unlink()  # 删除过期缓存
+            return None
+        
+        try:
+            with open(cache_file) as f:
+                cached = json.load(f)
+                self._log_jsonl("fastpath_hit", {"task": task[:50], "cache_key": cache_key})
+                return cached
+        except:
+            return None
+    
+    def _save_fastpath_cache(self, task: str, result: Dict[str, Any]):
+        """保存FastPath缓存"""
+        cache_key = self._get_cache_key(task)
+        cache_file = self.cache_dir / f"{cache_key}.json"
+        
+        with open(cache_file, "w") as f:
+            json.dump(result, f)
+        
+        self._log_jsonl("fastpath_save", {"cache_key": cache_key})
+    
+    def _setup_subagent_state_machine(self):
+        """初始化子代理状态机"""
+        # 状态定义
+        self.SubagentState = {
+            "PENDING": "pending",
+            "RUNNING": "running",
+            "COMPLETE": "complete",
+            "FAILED": "failed",
+            "CANCELLED": "cancelled",
+            "TIMEOUT": "timeout",
+        }
+        # 子代理状态存储
+        self._subagent_states: Dict[str, Dict] = {}
     
     def _log_jsonl(self, event_type: str, data: Dict[str, Any]):
         """写入JSONL日志"""
@@ -103,6 +163,13 @@ class SindrisExecutor:
         
         # 记录规划开始
         self._log_jsonl("plan_start", {"task": task[:100]})
+        
+        # FastPath缓存检查
+        cached_result = self._check_fastpath_cache(task)
+        if cached_result:
+            cached_result["from_cache"] = True
+            self._log_jsonl("plan_cached", {"task": task[:50]})
+            return cached_result
         
         # 任务分解
         roles = task_decomposer.get_roles(task, [])
@@ -151,6 +218,9 @@ class SindrisExecutor:
             "subtasks_count": len(subtasks),
             "subtasks": [{"id": s["task_id"], "role": s["role"], "phase": s.get("phase")} for s in subtasks]
         })
+        
+        # 保存FastPath缓存
+        self._save_fastpath_cache(task, result)
         
         return result
     
@@ -230,6 +300,51 @@ class SindrisExecutor:
             "status": status,
             "details": details or {}
         })
+    
+    # ========== 子代理状态机 ==========
+    
+    def update_subagent_state(self, task_id: str, session_key: str, state: str):
+        """
+        更新子代理状态
+        
+        状态流转：
+        PENDING → RUNNING → COMPLETE/FAILED/TIMEOUT/CANCELLED
+        """
+        if task_id not in self._subagent_states:
+            self._subagent_states[task_id] = {
+                "session_key": session_key,
+                "state": state,
+                "state_history": [],
+                "created_at": datetime.now().isoformat(),
+            }
+        else:
+            old_state = self._subagent_states[task_id]["state"]
+            self._subagent_states[task_id]["state"] = state
+            self._subagent_states[task_id]["state_history"].append({
+                "from": old_state,
+                "to": state,
+                "at": datetime.now().isoformat(),
+            })
+        
+        self._log_jsonl("subagent_state", {
+            "task_id": task_id,
+            "state": state,
+            "state_history": self._subagent_states[task_id]["state_history"],
+        })
+    
+    def get_subagent_state(self, task_id: str) -> Optional[str]:
+        """获取子代理当前状态"""
+        return self._subagent_states.get(task_id, {}).get("state")
+    
+    def is_subagent_terminal(self, task_id: str) -> bool:
+        """判断子代理是否处于终态"""
+        state = self.get_subagent_state(task_id)
+        return state in [self.SubagentState["COMPLETE"], self.SubagentState["FAILED"], 
+                         self.SubagentState["CANCELLED"], self.SubagentState["TIMEOUT"]]
+    
+    def get_all_subagent_states(self) -> Dict[str, Dict]:
+        """获取所有子代理状态"""
+        return self._subagent_states
 
 
 # 兼容性别名
