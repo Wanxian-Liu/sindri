@@ -22,29 +22,18 @@ SCRIPTS = os.path.join(SCRIPT_DIR, "scripts")
 sys.path.insert(0, SCRIPT_DIR)
 sys.path.insert(0, SCRIPTS)
 
-# 尝试导入新模块
+# 尝试导入核心模块
 try:
     from modules import (
-        SindrisScheduler,
-        RoundManager,
-        ReportGenerator,
-        RoleManager,
-        TaskDecomposer,
+        ReportGenerator,  # 报告生成（保留）
+        RoleManager,      # 角色管理（使用中）
+        TaskDecomposer,   # 任务分解（使用中）
+        # 注意：SindrisScheduler和RoundManager已移除（死代码）
     )
     MODULES_AVAILABLE = True
 except ImportError as e:
-    print(f"[sindris] Warning: New modules not available ({e}), using legacy mode")
+    print(f"[sindris] Warning: Modules not available ({e})")
     MODULES_AVAILABLE = False
-
-# sindris自有模块（独立运行，不依赖织界中枢）
-from consensus_officer import ConsensusOfficer
-from circuit_breaker import CircuitBreaker
-from safety_policy import SafetyPolicy, DangerLevel
-from review_logger import ReviewLogger, ResultSignal
-from telemetry_collector import TelemetryCollector, TelemetryEvent
-from memory_manager import MemoryManager
-from task_queue import TaskQueue, BlockReason
-from sindris_hud import SindrisHUD, HUDStyle, HUDData, TaskDisplay
 
 # 导入执行器（用于真正执行任务）
 try:
@@ -89,17 +78,11 @@ class SindrisExecutor:
         
         # 初始化模块（如果可用）
         if MODULES_AVAILABLE:
-            self.scheduler = SindrisScheduler()
-            self.round_manager = RoundManager(
-                workspace_root=self.workspace_root,
-                session_id=self.session_id,
-            )
+            # 注意：scheduler和round_manager已移除（死代码）
             self.report_generator = ReportGenerator(self.session_id)
             self.role_manager = RoleManager(self.workspace_root)
             self.task_decomposer = TaskDecomposer(self.workspace_root)
         else:
-            self.scheduler = None
-            self.round_manager = None
             self.report_generator = None
             self.role_manager = None
             self.task_decomposer = None
@@ -111,20 +94,8 @@ class SindrisExecutor:
         except Exception:
             self.omx = None
         
-        # 熔断器
-        self._circuit_breakers: Dict[str, Any] = {}
-        
         # 执行器（用于真正执行任务）
         self._agent_executor = AgentExecutor(workspace_root=self.workspace_root) if AgentExecutor else None
-    
-    def _get_circuit_breaker(self, role_type: str):
-        """获取熔断器"""
-        if role_type not in self._circuit_breakers:
-            self._circuit_breakers[role_type] = CircuitBreaker(
-                task_id=f"{self.session_id}_{role_type}",
-                role=role_type,
-            )
-        return self._circuit_breakers[role_type]
     
     async def plan(self, task: str) -> Dict[str, Any]:
         """
