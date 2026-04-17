@@ -134,15 +134,24 @@ class SindrisExecutor:
     
     def _find_role_file(self, role_name: str) -> Optional[str]:
         """查找角色文件路径"""
-        # 简化版：直接在roles目录搜索
         roles_dir = Path(SCRIPT_DIR) / "roles"
         if not roles_dir.exists():
             return None
         
-        # 搜索所有.md文件
-        name_lower = role_name.lower().replace(" ", "-")
+        # 标准化角色名：去除sindri-前缀，转换空格/下划线
+        normalized = role_name.lower().replace(" ", "-").replace("_", "-")
+        # 去掉sindri-前缀如果存在
+        if normalized.startswith("sindri-"):
+            normalized = normalized[7:]
+        
         for md_file in roles_dir.rglob("*.md"):
-            if name_lower in md_file.stem.lower():
+            stem = md_file.stem.lower()
+            # 去掉sindri-前缀
+            if stem.startswith("sindri-"):
+                stem = stem[7:]
+            # 检查是否匹配（支持部分匹配）
+            if (normalized in stem or 
+                any(part in stem for part in normalized.split("-"))):
                 return str(md_file.relative_to(SCRIPT_DIR))
         
         return None
