@@ -92,7 +92,7 @@ class SindrisExecutor:
                 "task_id": t.id,
                 "role": role_name,
                 "role_file": role_file,
-                "title": f"[{role_name}] {t.title}",
+                "title": t.title,
                 "tools": role_manager.get_allowed_tools(role_name) if role_manager else ["read", "exec"],
                 "timeout": role_manager.get_timeout(role_name) if role_manager else 600,
                 "phase": t.phase,

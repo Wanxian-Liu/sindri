@@ -147,7 +147,7 @@ class TaskDecomposer:
         
         tasks.append(Task(
             id=self._gen_id("task"),
-            title=f"[{architect_role['name']}] 架构分析与任务规划",
+            title="架构分析与任务规划",
             kind="round1_planning",
             phase="round1",
             priority="high",
@@ -170,7 +170,7 @@ class TaskDecomposer:
         for i, slice in enumerate(slices[:20]):  # 限制最多20个
             tasks.append(Task(
                 id=self._gen_id("task"),
-                title=f"[{developer_role['name']}] {slice['file']}::{slice['function']}",
+                title=f"{slice['file']}::{slice['function']}",
                 kind="round2_execution",
                 phase="round2",
                 priority=slice.get('priority', 'medium'),
@@ -194,7 +194,7 @@ class TaskDecomposer:
         # 功能验证任务
         tasks.append(Task(
             id=self._gen_id("task"),
-            title=f"[{tester_role['name']}] 功能验证",
+            title="功能验证",
             kind="round3_review",
             phase="round3",
             priority="high",
@@ -209,7 +209,7 @@ class TaskDecomposer:
         # 质量审查任务
         tasks.append(Task(
             id=self._gen_id("task"),
-            title=f"[{checker_role['name']}] 代码质量审查",
+            title="代码质量审查",
             kind="round3_review",
             phase="round3",
             priority="high",
