@@ -37,6 +37,16 @@ from .role_hierarchical_matcher import (
 )
 from .task_decomposer import TaskDecomposer
 
+# 进化任务
+from .evolution_task import (
+    EVOLUTION_TASK_CONFIG,
+    HERMES_CORE_COMPONENTS,
+    MIMIR_AETHER_COMPONENTS,
+    EVOLUTION_COMPARISON_TEMPLATE,
+    EVOLUTION_REPORT_TEMPLATE,
+    EVOLUTION_TASK_PROMPT,
+)
+
 __all__ = [
     # GStackPro
     "GStackRole",
@@ -59,5 +69,10 @@ __all__ = [
     "classify_domain",
     "classify_skills",
     "match_roles",
-
+    # 进化任务
+    "EVOLUTION_TASK_CONFIG",
+    "HERMES_CORE_COMPONENTS",
+    "MIMIR_AETHER_COMPONENTS",
+    "EVOLUTION_COMPARISON_TEMPLATE",
+    "EVOLUTION_REPORT_TEMPLATE",
 ]
