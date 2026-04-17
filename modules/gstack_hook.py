@@ -46,22 +46,22 @@ class GStackHook:
     
     async def _call_paranoid_review(self, code: str) -> Dict[str, Any]:
         """调用GStackPro Paranoid Review"""
+        import sys
+        
+        # 优先从sindris_gstack_hybrid导入（因为那里有完整实现）
+        hybrid_path = '/home/rayliu/.openclaw/workspace/sindri_gstack_hybrid'
+        if hybrid_path not in sys.path:
+            sys.path.insert(0, hybrid_path)
+        
         try:
-            # 尝试从sindris modules导入
-            from modules.gstack_integration import call_gstack_role, GStackRole
+            from gstack_integration import call_gstack_role, GStackRole
         except ImportError:
-            try:
-                # 尝试从sindri_gstack_hybrid导入
-                import sys
-                sys.path.insert(0, '/home/rayliu/.openclaw/workspace/sindri_gstack_hybrid')
-                from gstack_integration import call_gstack_role, GStackRole
-            except ImportError:
-                return {"status": "import_error", "error": "gstack_integration not found"}
+            return {"status": "import_error", "error": "gstack_integration not found"}
         
         result = await call_gstack_role(
             GStackRole.REVIEW,
             f"审查以下代码：\n\n{code[:2000]}",  # 限制长度
-            timeout=120
+            timeout=60
         )
         
         return {
