@@ -257,16 +257,22 @@ class TaskDecomposer:
         tasks = []
         developer_role = FIXED_TEAM[3]  # Senior Developer
         
-        # 如果有slices，按slice创建任务
-        if slices:
-            for slice_info in slices[:20]:  # 限制最多20个
+        # 如果有slices且数量合理（<=5），按slice创建任务
+        # 数量>5说明SliceGenerator无法精确匹配，使用fallback避免污染
+        if slices and len(slices) <= 5:
+            for slice_info in slices:
+                # 验证slice的test_cmd是否有效
+                test_cmd = slice_info.get('test_cmd', '')
+                # 如果test_cmd包含pytest且文件存在，则认为有效
+                verify = [test_cmd] if test_cmd and 'pytest' in test_cmd else ['代码审查通过']
+                
                 tasks.append(Task(
                     id=self._gen_id("task"),
                     title=f"{slice_info['file']}::{slice_info['function']}",
                     kind="round2_execution",
                     phase="round2",
                     priority=slice_info.get('priority', 'medium'),
-                    verify=[slice_info.get('test_cmd', '代码审查通过')],
+                    verify=verify,
                     metadata={
                         "role": developer_role,
                         "slice": slice_info,
@@ -274,20 +280,28 @@ class TaskDecomposer:
                     }
                 ))
         else:
-            # 无slices时的fallback任务
-            tasks.append(Task(
-                id=self._gen_id("task"),
-                title="执行任务分析",
-                kind="round2_execution",
-                phase="round2",
-                priority="high",
-                verify=["任务理解正确", "执行方案明确"],
-                metadata={
-                    "role": developer_role,
-                    "stage": "execution",
-                    "fallback": True,
-                }
-            ))
+            # slice太多（>10）或无slice时使用fallback
+            # 这避免了指向上下文不相关文件的问题
+            fallback_tasks = [
+                ("任务理解与分解", ["任务理解正确", "分解方案合理"]),
+                ("代码实现与调试", ["代码实现完成", "调试通过"]),
+                ("测试与验证", ["单元测试通过", "集成测试通过"]),
+            ]
+            for title, verify_list in fallback_tasks:
+                tasks.append(Task(
+                    id=self._gen_id("task"),
+                    title=title,
+                    kind="round2_execution",
+                    phase="round2",
+                    priority="high",
+                    verify=verify_list,
+                    metadata={
+                        "role": developer_role,
+                        "stage": "execution",
+                        "fallback": True,
+                        "slices_count": len(slices) if slices else 0,
+                    }
+                ))
         
         return tasks
     

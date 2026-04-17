@@ -11,7 +11,7 @@ sindris_executor.py - 织界统一协调系统执行引擎 (纯规划器版)
 - 子代理套用专业角色工作
 """
 
-VERSION = "3.4"
+VERSION = "3.5"
 
 import uuid
 from pathlib import Path
