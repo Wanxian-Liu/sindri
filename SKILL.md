@@ -1,6 +1,6 @@
 ---
 name: sindris
-version: "2.21"
+version: "3.4"
 license: MIT
 copyright: "2026 琬弦 (Wanxian)"
 description: |
