@@ -3,85 +3,59 @@ Sindri进化任务：MimirAether向Hermes 1:1进化
 
 命令词：进化MimirAether → Hermes
 
-触发方式：
-    说"进化MimirAether → Hermes"，Sindri自动执行
-
-执行流程：
-    Round1: 研究
-        - 研究Hermes核心组件设计
-        - 研究MimirAether当前实现
-        - 对比差距
-        
-    Round2: 方案
-        - 列出1:1进化清单
-        - 优先级排序
-        - 预估工作量
-        
-    Round3: 执行（刘哥同意后）
-        - 按优先级逐步改进
-        
-    Round4: 验证
-        - 测试改进效果
-        - Git commit
+重要：此任务需要刘哥确认方案后才能执行！
 """
 
+# ============================================================================
+# 源代码路径配置（必须准确）
+# ============================================================================
+
+HERMES_ROOT = "/home/rayliu/.openclaw/projects/hermes-agent"
+MIMIR_AETHER_ROOT = "/home/rayliu/.openclaw/projects/MimirAether"
+
+# Hermes核心组件（用于对比）
+# Hermes核心组件（用于对比）
+HERMES_CORE_COMPONENTS = [
+    ("agent/core_loop.py", "核心执行循环"),
+    ("agent/context_compressor.py", "上下文压缩"),
+    ("agent/insights.py", "数据洞察"),
+    ("agent/credential_pool.py", "凭证池"),
+    ("agent/prompt_builder.py", "Prompt构建"),
+    ("tools/skills_tool.py", "技能工具"),
+]
+
+# MimirAether对应组件
+MIMIR_AETHER_COMPONENTS = [
+    ("agent/core_loop.py", "核心执行循环"),
+    ("agent/context_compressor.py", "上下文压缩"),
+    ("agent/insights.py", "数据洞察"),
+    ("agent/credential_pool.py", "凭证池"),
+    ("agent/prompt_builder.py", "Prompt构建"),
+    ("skills/skills_loader.py", "技能加载器"),
+]
+
+# ============================================================================
 # 进化任务配置
+# ============================================================================
+
 EVOLUTION_TASK_CONFIG = {
     "name": "MimirAether Hermes Evolution",
     "command": "进化MimirAether → Hermes",
     "description": "将MimirAether向Hermes进行1:1结构进化",
-    "target": "MimirAether",
-    "reference": "Hermes",
-    "mode": "study_then_execute",  # 先研究后执行，需要刘哥确认
+    "mode": "study_then_execute",  # 先研究后执行
+    "require_approval": True,  # 需要刘哥确认
 }
 
-# Hermes核心组件清单（用于对比）
-HERMES_CORE_COMPONENTS = [
-    "agent/core_loop.py",
-    "agent/context_compressor.py",
-    "agent/insights.py",
-    "agent/credential_pool.py",
-    "agent/prompt_builder.py",
-    "tools/skills_tool.py",
-    "tools/skill_manager_tool.py",
-    "scheduler/cron.py",
-]
-
-# MimirAether对应组件（当前状态）
-MIMIR_AETHER_COMPONENTS = [
-    "agent/core_loop.py",
-    "agent/context_compressor.py",
-    "agent/insights.py",
-    "agent/credential_pool.py",
-    "agent/prompt_builder.py",
-    "skills/skills_loader.py",
-    "skills/skill_manager.py",
-    "scheduler/jobs.py",
-]
-
-# 进化对比模板
-EVOLUTION_COMPARISON_TEMPLATE = """
-## {component_name}
-
-### Hermes设计
-{hermes_design}
-
-### MimirAether现状
-{mimir_current}
-
-### 差距
-{gap}
-
-### 进化建议
-{suggestion}
-
-### 优先级
-{priority}
-"""
-
+# ============================================================================
 # 进化报告模板
+# ============================================================================
+
 EVOLUTION_REPORT_TEMPLATE = """
 # MimirAether向Hermes 1:1进化方案
+
+**源代码路径**：
+- Hermes: `{hermes_root}`
+- MimirAether: `{mimir_root}`
 
 ## 总体评估
 {total_assessment}
@@ -98,80 +72,76 @@ EVOLUTION_REPORT_TEMPLATE = """
 {estimated_effort}
 
 ---
-请确认后说"执行进化"开始执行。
+## ⚠️ 刘哥确认
+
+请审查以上方案。
+
+**确认后说**：`执行进化` 或 `开始执行`
+
+**拒绝说**：`取消` 或 `重新规划`
 """
 
-# Sindri进化任务Prompt
+# ============================================================================
+# Sindri进化任务Prompt（完整版）
+# ============================================================================
+
 EVOLUTION_TASK_PROMPT = """
 # MimirAether向Hermes 1:1进化任务
 
-## 命令词
-```
-进化MimirAether → Hermes
-```
+## ⚠️ 重要提醒
+
+此任务**必须先出方案，刘哥确认后才能执行**。
+
+## 源代码路径
+
+- **Hermes**: `{hermes_root}`
+- **MimirAether**: `{mimir_root}`
 
 ## 任务目标
-将MimirAether向Hermes进行**1:1结构进化**，学习Hermes的架构设计，**但不使用Hermes的代码**。
 
-## 核心原则
-- **学结构**：模块划分、接口设计、数据流
-- **不抄代码**：自己实现，不复制粘贴
-- **刘哥确认**：方案确认后再执行
+将MimirAether向Hermes进行**1:1结构进化**：
+- 学习Hermes的架构设计
+- 不使用Hermes的代码（自己实现）
+- 保持MimirAether的独特性
 
-## 执行流程
+## 执行流程（3阶段）
 
-### Round1: 研究
-1. 研究Hermes核心组件设计
-   - agent/core_loop.py
-   - agent/context_compressor.py
-   - agent/insights.py
-   - agent/credential_pool.py
-   - tools/skills_tool.py
+### 阶段1: 研究（自动执行）
+1. 读取Hermes核心组件源码
+2. 读取MimirAether对应组件源码
+3. 对比架构差距
 
-2. 研究MimirAether当前实现
-   - 对比相同组件的实现差异
-
-3. 对比差距
-   - 架构差距
-   - 功能差距
-   - 完整性差距
-
-### Round2: 方案
-1. 列出1:1进化清单
-   - 组件名
-   - 当前状态
-   - 目标状态
-   - 进化方式（自学/参考Hermes）
-
-2. 优先级排序
-   - P0: 核心功能缺陷
-   - P1: 重要功能缺失
-   - P2: 优化改进
-
+### 阶段2: 出方案（自动执行）
+1. 列出进化清单（组件名、当前状态、目标状态）
+2. 优先级排序（P0/P1/P2）
 3. 预估工作量
 
-### Round3: 执行（刘哥同意后）
+### 阶段3: 执行（**需要刘哥确认**）
+刘哥说"执行进化"后才执行：
 1. 按优先级逐步改进
-2. 每个组件改进后验证
-3. 及时汇报进度
+2. 每个组件改进后测试
+3. Git commit
 
-### Round4: 验证
-1. 测试改进效果
-2. Git commit
-3. 更新文档
+## 对比组件清单
 
-## 输出格式
+{HERMES_CORE_COMPONENTS}
 
-### 研究报告
+对应MimirAether组件：
+{MIMIR_AETHER_COMPONENTS}
+
+## 输出要求
+
+### 研究阶段输出
+对每个组件输出：
 ```
-## {组件名}
+## {component_name}
 
-### Hermes设计
+### Hermes设计（来自 {hermes_root}/{component_path}）
 - 架构：
 - 核心逻辑：
 - 数据流：
 
-### MimirAether现状
+### MimirAether现状（来自 {mimir_root}/{component_path}）
 - 当前实现：
 - 差距：
 
@@ -180,23 +150,41 @@ EVOLUTION_TASK_PROMPT = """
 - 如何做（不抄代码）
 ```
 
-### 进化方案
+### 方案阶段输出
 ```
 ## 进化清单
 
-| 优先级 | 组件 | 当前状态 | 目标状态 | 工作量 |
-|--------|------|---------|---------|--------|
+| 优先级 | Hermes组件 | MimirAether组件 | 差距 | 工作量 |
+|--------|-----------|----------------|------|--------|
 | P0 | ... | ... | ... | ... |
 
 ## 执行计划
 1. ...
 2. ...
 
-请确认后说"执行进化"开始执行。
+## 预估工作量
+- 总计: X小时
+- P0: X小时
+- P1: X小时
+- P2: X小时
 ```
 
+## ⚠️ 刘哥确认
+
+方案出来后请刘哥审查。
+
+**确认后说**：`执行进化` 或 `开始执行`
+
+**拒绝说**：`取消` 或 `重新规划`
+
 ## 注意事项
-- 重点关注：自进化机制、skill系统、上下文压缩
-- 不要复制Hermes代码
-- 保持MimirAether的独特性
+
+1. **不抄代码** - 只学架构设计，自己实现
+2. **保持独特性** - MimirAether有自己特色不要改
+3. **先方案后执行** - 必须先出方案
+4. **刘哥确认** - 必须刘哥确认后才能执行
 """
+
+# 路径常量（供外部使用）
+HERMES_SOURCE_ROOT = HERMES_ROOT
+MIMIR_AETHER_SOURCE_ROOT = MIMIR_AETHER_ROOT
