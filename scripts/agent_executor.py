@@ -17,7 +17,7 @@ import sys
 import json
 import time
 from typing import Dict, Any, Optional, List
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 
 # DeepSeek客户端路径
@@ -25,13 +25,21 @@ DEEPSEEK_CLIENT_PATH = os.path.expanduser("~/.openclaw/projects/MimirAether/mimi
 
 @dataclass
 class ExecutionResult:
-    """执行结果"""
-    success: bool
-    task_id: str
+    """执行结果（兼容report_generator和agent_executor两个版本）"""
+    # agent_executor字段
+    success: bool = True
+    task_id: str = ""
     output: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
     backend: str = "unknown"  # sessions_spawn / deepseek / local / mock
     execution_time_ms: int = 0
+    # report_generator字段（兼容）
+    title: str = ""
+    role: str = ""
+    status: str = ""  # "success" / "failed"
+    duration_ms: int = 0
+    verify_passed: bool = False
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
 class ExecutionBackend(Enum):
     """执行后端"""
