@@ -182,7 +182,7 @@ class SindrisScheduler:
                             name_match = re.search(r'name:\s*"?([^"]+)"?', frontmatter)
                             emoji = emoji_match.group(1) if emoji_match else ""
                             name = name_match.group(1) if name_match else role_type
-                            role_instruction = f"\n\n# 你的角色\n{emoji} {name}\n\n{body[:500]}..."
+                            role_instruction = f"\n\n# 你的角色\n{emoji} {name}\n\n{body[:2000]}"
             except Exception as e:
                 print(f"[Scheduler] Failed to load role_file: {e}")
         
