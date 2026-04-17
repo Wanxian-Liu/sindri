@@ -29,6 +29,12 @@ from .round_manager import RoundManager
 from .report_generator import ReportGenerator
 from .role_manager import RoleManager
 from .role_matcher import RoleMatcher, FIXED_TEAM, FIXED_TEAM_TRIGGERS
+from .role_hierarchical_matcher import (
+    RoleHierarchicalMatcher,
+    classify_domain,
+    classify_skills,
+    match_roles,
+)
 from .task_decomposer import TaskDecomposer
 
 __all__ = [
@@ -48,4 +54,10 @@ __all__ = [
     "RoleMatcher",
     "FIXED_TEAM",
     "FIXED_TEAM_TRIGGERS",
+    # 分层角色匹配
+    "RoleHierarchicalMatcher",
+    "classify_domain",
+    "classify_skills",
+    "match_roles",
+
 ]

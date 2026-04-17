@@ -15,6 +15,7 @@ from typing import List, Dict, Optional, Tuple
 from dataclasses import dataclass
 
 from .task_classifier import TaskClassifier, TaskType
+from .role_hierarchical_matcher import classify_domain, RoleHierarchicalMatcher
 
 
 # 固定小组配置
@@ -65,6 +66,7 @@ class RoleMatcher:
             "~/.openclaw/skills/sindris/scripts/roles_registry.json"
         )
         self._task_classifier = TaskClassifier()  # 任务类型识别器
+        self._hierarchical_matcher = RoleHierarchicalMatcher(self._registry_path)  # 分层匹配器
         self._load_roles()
     
     def _load_roles(self) -> None:
@@ -98,13 +100,16 @@ class RoleMatcher:
         匹配角色
         
         策略优先级：
-        1. 固定小组（编程任务）
-        2. 向量相似度
+        1. 固定小组（编程任务，但creative域除外）
+        2. 分层域判断 + 向量相似度
         3. claim覆盖
         4. 关键词匹配
         """
-        # 1. 任务类型识别 + 固定小组
-        if self.should_use_fixed_team(task):
+        # 0. 分层域判断（优先）
+        task_domain = classify_domain(task)
+        
+        # 1. 任务类型识别 + 固定小组（creative域不用固定团队）
+        if task_domain != "creative" and self.should_use_fixed_team(task):
             task_type = self.classify_task_type(task)
             print(f"[RoleMatcher] 任务类型: {task_type.value}, 使用固定团队")
             return [
@@ -112,8 +117,8 @@ class RoleMatcher:
                 for r in FIXED_TEAM
             ][:top_k]
         
-        # 2. 向量相似度匹配
-        vector_matches = self._match_by_vector(task, top_k)
+        # 2. 分层域判断 + 向量相似度匹配
+        vector_matches = self._match_by_vector(task, top_k, preferred_domain=task_domain)
         
         # 3. 应用claim覆盖
         matches = self._apply_claim_overrides(vector_matches, task)
@@ -124,8 +129,8 @@ class RoleMatcher:
         
         return matches[:top_k]
     
-    def _match_by_vector(self, task: str, top_k: int) -> List[RoleMatch]:
-        """向量相似度匹配（简化版TF-IDF + 关键词增强）"""
+    def _match_by_vector(self, task: str, top_k: int, preferred_domain: str = None) -> List[RoleMatch]:
+        """向量相似度匹配（简化版TF-IDF + 分层域增强）"""
         task_lower = task.lower()
         task_tokens = self._tokenize(task)
         if not task_tokens and not task_lower:
@@ -133,6 +138,13 @@ class RoleMatcher:
         
         # 计算task的TF-IDF
         task_tfidf = self._compute_tfidf(task_tokens)
+        
+        # 分层域映射：角色category -> 任务域
+        CATEGORY_TO_DOMAIN = {
+            "blender": "creative", "unity": "creative", "godot": "creative",
+            "academic": "research", "testing": "testing", "product": "product",
+            "marketing": "marketing", "engineering": "engineering",
+        }
         
         # 计算每个角色的得分
         scores = []
@@ -154,6 +166,12 @@ class RoleMatcher:
                 if kw.lower() in task_lower:
                     keyword_boost += 0.2
             
+            # 分层域增强：如果角色category匹配任务域，大幅增强
+            if preferred_domain:
+                role_domain = CATEGORY_TO_DOMAIN.get(role_category, role_category)
+                if role_domain == preferred_domain:
+                    keyword_boost += 0.5  # 域匹配加分
+            
             # 分类匹配增强
             category_keywords = {
                 'engineering': ['开发', '代码', 'python', 'java', '编程', 'code', 'develop', 'software', '架构', 'architect', '系统'],
@@ -162,10 +180,11 @@ class RoleMatcher:
                 'design': ['设计', 'design', 'ui', 'ux', '界面'],
                 'research': ['研究', '分析', 'research', 'analyze'],
                 'academic': ['学术', '研究', 'theory', '理论'],
+                'creative': ['blender', 'unity', '3d', '建模', '渲染', '动画', '设计'],
             }
             
             for cat, kws in category_keywords.items():
-                if cat in role_category.lower():
+                if cat in role_category.lower() or (preferred_domain and cat == preferred_domain):
                     for kw in kws:
                         if kw in task_lower:
                             keyword_boost += 0.15
