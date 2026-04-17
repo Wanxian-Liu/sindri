@@ -15,8 +15,8 @@ MIMIR_AETHER_ROOT = "/home/rayliu/.openclaw/projects/MimirAether"
 
 # Hermes核心组件（用于对比）
 # Hermes核心组件（用于对比）
+# 注意：只列出实际存在的文件
 HERMES_CORE_COMPONENTS = [
-    ("agent/core_loop.py", "核心执行循环"),
     ("agent/context_compressor.py", "上下文压缩"),
     ("agent/insights.py", "数据洞察"),
     ("agent/credential_pool.py", "凭证池"),
