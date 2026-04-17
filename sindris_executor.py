@@ -252,6 +252,26 @@ class SindrisExecutor:
                     "skipped": True,
                 })
         
+        # Round3: GStackHook审查（如果有）
+        try:
+            from modules.gstack_hook import gstack_hook
+            
+            reviewed_results = []
+            for r in round2_results:
+                if r.get('success') and r.get('output'):
+                    hook_result = await gstack_hook.on_worker_complete(
+                        task_id=r.get('task_id', ''),
+                        output=str(r.get('output', '')),
+                        worker_role=r.get('role', '')
+                    )
+                    r['gstack_review'] = hook_result
+                reviewed_results.append(r)
+            round2_results = reviewed_results
+        except ImportError:
+            pass  # GStackHook不可用，跳过
+        except Exception as e:
+            pass  # Hook调用失败，不阻塞流程
+        
         # Round3: 审查结果
         review_passed = all(r.get("success") for r in round2_results)
         failed_count = sum(1 for r in round2_results if not r.get("success"))
