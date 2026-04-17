@@ -162,7 +162,7 @@ class SindrisExecutor:
     async def _plan_legacy(self, task: str) -> Dict[str, Any]:
         """遗留模式规划"""
         # 简化版，使用固定小组
-        from modules.task_decomposer import FIXED_TEAM, FIXED_TEAM_TRIGGERS
+        from modules.role_matcher import FIXED_TEAM, FIXED_TEAM_TRIGGERS
         
         task_lower = task.lower()
         if any(trigger in task_lower for trigger in FIXED_TEAM_TRIGGERS):

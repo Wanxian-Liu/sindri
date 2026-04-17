@@ -23,7 +23,16 @@ from .health_score import (
     format_health_report,
 )
 
+# Sindris核心组件
+from .scheduler import SindrisScheduler
+from .round_manager import RoundManager
+from .report_generator import ReportGenerator
+from .role_manager import RoleManager
+from .role_matcher import RoleMatcher, FIXED_TEAM, FIXED_TEAM_TRIGGERS
+from .task_decomposer import TaskDecomposer
+
 __all__ = [
+    # GStackPro
     "GStackRole",
     "GStackResult", 
     "call_gstack_role",
@@ -31,4 +40,12 @@ __all__ = [
     "HealthScoreResult",
     "calculate_health_score",
     "format_health_report",
+    # Sindris核心
+    "SindrisScheduler",
+    "RoundManager",
+    "ReportGenerator",
+    "RoleManager",
+    "RoleMatcher",
+    "FIXED_TEAM",
+    "FIXED_TEAM_TRIGGERS",
 ]
