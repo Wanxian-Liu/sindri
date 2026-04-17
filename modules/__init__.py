@@ -1,21 +1,34 @@
 """
-sindris modules - 按职责拆分的模块
+Sindri+GStackPro混合框架 - 主入口
+
+整合Sindri Round1-4流程与GStackPro质量关卡
+
+流程:
+Round0: CEO审视 (GStackPro) - 值不值得做？
+Round1: 规划 (Sindri) - 178角色匹配
+Round2: 执行 (Sindri) + Paranoid Review (GStackPro)
+Round3: 集成 + Health Score (GStackPro)
+Round4: 完成 (Sindri)
 """
 
-from .scheduler import SindrisScheduler
-from .round_manager import RoundManager
-from .report_generator import ReportGenerator
-from .role_manager import RoleManager
-from .task_decomposer import TaskDecomposer
-from .role_matcher import RoleMatcher, RoleMatch, FIXED_TEAM
+from .gstack_integration import (
+    GStackRole,
+    GStackResult,
+    call_gstack_role,
+)
+from .health_score import (
+    HealthScoreConfig,
+    HealthScoreResult,
+    calculate_health_score,
+    format_health_report,
+)
 
 __all__ = [
-    "SindrisScheduler",
-    "RoundManager", 
-    "ReportGenerator",
-    "RoleManager",
-    "TaskDecomposer",
-    "RoleMatcher",
-    "RoleMatch",
-    "FIXED_TEAM",
+    "GStackRole",
+    "GStackResult", 
+    "call_gstack_role",
+    "HealthScoreConfig",
+    "HealthScoreResult",
+    "calculate_health_score",
+    "format_health_report",
 ]

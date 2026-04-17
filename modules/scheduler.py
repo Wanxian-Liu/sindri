@@ -45,7 +45,7 @@ class AgentEventData:
 class SchedulerConfig:
     """调度配置"""
     max_retries: int = 3
-    default_timeout: int = 300
+    default_timeout: int = 600  # 10分钟
     circuit_failure_threshold: int = 5
     circuit_recovery_timeout: int = 60
     max_thread_pool_workers: int = 4

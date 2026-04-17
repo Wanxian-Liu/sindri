@@ -24,11 +24,11 @@ ROLE_TOOL_DEFAULTS = {
 
 # 角色超时配置（秒）
 ROLE_TIMEOUT_DEFAULTS = {
-    "researcher": 600,
-    "developer": 1200,
-    "verifier": 300,
-    "architect": 600,
-    "general": 600,
+    "researcher": 900,   # 15分钟
+    "developer": 1800,   # 30分钟
+    "verifier": 600,     # 10分钟
+    "architect": 900,    # 15分钟
+    "general": 900,       # 15分钟
 }
 
 
