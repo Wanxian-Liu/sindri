@@ -88,10 +88,14 @@ class SindrisExecutor:
             role_name = role.get("name", role.get("id", "Specialist"))
             role_file = self._find_role_file(role_name)
             
+            # 获取角色prompt
+            role_prompt = self.get_role_prompt(role_name) if role_file else f"你是 {role_name}。"
+            
             subtasks.append({
                 "task_id": t.id,
                 "role": role_name,
                 "role_file": role_file,
+                "role_prompt": role_prompt,
                 "title": t.title,
                 "tools": role_manager.get_allowed_tools(role_name) if role_manager else ["read", "exec"],
                 "timeout": role_manager.get_timeout(role_name) if role_manager else 600,

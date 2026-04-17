@@ -9,7 +9,9 @@ scheduler.py - 任务调度模块
 
 import asyncio
 import uuid
+import re
 import concurrent.futures
+from pathlib import Path
 from typing import Dict, List, Optional, Any, Callable
 from dataclasses import dataclass, field
 from enum import Enum
@@ -136,9 +138,18 @@ class SindrisScheduler:
         allowed_tools: List[str],
         timeout: int,
         cwd: str,
+        role_file: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         启动子代理
+        
+        Args:
+            task_title: 任务标题
+            role_type: 角色类型
+            allowed_tools: 允许的工具列表
+            timeout: 超时时间（秒）
+            cwd: 工作目录
+            role_file: 角色文件路径（可选）
         
         Returns:
             {
@@ -152,9 +163,35 @@ class SindrisScheduler:
         
         session_id = f"sindris_{uuid.uuid4().hex[:8]}"
         
+        # 加载角色文件内容
+        role_instruction = ""
+        if role_file:
+            try:
+                role_path = Path(role_file)
+                if role_path.exists():
+                    role_content = role_path.read_text()
+                    # 提取frontmatter中的角色定义
+                    if role_content.startswith("---"):
+                        parts = role_content.split("---", 2)
+                        if len(parts) >= 3:
+                            frontmatter = parts[1]
+                            body = parts[2]
+                            # 提取emoji和name
+                            import re
+                            emoji_match = re.search(r'emoji:\s*"?([^\n"]+)"?', frontmatter)
+                            name_match = re.search(r'name:\s*"?([^"]+)"?', frontmatter)
+                            emoji = emoji_match.group(1) if emoji_match else ""
+                            name = name_match.group(1) if name_match else role_type
+                            role_instruction = f"\n\n# 你的角色\n{emoji} {name}\n\n{body[:500]}..."
+            except Exception as e:
+                print(f"[Scheduler] Failed to load role_file: {e}")
+        
+        # 构建任务描述：包含角色指令
+        full_task = f"{task_title}{role_instruction}"
+        
         try:
             result = await sessions_spawn(
-                task=task_title,
+                task=full_task,
                 runtime="subagent",
                 runTimeoutSeconds=timeout,
                 cleanup="keep",
