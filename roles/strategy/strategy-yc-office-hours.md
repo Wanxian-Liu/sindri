@@ -185,6 +185,380 @@ Ask these questions **ONE AT A TIME**. Push on each one until the answer is spec
 
 ---
 
+## Code Examples
+
+> These examples are companion scripts for the office hours coach — not part of the diagnostic workflow. Use them to prototype, validate, and analyze when the session surfaces concrete data.
+
+### Python: 产品需求分析 & 数据结构设计
+
+#### 用户访谈摘要分析（Q1/Q3 探索后使用）
+
+```python
+from dataclasses import dataclass, field
+from typing import Optional
+from collections import Counter
+
+@dataclass
+class UserInterview:
+    name: str
+    title: str
+    company: str
+    pain_scale: int  # 1-10
+    current_workaround: str
+    quotes: list[str] = field(default_factory=list)
+    behaviors: list[str] = field(default_factory=list)
+
+    def is_concrete(self) -> bool:
+        """Q3检测：用户回答是否足够具体？"""
+        red_flags = ["some companies", "many teams", "everyone needs"]
+        combined = f"{self.title} {self.company} {self.current_workaround}"
+        return not any(flag in combined.lower() for flag in red_flags)
+
+    def demand_signal(self) -> str:
+        """Q1检测：需求信号强度"""
+        if self.pain_scale >= 8 and self.behaviors:
+            return "HIGH — 有具体行为证据"
+        elif self.pain_scale >= 6:
+            return "MEDIUM — 自述痛苦但缺少行为"
+        else:
+            return "LOW — 需求不紧迫"
+
+# 示例：分析一组访谈
+interviews = [
+    UserInterview(
+        name="Sarah Chen",
+        title="Ops Manager",
+        company="50-person logistics company",
+        pain_scale=9,
+        current_workaround="Excel + Slack alerts + manual copy-paste, 3hrs/day",
+        quotes=["I literally check Slack every 5 minutes", "I got called at 2am last week"],
+        behaviors=["built a private spreadsheet to track shipments", "missed 3 deliveries due to alert overload"]
+    ),
+    UserInterview(
+        name="匿名用户",
+        title="Manager",
+        company="some company",
+        pain_scale=7,
+        current_workaround="uses tools",
+        quotes=["seems useful"],
+        behaviors=[]
+    ),
+]
+
+print("=== Q1 需求信号分析 ===")
+for iv in interviews:
+    print(f"{iv.name} ({iv.title}) → {iv.demand_signal()} | 具体性: {'✓' if iv.is_concrete() else '⚠️'}")
+
+print("\n=== Q3 精确度分析 ===")
+print(f"具体用户比例: {sum(1 for i in interviews if i.is_concrete())}/{len(interviews)}")
+```
+
+**输出示例：**
+```
+=== Q1 需求信号分析 ===
+Sarah Chen (Ops Manager) → HIGH — 有具体行为证据 | 具体性: ✓
+匿名用户 (Manager) → MEDIUM — 自述痛苦但缺少行为 | 具体性: ⚠️
+
+=== Q3 精确度分析 ===
+具体用户比例: 1/2
+```
+
+#### 窄切入点优先级矩阵（Q4 使用）
+
+```python
+from dataclasses import dataclass
+from typing import Literal
+
+@dataclass
+class WedgeOption:
+    feature: str
+    user: str
+    time_to_build: str  # days
+    willingness_to_pay: Literal["high", "medium", "low"]
+    competitive_moat: Literal["strong", "medium", "weak"]
+
+    def score(self) -> float:
+        """优先级评分：支付意愿×用户精确度 / 工期"""
+        pay_score = {"high": 3, "medium": 2, "low": 1}[self.willingness_to_pay]
+        time_score = max(1, {"1d": 1, "3d": 0.8, "1w": 0.5, "2w": 0.3, "1m+": 0.1}.get(self.time_to_build, 0.5))
+        return pay_score * time_score
+
+wedges = [
+    WedgeOption("实时货轮位置推送", "Sarah, Ops Manager @ 50人物流公司", "3d", "high", "medium"),
+    WedgeOption("完整ERP集成", "物流公司IT部门", "30d+", "medium", "weak"),
+    WedgeOption("历史数据报表", "运营总监 @ 任意规模", "7d", "low", "weak"),
+]
+
+print("=== Q4 窄切入点优先级 ===")
+for w in sorted(wedges, key=lambda x: -x.score()):
+    print(f"[{w.score():.2f}] {w.feature} | 用户: {w.user} | 工期: {w.time_to_build}")
+```
+
+---
+
+### Bash: 快速验证命令
+
+#### 验证用户规模声明（Q1 交叉检验）
+
+```bash
+# 检查公开数据：LinkedIn员工数、公司规模
+curl -s "https://api.linkedin.com/v2/company/~?format=json" 2>/dev/null | jq '.employeeCountRange' || \
+echo "公司规模需手动核实: https://www.linkedin.com/company/目标公司"
+
+# YC Demo Day历史数据：验证同类公司融资/用户规模
+curl -s "https://api.ycombinator.com/v0/companies.json" 2>/dev/null | \
+  jq '.[] | select(.YC_batch | contains("W24")) | {name, founded, company_size}' 2>/dev/null || \
+echo "YC数据需手动核实: https://www.ycombinator.com/companies"
+
+# 检查产品是否真正上线（Hacker News / Product Hunt信号）
+hn_mentions=$(curl -s "https://hn.algolia.com/api/v1/search?query=PRODUCT_NAME&tags=story" | jq '.hits | length')
+echo "HN讨论次数: $hn_mentions"
+
+# 快速验证"有很多人想要"：检查App Store/Play Store下载量
+# 示例（需替换实际包名）
+echo "手动检查: https://play.google.com/store/apps/details?id=PACKAGE_NAME"
+echo "手动检查: https://apps.apple.com/cn/app/idAPPLE_ID"
+```
+
+#### Status Quo 验证：估算当前方案成本（Q2）
+
+```bash
+#!/usr/bin/env bash
+# 估算用户每月在 workaround 上浪费的时间
+# 用法: ./cost_estimator.sh "3" "hrs/day" "50" "salary_per_hour"
+
+hours_per_day=$1
+days_per_week=${2:-5}
+hourly_rate=${3:-200}  # 默认200元/小时
+num_users=${4:-10}
+
+daily_cost=$(echo "$hours_per_day * $hourly_rate * $num_users" | bc)
+monthly_cost=$(echo "$daily_cost * 22" | bc)
+yearly_cost=$(echo "$monthly_cost * 12" | bc)
+
+echo "=== Q2 Status Quo 成本估算 ==="
+echo "每日浪费成本: ¥$daily_cost"
+echo "每月浪费成本: ¥$monthly_cost"
+echo "每年浪费成本: ¥$yearly_cost"
+echo ""
+echo "ROI测算：如果你的产品定价 ¥${hourly_rate}/月/用户"
+echo "只需 $num_users 个用户即可覆盖现状成本"
+```
+
+**运行示例：**
+```bash
+$ chmod +x cost_estimator.sh
+$ ./cost_estimator.sh 3 5 200 10
+=== Q2 Status Quo 成本估算 ===
+每日浪费成本: ¥6000
+每月浪费成本: ¥132000
+每年浪费成本: ¥1584000
+
+ROI测算：如果你的产品定价 ¥200/月/用户
+只需 10 个用户即可覆盖现状成本
+```
+
+---
+
+### SQL: 用户分析查询
+
+#### 用户行为深度分析（Q1/Q5 探索后使用）
+
+```sql
+-- YC评审场景：分析用户实际行为 vs 自我报告
+-- 假设有 users, events, payments 三张表
+
+-- Q1 Demand Signal: 谁在"用脚投票"（主动扩展使用）？
+SELECT
+    u.id,
+    u.email,
+    u.acquisition_channel,
+    COUNT(DISTINCT e.session_id) as total_sessions,
+    COUNT(DISTINCT DATE(e.created_at)) as active_days,
+    MAX(e.created_at) as last_active,
+    -- Q5 信号：用户是否在做产品没设计的事？
+    (SELECT COUNT(*) FROM events e2
+     WHERE e2.user_id = u.id
+     AND e2.event_type NOT IN ('page_view', 'click', 'scroll')) as non_core_actions
+FROM users u
+JOIN events e ON u.id = e.user_id
+WHERE u.created_at > NOW() - INTERVAL '90 days'
+GROUP BY u.id, u.email, u.acquisition_channel
+HAVING COUNT(DISTINCT e.session_id) > 5
+ORDER BY non_core_actions DESC  -- 意外行为越多越值得关注
+LIMIT 20;
+
+-- Q5 观察惊喜：用户做了哪些"意外之事"？
+SELECT
+    event_type,
+    COUNT(*) as occurrence_count,
+    COUNT(DISTINCT user_id) as unique_users,
+    -- 这些行为在产品设计中出现了吗？
+    CASE WHEN event_type LIKE '%export%' THEN '⚠️ 可能未规划'
+         WHEN event_type LIKE '%share%' THEN '⚠️ 社交信号'
+         WHEN event_type LIKE '%api%' THEN '⚠️ 开发者用户'
+         ELSE '✓ 预期内'
+    END as assessment
+FROM events
+WHERE created_at > NOW() - INTERVAL '30 days'
+  AND event_type NOT IN ('heartbeat', 'session_start')
+GROUP BY event_type
+HAVING COUNT(*) > 50
+ORDER BY unique_users DESC;
+
+-- Q1 支付意愿：谁在真正付钱且增长？
+SELECT
+    plan_name,
+    COUNT(*) as current_subscribers,
+    SUM(amount_cents) as monthly_revenue,
+    COUNT(*) FILTER (WHERE joined_this_month) as new_this_month,
+    COUNT(*) FILTER (WHERE churned_this_month) as churned_this_month,
+    ROUND(
+        COUNT(*) FILTER (WHERE churned_this_month)::numeric /
+        NULLIF(COUNT(*) FILTER (WHERE joined_before_month), 0) * 100,
+        2
+    ) as churn_rate_pct
+FROM (
+    SELECT
+        u.id,
+        p.plan_name,
+        p.amount_cents,
+        u.is_paying,
+        u.joined_this_month,
+        u.churned_this_month
+    FROM users u
+    JOIN plans p ON u.plan_id = p.id
+) sub
+GROUP BY plan_name;
+
+-- Q4 Wedge: 用户愿意为哪个功能单独付钱？
+SELECT
+    feature_name,
+    COUNT(DISTINCT user_id) as users_who_enabled,
+    SUM(CASE WHEN is_paying THEN 1 ELSE 0 END) as paying_users,
+    ROUND(
+        SUM(CASE WHEN is_paying THEN 1 ELSE 0 END)::numeric /
+        NULLIF(COUNT(DISTINCT user_id), 0) * 100,
+        1
+    ) as pay_conversion_pct,
+    -- 如果拆成独立产品：这个转化率×用户总数=潜在市场规模
+    COUNT(DISTINCT user_id) * 50 as rough_monthly_market_estimate_usd
+FROM user_features uf
+JOIN users u ON uf.user_id = u.id
+WHERE feature_enabled = true
+GROUP BY feature_name
+HAVING COUNT(DISTINCT user_id) >= 5
+ORDER BY paying_users DESC;
+```
+
+---
+
+### 配置示例: YAML / JSON
+
+#### 产品需求文档结构（YC Pitch前自检）
+
+```yaml
+# yc_application_product.yaml
+# 用于 YC 申请前梳理产品逻辑
+
+product:
+  name: "CargoPulse"
+  one_liner: "实时货轮追踪报警系统 for 物流运营经理"
+
+  # Q1: 需求证据
+  demand:
+    paying_customers: 12
+    monthly_recurring_revenue: 4800  # USD
+    nps_score: 62
+    churned_customers_last_90d: 1
+    evidence_quotes:
+      - "I got a 2am call that could have been avoided"
+      - "This is the first tool my team actually uses daily"
+    # 警惕：以下都不是需求信号
+    waitlist_signups: 847  # ❌ 不算数
+    interest_emails: 43   # ❌ 不算数
+    vc_excited_calls: 5   # ❌ 不算数
+
+  # Q2: Status Quo
+  status_quo:
+    current_solution: "Excel + Slack alerts + manual copy-paste"
+    hours_wasted_per_day: 3
+    cost_per_month_per_user: 132000  # 工资×时间
+    jobs_to_be_done:
+      - "I need to know when a shipment is delayed BEFORE my client calls me"
+      - "I need to prioritize which delays to handle first"
+      - "I need an audit trail for liability disputes"
+
+  # Q3: 精准用户画像
+  target_user:
+    name: "Sarah Chen"
+    title: "Ops Manager"
+    company_size: "50-person logistics company"
+    gets_promoted_for: "On-time delivery rate above 95%"
+    gets_fired_for: "Customer escalations from missed delays"
+    keeps_them_up_at_night: "Being the last to know when something goes wrong"
+
+  # Q4: 最小可行产品
+  narrowest_wedge:
+    core_feature: "Real-time delay alerts with supplier context"
+    delivery_time: "3 days"
+    price_point: "$99/month per user"
+    why_pay_now: "Saves 3hrs/day of manual monitoring"
+    expansion_path: "Analytics → Full TMS → Supplier network"
+
+  # Q5: 观察惊喜
+  surprise_findings:
+    - "Users built private spreadsheets to track shipments (not in our roadmap)"
+    - "Users shared tracking links with CLIENTS (unexpected B2B2C signal)"
+    - "3 users requested API access within first week"
+
+  # Q6: 未来适应性
+  future_fit:
+    thesis: "Supply chain visibility becomes non-negotiable as regulations require it"
+    moat_expands: true  # 每次新航运公司合作 = 新数据护城河
+    risk: "Big tech enters (Amazon Logistics) — but early B2B relationships are sticky"
+```
+
+#### 竞品分析 JSON（Q2 辅助）
+
+```json
+{
+  "competitor_analysis": {
+    "product": "CargoPulse",
+    "date": "2026-04-18",
+    "market_segments": {
+      "enterprise_tms": {
+        "players": ["SAP TM", "Oracle TMS", "Blue Yonder"],
+        "weakness": "Too expensive ($100k+/year), 6-month implementation",
+        "cargo_pulse_advantage": "1/50th the cost, live in 1 day"
+      },
+      "sms_alerts": {
+        "players": ["Twilio", "custom scripts"],
+        "weakness": "No context, just raw data dumps",
+        "cargo_pulse_advantage": "Intelligent routing, supplier context, escalation rules"
+      },
+      "spreadsheet_plus_slack": {
+        "players": ["Everyone doing this today"],
+        "weakness": "Manual, error-prone, no alerting",
+        "cargo_pulse_advantage": "Automates the entire workflow, no human error"
+      }
+    },
+    "status_quo_cost_analysis": {
+      "current_workaround": "Excel + Slack + manual copy-paste",
+      "hours_per_day": 3,
+      "hourly_cost_usd": 50,
+      "users_affected": 10,
+      "monthly_cost": 33000,
+      "annual_cost": 396000,
+      "cargo_pulse_annual_cost": 12000,
+      "roi_months": 4
+    }
+  }
+}
+```
+
+---
+
 ## Phase 2B: Builder Mode — Design Partner
 
 Use this mode when the user is building for fun, learning, hacking on open source, at a hackathon, or doing research.
