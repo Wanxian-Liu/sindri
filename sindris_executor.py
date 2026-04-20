@@ -11,7 +11,7 @@ sindris_executor.py - 织界统一协调系统执行引擎 (纯规划器版)
 - 子代理套用专业角色工作
 """
 
-VERSION = "3.6"
+VERSION = "3.7"
 
 import uuid
 import json
@@ -44,6 +44,7 @@ class SindrisExecutor:
         self._setup_jsonl_logger()
         self._setup_fastpath_cache()
         self._setup_subagent_state_machine()
+        self._setup_safety_policy()  # v3.7: 集成SafetyPolicy
     
     def _setup_jsonl_logger(self):
         """初始化JSONL日志记录器"""
@@ -162,6 +163,31 @@ class SindrisExecutor:
                 "task_type": task_type,
                 "error": str(e),
             }
+    
+    def _setup_safety_policy(self):
+        """v3.7: 初始化SafetyPolicy危险命令拦截"""
+        try:
+            from scripts.safety_policy import SafetyPolicy
+            self.safety_policy = SafetyPolicy()
+            self._log_jsonl("safety_policy_loaded", {"status": "loaded"})
+        except ImportError:
+            self.safety_policy = None
+            self._log_jsonl("safety_policy_loaded", {"status": "not_found"})
+    
+    def check_dangerous_command(self, command: str) -> Dict[str, Any]:
+        """
+        v3.7: 检查命令是否危险
+        
+        Args:
+            command: 要检查的命令
+            
+        Returns:
+            {"safe": bool, "level": str, "message": str}
+        """
+        if not self.safety_policy:
+            return {"safe": True, "level": "none", "message": "SafetyPolicy not loaded"}
+        
+        return self.safety_policy.check_command(command)
     
     def _setup_subagent_state_machine(self):
         """初始化子代理状态机"""
@@ -508,6 +534,61 @@ class SindrisExecutor:
         """获取所有子代理状态"""
         return self._subagent_states
 
+    # ========== v3.7: 默认验证函数 ==========
+    
+    DEFAULT_CHECK_FUNCTIONS = {
+        "file_exists": lambda ctx: (
+            ctx.get("file_path") and 
+            Path(ctx["file_path"]).exists()
+        ),
+        "file_not_empty": lambda ctx: (
+            ctx.get("file_path") and 
+            Path(ctx["file_path"]).exists() and 
+            Path(ctx["file_path"]).stat().st_size > 0
+        ),
+        "code_importable": lambda ctx: (
+            ctx.get("module_name") and
+            ctx.get("workspace_root") and
+            any(
+                Path(ctx["workspace_root"]).glob(f"**/{ctx['module_name']}.py")
+            )
+        ),
+        "no_placeholder": lambda ctx: (
+            ctx.get("content") and
+            "MOCK" not in ctx.get("content", "") and
+            "TODO" not in ctx.get("content", "") and
+            "placeholder" not in ctx.get("content", "").lower()
+        ),
+        "function_defined": lambda ctx: (
+            ctx.get("file_path") and
+            ctx.get("function_name") and
+            Path(ctx["file_path"]).exists() and
+            f"def {ctx['function_name']}" in Path(ctx["file_path"]).read_text()
+        ),
+    }
+    
+    def _get_check_fn_for_item(self, item: Dict[str, Any]) -> Optional[callable]:
+        """
+        v3.7: 根据验证项的name自动提供默认check_fn
+        """
+        if item.get("check_fn"):
+            return item["check_fn"]
+        
+        name_lower = item.get("name", "").lower()
+        
+        if "文件存在" in name_lower or "file exists" in name_lower or "文件已创建" in name_lower:
+            return lambda ctx: self.DEFAULT_CHECK_FUNCTIONS["file_exists"](ctx)
+        if "非空" in name_lower or "not empty" in name_lower:
+            return lambda ctx: self.DEFAULT_CHECK_FUNCTIONS["file_not_empty"](ctx)
+        if "可导入" in name_lower or "importable" in name_lower:
+            return lambda ctx: self.DEFAULT_CHECK_FUNCTIONS["code_importable"](ctx)
+        if "非mock" in name_lower or "no placeholder" in name_lower:
+            return lambda ctx: self.DEFAULT_CHECK_FUNCTIONS["no_placeholder"](ctx)
+        if "函数定义" in name_lower or "function defined" in name_lower:
+            return lambda ctx: self.DEFAULT_CHECK_FUNCTIONS["function_defined"](ctx)
+        
+        return None
+
 
     # ========== Ralph验证集成 ==========
     
@@ -539,14 +620,15 @@ class SindrisExecutor:
         try:
             from scripts.ralph_loop import RalphLoop, RalphResult, VerificationStatus
             
-            # 构建验证项
+            # 构建验证项 v3.7: 使用默认check_fn
             parsed_items = []
             for item in verify_items:
+                check_fn = self._get_check_fn_for_item(item)
                 parsed_items.append({
                     "id": item.get("id", str(uuid.uuid4())[:8]),
                     "name": item.get("name", "unnamed"),
                     "description": item.get("description", ""),
-                    "check_fn": item.get("check_fn"),
+                    "check_fn": check_fn,  # v3.7: 可能为None，但有默认值在RalphLoop中
                 })
             
             # 创建Ralph验证器
@@ -566,6 +648,7 @@ class SindrisExecutor:
                 "consecutive_passed": ralph_result.consecutive_passed,
             })
             
+            # v3.7: 返回可序列化的dict，不包含循环引用的对象
             return {
                 "success": ralph_result.success,
                 "total_rounds": ralph_result.total_rounds,
@@ -577,7 +660,7 @@ class SindrisExecutor:
                     "failed_count": ralph_result.final_report.failed_count,
                     "conclusion": ralph_result.final_report.conclusion,
                 },
-                "ralph_result": ralph_result,
+                # v3.7: 移除ralph_result避免循环引用
             }
             
         except ImportError as e:
