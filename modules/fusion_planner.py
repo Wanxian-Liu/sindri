@@ -156,8 +156,9 @@ class FusionPlanner:
         with self._stats_lock:
             self._stats["total_requests"] += 1
 
-        # ── OMX Round1 Start ───────────────────────────
-        omx_task_id = self._omx_track("round1_start", task=task, task_id=None, role_matches=None)
+        # P0-3 Fix: OMX Round1 Start移到"即将执行角色匹配"时，而非进入plan()时
+        # 这样 role_matches 不会是 None，OMX事件携带真实的角色信息
+        omx_task_id = None  # 延迟初始化
 
         # ── 第1层：缓存检查 ──────────────────────────────
         if use_cache:
@@ -167,7 +168,10 @@ class FusionPlanner:
                     self._stats["cache_hits"] += 1
                 logger.info(f"[FusionPlanner] FastPath HIT: {task[:50]}...")
                 plan = self._restore_fusion_plan(task_id, task, cached)
-                self._omx_track("round1_complete", task=task, task_id=omx_task_id, verified=True, plan_summary=f"Cache HIT for {task[:50]}...")
+                # P0-3 Fix: Cache HIT时也发送完整的OMX事件（含角色信息）
+                self._omx_track("round1_complete", task=task, task_id=None, verified=True,
+                                plan_summary=f"Cache HIT for {task[:50]}...",
+                                role_matches=plan.role_matches if hasattr(plan, 'role_matches') else None)
                 return plan
 
         # ── 第2层：熔断检查 ──────────────────────────────
@@ -175,7 +179,8 @@ class FusionPlanner:
             with self._stats_lock:
                 self._stats["circuit_breaks"] += 1
             logger.warning("[FusionPlanner] Circuit breaker OPEN, using fallback")
-            self._omx_track("round1_complete", task=task, task_id=omx_task_id, verified=False, plan_summary="Circuit breaker open")
+            self._omx_track("round1_start", task=task, task_id=None, role_matches=None)
+            self._omx_track("round1_complete", task=task, task_id=None, verified=False, plan_summary="Circuit breaker open")
 
             if allow_fallback:
                 return self._fallback_plan(task_id, task)
@@ -185,7 +190,14 @@ class FusionPlanner:
 
         try:
             # ── 第3层：融合分解+匹配 ────────────────────
-            result = self._decompose_and_match(task)
+            # P0-3 Fix: OMX Round1 Start在角色匹配完成后才发出，此时role_matches已知
+            # 先执行角色匹配（不重复调用role_matcher.match）
+            # _decompose_and_match内部会调用role_matcher.match，所以先触发OMX再调用
+            _pre_role_matches = self.role_matcher.match(task)
+            logger.info(f"[FusionPlanner] Pre-check: {len(_pre_role_matches)} roles matched")
+            omx_task_id = self._omx_track("round1_start", task=task, task_id=None, role_matches=_pre_role_matches)
+
+            result = self._decompose_and_match(task, precomputed_role_matches=_pre_role_matches)
             subtasks, tasks, role_matches = result
 
             # 构建FusionPlan
@@ -203,9 +215,10 @@ class FusionPlanner:
             self.fastpath.set(task, self._fusion_plan_to_dict(plan))
             self.circuit_breaker.record_success()
 
-            # ── OMX Round1 Complete ─────────────────────
+            # ── OMX Round1 Complete（携带完整role_matches）──────
             plan_summary = f"{len(subtasks)} subtasks across {[s.phase for s in subtasks]}"
-            self._omx_track("round1_complete", task=task, task_id=omx_task_id, verified=True, plan_summary=plan_summary, role_matches=role_matches)
+            self._omx_track("round1_complete", task=task, task_id=omx_task_id, verified=True,
+                            plan_summary=plan_summary, role_matches=role_matches)
 
             return plan
 
@@ -216,7 +229,8 @@ class FusionPlanner:
                 self._stats["planning_errors"] += 1
 
             logger.error(f"[FusionPlanner] Planning failed: {e}")
-            self._omx_track("round1_complete", task=task, task_id=omx_task_id, verified=False, plan_summary=f"Planning error: {e}")
+            self._omx_track("round1_start", task=task, task_id=None, role_matches=None)
+            self._omx_track("round1_complete", task=task, task_id=None, verified=False, plan_summary=f"Planning error: {e}")
 
             if allow_fallback:
                 with self._stats_lock:
@@ -225,7 +239,8 @@ class FusionPlanner:
             else:
                 raise
 
-    def _decompose_and_match(self, task: str) -> Tuple[List[Subtask], List[Task], List[RoleMatch]]:
+    def _decompose_and_match(self, task: str,
+                                  precomputed_role_matches: List[Any] = None) -> Tuple[List[Subtask], List[Task], List[RoleMatch]]:
         """
         融合分解+匹配核心逻辑
 
@@ -233,12 +248,22 @@ class FusionPlanner:
         - RoleMatcher.match() 的4层fallback（固定团队→向量→claim→关键词）
         - TaskDecomposer.decompose_by_round() 的Round分解
 
+        Args:
+            task: 原始任务
+            precomputed_role_matches: 预计算的角色匹配结果（避免重复调用role_matcher）
+
         Returns:
             (subtasks, tasks, role_matches)
         """
         # ── Step 1: 角色匹配（4层fallback来自RoleMatcher）──
-        role_matches = self.role_matcher.match(task)
-        logger.info(f"[FusionPlanner] RoleMatcher returned {len(role_matches)} roles")
+        # P0-3 Fix: 如果外部已预计算，直接复用，避免重复调用
+        if precomputed_role_matches is not None:
+            role_matches = precomputed_role_matches
+            logger.info(f"[FusionPlanner] Using precomputed {len(role_matches)} role_matches")
+        else:
+            role_matches = self.role_matcher.match(task)
+            logger.info(f"[FusionPlanner] RoleMatcher returned {len(role_matches)} roles")
+
         for rm in role_matches:
             logger.info(f"  → {rm.role.get('name')} (source={rm.source}, sim={rm.similarity:.2f})")
 
