@@ -279,9 +279,15 @@ class FusionPlanner:
             role_name = role_from_meta.get("name", task.metadata.get("role", {}).get("name", "Developer"))
             role_id = role_from_meta.get("id", "")
 
-            # 优先级映射
-            priority_map = {"high": 300, "medium": 300, "low": 300}
-            timeout = priority_map.get(task.priority, 300)
+            # 优先级+阶段映射：按phase分配合理timeout
+            # round1=规划(300s), round2=执行(600s), round3=验证(180s)
+            phase_timeout_map = {
+                "round1": 300,
+                "round2": 600,
+                "round3": 180,
+                "verification": 180,
+            }
+            timeout = phase_timeout_map.get(phase, 300)
 
             subtasks.append(Subtask(
                 phase=phase,
