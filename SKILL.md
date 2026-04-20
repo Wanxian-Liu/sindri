@@ -183,6 +183,62 @@ for subtask in plan['subtasks']:
 | 视角 | 如何做出来 | 哪里有问题 |
 | 适用场景 | 功能开发、代码实现 | 代码审计、质量评估、安全审查 |
 
+---
+
+### 角色改进分配规则（Role Evolution Distributor）
+
+当sindris识别到"改进角色"任务时，自动应用以下分配规则：
+
+#### 分配矩阵
+
+| 被改进角色category | 问题类型 | 改进角色 | 负责改进 |
+|-------------------|----------|----------|----------|
+| coordination | 架构不匹配sindri | **Software Architect** | Agents Orchestrator |
+| product | 文档结构/工作流 | **Technical Writer** | Product Manager |
+| engineering | 代码质量/接口契约 | **Code Reviewer** | Staff Engineer, Frontend Developer |
+| engineering | 安全调试/多语言 | **Security Engineer** | Debugger |
+| testing | 测试方法论/sindri集成 | **QA Lead** | Reality Checker, API Tester |
+
+#### 分配决策树
+
+```
+被改进角色是什么category？
+    ↓
+该category对应什么问题？
+    ↓
+分配最合适的改进角色
+```
+
+**决策优先级**：
+1. **架构问题** → Software Architect（最高优先级）
+2. **安全问题** → Security Engineer
+3. **文档问题** → Technical Writer
+4. **代码质量问题** → Code Reviewer
+5. **测试问题** → QA Lead
+
+#### 改进团队组建模板
+
+```
+改进任务：改进{被改进角色}
+    ↓
+根据分配矩阵确定改进角色
+    ↓
+组建改进团队：
+  - Round1: Software Architect 规划改进方案
+  - Round2: 各改进角色并行执行
+  - Round3: Technical Writer 验收文档质量
+```
+
+#### 触发条件
+
+当任务包含以下关键词时，触发角色改进分配：
+- "改进角色"
+- "优化角色"
+- "升级角色"
+- "完善角色"
+- "修复角色"
+- 刘哥说"用sindri流程改进"
+
 ### 角色匹配规则
 
 #### 规则一：固定小组优先
