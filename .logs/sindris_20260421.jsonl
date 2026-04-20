@@ -64,3 +64,7 @@
 2026-04-21 01:06:10,923 - INFO - {"timestamp": "2026-04-21T01:06:10.923812", "session_id": "sindris_495c5317787f", "event_type": "plan_start", "task": "完善Code Reviewer Security Engineer QA Lead Technical Writer四个角色md文件"}
 2026-04-21 01:06:10,924 - INFO - [TaskDecomposer] RoleMatcher匹配到4个角色
 2026-04-21 01:06:10,929 - INFO - {"timestamp": "2026-04-21T01:06:10.929447", "session_id": "sindris_495c5317787f", "event_type": "fastpath_save", "cache_key": "49b5343d6f7a"}
+2026-04-21 01:25:48,790 - INFO - {"timestamp": "2026-04-21T01:25:48.790648", "session_id": "sindris_6573a81beb4e", "event_type": "safety_policy_loaded", "status": "loaded"}
+2026-04-21 01:25:48,799 - INFO - {"timestamp": "2026-04-21T01:25:48.799225", "session_id": "sindris_6573a81beb4e", "event_type": "plan_start", "task": "完善Code Reviewer角色"}
+2026-04-21 01:25:48,800 - INFO - [TaskDecomposer] RoleMatcher匹配到4个角色
+2026-04-21 01:25:48,803 - INFO - {"timestamp": "2026-04-21T01:25:48.803686", "session_id": "sindris_6573a81beb4e", "event_type": "fastpath_save", "cache_key": "09779f1dbbde"}

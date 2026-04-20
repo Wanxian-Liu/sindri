@@ -476,13 +476,13 @@ class SindrisExecutor:
             
             # 优先级1: 精确匹配
             if normalized == stem:
-                exact_matches.append(str(md_file.relative_to(SCRIPT_DIR)))
+                exact_matches.append(str(md_file.absolute()))  # 绝对路径供子代理使用
             # 优先级2: 包含匹配
             elif normalized in stem:
-                contains_matches.append(str(md_file.relative_to(SCRIPT_DIR)))
+                contains_matches.append(str(md_file.absolute()))  # 绝对路径供子代理使用
             # 优先级3: 部分匹配（单词匹配）
             elif any(part in stem for part in normalized.split("-")):
-                part_matches.append(str(md_file.relative_to(SCRIPT_DIR)))
+                part_matches.append(str(md_file.absolute()))  # 绝对路径供子代理使用
         
         # 按优先级返回：精确 > 包含 > 部分
         if exact_matches:
