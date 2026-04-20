@@ -10,7 +10,9 @@ description: |
   整合织界中枢模块（熔断/投票/worktree）和OMX持久化。
   
   v3.6更新：
-  - 真正集成Ralph 3轮验证机制
+  - Phase 1: OpenClaw Hook深度集成（sindri-executor-reminder v2.0）
+  - Phase 2: runTimeoutSeconds参数确认正确
+  - Phase 3: 真正集成Ralph 3轮验证机制
   - verify_with_ralph()方法真正调用RalphLoop
   - verify_subtask_result()用于子任务验证
   - 不再是假的验证通过
