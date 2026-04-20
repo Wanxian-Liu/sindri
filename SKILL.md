@@ -32,17 +32,20 @@ description: |
   
   核心组件：
   1. sindris_executor.py - 唯一执行引擎（含plan/run两个方法）
-  2. agent_executor.py - 三级降级执行器
-  3. omx_integrator.py - OMX持久化层
-  4. sindris_tmux_manager.py - tmux Worker运行时
-  5. 织界中枢模块 - 熔断/投票/worktree
-  6. 178角色库 - 专业角色匹配
-  7. safety_policy.py - 危险操作拦截（任务级别）
-  8. review_logger.py - 结果review记录
-  9. telemetry_collector.py - 运行时遥测收集
-  10. memory_manager.py - 任务记忆管理
-  11. task_queue.py - 任务队列和阻塞管理
-  12. sindris_hud.py - 实时状态显示
+  2. scripts/safety_policy.py - 危险操作拦截（已集成）
+  3. scripts/ralph_loop.py - 3轮验证机制（已集成）
+  4. scripts/telemetry_collector.py - 运行时遥测收集（v3.8已集成）
+  5. scripts/omx_integrator.py - OMX持久化层（v3.8已集成）
+
+  scripts/目录下的其他模块（可选集成）：
+  - sindris_tmux_manager.py - tmux Worker运行时（OpenClaw sessions_spawn已提供）
+  - task_queue.py - 任务队列管理（可选）
+  - memory_manager.py - 任务记忆（MEMORY.md已够用）
+  - sindris_hud.py - 实时显示（session_status已够用）
+
+  角色库：
+  - 178角色库 - 专业角色匹配
+  - roles/ - sindris专用角色定义
   
   触发条件：
   - 复杂任务需要拆分为子任务
