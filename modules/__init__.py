@@ -36,6 +36,25 @@ from .role_hierarchical_matcher import (
     match_roles,
 )
 from .task_decomposer import TaskDecomposer
+from .plan_engine import (
+    PlanEngine,
+    Plan,
+    Subtask,
+    FastPathCache,
+    CircuitBreaker,
+    CircuitState,
+    CircuitBreakerOpenError,
+    create_plan_engine,
+)
+from .verify_engine import (
+    VerifyEngine,
+    VerifyResult,
+    VerifyPhase,
+    MtimeTracker,
+    MockInjector,
+    IntegrationVerifier,
+    create_verify_engine,
+)
 
 # 进化任务
 from .evolution_task import (
@@ -51,7 +70,7 @@ from .evolution_task import (
 __all__ = [
     # GStackPro
     "GStackRole",
-    "GStackResult", 
+    "GStackResult",
     "call_gstack_role",
     "HealthScoreConfig",
     "HealthScoreResult",
@@ -70,6 +89,23 @@ __all__ = [
     "classify_domain",
     "classify_skills",
     "match_roles",
+    # 任务规划引擎
+    "PlanEngine",
+    "Plan",
+    "Subtask",
+    "FastPathCache",
+    "CircuitBreaker",
+    "CircuitState",
+    "CircuitBreakerOpenError",
+    "create_plan_engine",
+    # 验证引擎
+    "VerifyEngine",
+    "VerifyResult",
+    "VerifyPhase",
+    "MtimeTracker",
+    "MockInjector",
+    "IntegrationVerifier",
+    "create_verify_engine",
     # 进化任务
     "EVOLUTION_TASK_CONFIG",
     "HERMES_CORE_COMPONENTS",
