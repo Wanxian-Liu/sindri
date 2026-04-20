@@ -46,6 +46,7 @@ class SindrisExecutor:
         self._setup_subagent_state_machine()
         self._setup_safety_policy()  # v3.7: 集成SafetyPolicy
         self._setup_telemetry()  # v3.8: 集成TelemetryCollector
+        self._setup_omx()  # v3.8: 集成OMXIntegrator
     
     def _setup_jsonl_logger(self):
         """初始化JSONL日志记录器"""
@@ -201,7 +202,18 @@ class SindrisExecutor:
             self._log_jsonl("telemetry_loaded", {"status": "loaded"})
         except ImportError:
             self.telemetry = None
-            self._log_jsonl("telemetry_loaded", {"status": "not_found"})    
+            self._log_jsonl("telemetry_loaded", {"status": "not_found"})
+    
+    def _setup_omx(self):
+        """v3.8: 初始化OMXIntegrator持久化"""
+        try:
+            from scripts.omx_integrator import OMXIntegrator
+            self.omx = OMXIntegrator(self.workspace_root)
+            self._log_jsonl("omx_integrator_loaded", {"status": "loaded", "root": self.workspace_root})
+        except ImportError as e:
+            self.omx = None
+            self._log_jsonl("omx_integrator_loaded", {"status": "not_found", "error": str(e)})
+    
     def check_dangerous_command(self, command: str) -> Dict[str, Any]:
         """
         v3.7: 检查命令是否危险
@@ -453,6 +465,20 @@ class SindrisExecutor:
             self.telemetry.round_change("pending", "planned", task_id=self.session_id)
             for s in subtasks:
                 self.telemetry.task_start(s["task_id"], role=s.get("role"))
+        
+        # v3.8: OMX持久化 - Round1完成
+        if self.omx:
+            matched_roles = [s.get("role") for s in subtasks]
+            self.omx.on_round1_start(
+                task_description=task[:200],
+                task_id=self.session_id,
+                matched_roles=matched_roles
+            )
+            self.omx.on_round1_complete(
+                plan_summary=result.get("plan_summary", ""),
+                task_id=self.session_id,
+                verified=True
+            )
         
         return result
     

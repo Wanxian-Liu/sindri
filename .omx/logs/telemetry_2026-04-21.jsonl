@@ -1,2 +1,10 @@
 {"event": "task_start", "timestamp": "2026-04-21T01:43:01.893110", "task_id": "test_task_001", "worker_id": null, "role": "developer", "duration_ms": null, "success": null, "error": null, "details": {}}
 {"event": "task_complete", "timestamp": "2026-04-21T01:43:01.893235", "task_id": "test_task_001", "worker_id": null, "role": "developer", "duration_ms": null, "success": true, "error": null, "details": {}}
+{"event": "round_change", "timestamp": "2026-04-21T01:45:12.679741", "task_id": "sindris_b7b9edfae25f", "worker_id": null, "role": null, "duration_ms": null, "success": null, "error": null, "details": {"from_round": "pending", "to_round": "planned"}}
+{"event": "task_start", "timestamp": "2026-04-21T01:45:12.679838", "task_id": "task_a169b7d0", "worker_id": null, "role": "Staff Engineer", "duration_ms": null, "success": null, "error": null, "details": {}}
+{"event": "task_start", "timestamp": "2026-04-21T01:45:12.679891", "task_id": "task_90f8bca3", "worker_id": null, "role": "Debugger", "duration_ms": null, "success": null, "error": null, "details": {}}
+{"event": "task_start", "timestamp": "2026-04-21T01:45:12.679943", "task_id": "task_50089a84", "worker_id": null, "role": "Debugger", "duration_ms": null, "success": null, "error": null, "details": {}}
+{"event": "task_start", "timestamp": "2026-04-21T01:45:12.680007", "task_id": "task_195ee050", "worker_id": null, "role": "Debugger", "duration_ms": null, "success": null, "error": null, "details": {}}
+{"event": "task_start", "timestamp": "2026-04-21T01:45:12.680060", "task_id": "task_cea9d4ce", "worker_id": null, "role": "API Tester", "duration_ms": null, "success": null, "error": null, "details": {}}
+{"event": "task_start", "timestamp": "2026-04-21T01:45:12.680109", "task_id": "task_fd86ac09", "worker_id": null, "role": "Reality Checker", "duration_ms": null, "success": null, "error": null, "details": {}}
+{"event": "task_start", "timestamp": "2026-04-21T01:45:12.680157", "task_id": "dev_verifier", "worker_id": null, "role": "Verifier", "duration_ms": null, "success": null, "error": null, "details": {}}
