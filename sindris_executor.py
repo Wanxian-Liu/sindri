@@ -148,8 +148,8 @@ class SindrisExecutor:
     
     def _run_auto_verification(self, task_type: str) -> Dict:
         """
-        自动运行验证（不需要手动触发）
-        返回验证结果
+        v3.8: 自动运行真实验证
+        返回验证结果（不再返回固定的verified=True）
         """
         try:
             # 动态导入避免循环依赖
@@ -170,11 +170,15 @@ class SindrisExecutor:
                 target = "FIXED_TEAM"
                 improver = "固定团队"
             
+            # v3.8: 真正调用验证器（需要传入improver_id）
+            verification_result = verifier.verify(target, improver_id=improver)
+            
             result = {
-                "verified": True,
+                "verified": verification_result.get("success", False),
                 "task_type": task_type,
                 "target": target,
-                "message": f"✅ {improver}验证通过：代码已实现、非MOCK、已集成",
+                "message": verification_result.get("message", f"{improver}验证完成"),
+                "details": verification_result,
             }
             return result
         except Exception as e:
@@ -287,6 +291,30 @@ class SindrisExecutor:
             "plan_summary": "..."
         }
         """
+        # v3.8: 输入验证
+        if not isinstance(task, str):
+            return {
+                "success": False,
+                "error": f"task must be str, got {type(task).__name__}",
+                "phase": "rejected",
+            }
+        
+        task = task.strip()
+        if len(task) < 3:
+            return {
+                "success": False,
+                "error": "task must be at least 3 characters after trimming",
+                "phase": "rejected",
+            }
+        
+        if len(task) > 5000:
+            return {
+                "success": False,
+                "error": "task exceeds maximum length of 5000 characters",
+                "phase": "rejected",
+            }
+        # v3.8: 输入验证结束
+        
         # 导入任务分解器
         try:
             from modules import TaskDecomposer, RoleManager
