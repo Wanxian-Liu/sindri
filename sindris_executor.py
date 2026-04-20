@@ -48,6 +48,10 @@ from modules.plan_engine import (
     CircuitBreakerOpenError,
     create_plan_engine as _create_plan_engine,
 )
+from modules.fusion_planner import (
+    FusionPlanner,
+    FusionPlan,
+)
 from modules.verify_engine import (
     VerifyEngine,
     VerifyResult,
@@ -98,9 +102,10 @@ class SindrisExecutor:
     
     def _init_engines(self):
         """初始化两大引擎"""
-        # PlanEngine - 任务规划
+        # FusionPlanner - 融合规划引擎（新架构）
+        # 整合RoleMatcher(4层fallback) + PlanEngine(FastPath/CircuitBreaker)
         cache_dir = os.path.join(SCRIPT_DIR, "cache")
-        self.plan_engine = _create_plan_engine(
+        self.plan_engine = FusionPlanner(
             workspace_root=self.workspace_root,
             cache_dir=cache_dir,
         )

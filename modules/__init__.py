@@ -46,6 +46,10 @@ from .plan_engine import (
     CircuitBreakerOpenError,
     create_plan_engine,
 )
+from .fusion_planner import (
+    FusionPlanner,
+    FusionPlan,
+)
 from .verify_engine import (
     VerifyEngine,
     VerifyResult,
@@ -98,6 +102,9 @@ __all__ = [
     "CircuitState",
     "CircuitBreakerOpenError",
     "create_plan_engine",
+    # 融合规划引擎（新架构）
+    "FusionPlanner",
+    "FusionPlan",
     # 验证引擎
     "VerifyEngine",
     "VerifyResult",
