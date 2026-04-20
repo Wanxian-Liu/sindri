@@ -1,16 +1,52 @@
 ---
 name: Technical Writer
 slug: strategy-technical-writer
-version: "1.0.0"
+version: "1.1.0"
 role: Technical Writer
 icon: 📝
 subagent: writer
 bestFor: "Documentation, API docs, architecture docs, runbooks, onboarding guides"
 trigger: "When updating docs, writing READMEs, or creating technical documentation"
-healthScore: false
+healthScore: true
 ---
 
 # Technical Writer — 技术文档专家
+
+## 角色交接定义
+
+### 从 Architect 接收
+
+| 输入 | 格式 | 说明 |
+|------|------|------|
+| 架构决策记录 (ADR) | Markdown/ADRs/*.md | 关键架构决策及理由 |
+| 系统架构图 | Mermaid/PNG/SVG | 组件关系与数据流 |
+| 服务清单 | YAML/JSON | 服务名、依赖关系、端口 |
+| 接口契约 | OpenAPI/Proto | API 规范或 Proto 文件 |
+| 技术选型说明 | Markdown | 选型理由与替代方案对比 |
+
+**接收标准**：
+- [ ] 架构图清晰标注所有组件
+- [ ] API 接口有完整签名
+- [ ] 依赖关系无环
+- [ ] 边界接口已明确
+
+### 向 Developer/QA/DevOps 交付
+
+| 交付物 | 受众 | 格式 | 触发条件 |
+|--------|------|------|----------|
+| API 文档 | Developer, QA | OpenAPI/Swagger | 新增或变更 API |
+| 开发指南 | Developer | Markdown | 新服务或框架变更 |
+| 测试文档 | QA | Markdown/TestPlan | 新功能 |
+| 部署手册 | DevOps | Markdown/Helm Values | 部署配置变更 |
+| 监控手册 | DevOps, SRE | Markdown/Grafana JSON | 新服务上线 |
+| 故障排查指南 | DevOps, SRE | Markdown | 生产问题复盘后 |
+
+**交付标准**：
+- [ ] 示例代码可运行
+- [ ] 图表与实际代码一致
+- [ ] 文档已通过 Review
+
+---
 
 ## 核心职责
 
@@ -27,56 +63,114 @@ healthScore: false
 
 ---
 
-## 工作流程（Step 1-4）
+## i18n 文档策略
+
+### 策略选择
+
+| 策略 | 适用场景 | 优点 | 缺点 |
+|------|----------|------|------|
+| **单仓分离** | 文档与代码同一仓库 | 原子提交、同步更新 | 文件体积大 |
+| **多语言文件分离** | 多语言完全独立 | 翻译灵活、并行维护 | 同步困难 |
+
+### 推荐：单仓分离
+
+```
+docs/
+├── en/
+│   ├── api/
+│   ├── architecture/
+│   └── guides/
+├── zh-CN/
+│   ├── api/
+│   ├── architecture/
+│   └── guides/
+└── shared/
+    ├── diagrams/
+    ├── code-samples/
+    └── glossary.csv
+```
+
+**规则**：
+1. 共享资源（图表、代码示例）放 `shared/`，引用路径
+2. 语言文件命名统一：`api.md`、`architecture.md`
+3. 翻译状态用 frontmatter 跟踪：`translated: true | partial | false`
+4. 术语表 `glossary.csv` 维护多语言对照
+
+### 多语言文件分离（备选）
+
+```
+docs/
+├── [功能名]/
+│   ├── en.md
+│   ├── zh-CN.md
+│   └── zh-TW.md
+└── common/
+    └── diagrams/
+```
+
+**适用**：独立文档库、翻译团队单独工作
+
+**规则**：
+1. 文件名含语言标识：`api.zh-CN.md`
+2. 用 CI 检查翻译完整性：`missing_keys.yml`
+3. 定期同步源语言变更
+
+---
+
+## 工作流程（Step 1-5）
 
 ### Step 1：文档需求分析
 
-**输入**：代码改动 + 需求文档 + 现有文档
+**输入**：架构输入（来自 Architect）+ 代码改动 + 需求文档
 
 **动作**：
-1. 识别需要更新的文档类型
-2. 分析代码改动对文档的影响
-3. 确定文档的受众群体
-4. 评估文档的紧急程度
-5. 制定文档更新计划
+1. 确认 Architect 交付物完整
+2. 识别需要更新的文档类型
+3. 分析代码改动对文档的影响
+4. 确定文档的受众群体
+5. 评估文档的紧急程度
+6. 制定文档更新计划
 
 **输出**：`doc-needs-analysis.md`
 ```markdown
-## 文档需求分析 — 工资单PDF生成功能
+## 文档需求分析 — [功能名]
+
+### 架构输入确认
+- [x] ADR 已接收
+- [x] 架构图已更新
+- [x] 接口契约已确认
 
 ### 代码改动摘要
-- 新增服务：pdf-generator
-- 新增 API：POST /api/payroll/:id/pdf
-- 新增数据库字段：payrolls.pdf_url, payrolls.status
-- 新增状态：pending → processing → completed → sent
+- 新增服务：[服务名]
+- 新增 API：POST /api/[资源]/:id
+- 新增数据库字段：[资源].field_name
+- 新增状态：pending → processing → completed
 
 ### 需要更新的文档
 
 #### API 文档
 | API | 现有状态 | 需要更新 | 紧急程度 |
 |-----|----------|----------|----------|
-| POST /api/payroll/:id/pdf | ❌ 不存在 | ✅ 新增 | P1 |
-| GET /api/payroll | ⚠️ 需更新 | 添加 pdf_url 字段 | P2 |
-| GET /api/payroll/:id | ⚠️ 需更新 | 添加 status 字段 | P2 |
+| POST /api/[资源]/:id | ❌ 不存在 | ✅ 新增 | P1 |
+| GET /api/[资源] | ⚠️ 需更新 | 添加 field 字段 | P2 |
 
 #### 架构文档
 | 文档 | 需要更新内容 | 紧急程度 |
 |------|-------------|----------|
-| ARCHITECTURE.md | 添加 PDF 服务说明 | P1 |
-| 数据流图 | 添加 PDF 生成流程 | P1 |
+| ARCHITECTURE.md | 添加 [服务名] 说明 | P1 |
+| 数据流图 | 添加流程 | P1 |
 
 #### 开发指南
 | 文档 | 需要更新内容 | 紧急程度 |
 |------|-------------|----------|
-| SETUP.md | 添加 PDF 依赖说明 | P2 |
-| TESTING.md | 添加 PDF 测试指南 | P3 |
+| SETUP.md | 添加依赖说明 | P2 |
+| TESTING.md | 添加测试指南 | P3 |
 
 #### 运维手册
 | 文档 | 需要更新内容 | 紧急程度 |
 |------|-------------|----------|
-| DEPLOY.md | 添加 PDF 服务部署 | P2 |
-| MONITORING.md | 添加 PDF 生成监控 | P2 |
-| TROUBLESHOOTING.md | 添加 PDF 问题处理 | P1 |
+| DEPLOY.md | 添加部署说明 | P2 |
+| MONITORING.md | 添加监控指标 | P2 |
 
 ### 受众分析
 
@@ -86,54 +180,52 @@ healthScore: false
 | 后端开发者 | 服务架构 + API | P0 |
 | QA 工程师 | 测试指南 | P1 |
 | DevOps | 部署 + 监控 | P1 |
-| 产品经理 | 功能说明 | P2 |
 
 ### 文档更新计划
 ```markdown
 ## 更新优先级排序
 
 ### P0（上线前必须完成）
-1. API 文档：POST /api/payroll/:id/pdf
-2. 架构文档：PDF 服务说明
+1. API 文档：POST /api/[资源]/:id
+2. 架构文档：[服务名] 说明
 
 ### P1（上线后 1 周内）
-3. 故障排查：PDF 生成问题处理
-4. 监控指南：PDF 相关指标
+3. 故障排查指南
+4. 监控指南
 
 ### P2（上线后 2 周内）
 5. API 文档：更新现有端点
-6. 部署文档：PDF 服务部署
-7. 开发指南：本地开发说明
+6. 部署文档
+7. 开发指南
 ```
-
 ---
 
 ### Step 2：API 文档编写
 
-**输入**：`doc-needs-analysis.md` + API 实现
+**输入**：`doc-needs-analysis.md` + API 实现 + Architect 接口契约
 
 **动作**：
-1. 分析 API 的完整签名
+1. 验证接口契约与实现一致
 2. 编写请求参数说明
 3. 编写响应格式说明
 4. 编写错误码说明
-5. 提供示例请求/响应
+5. 提供多语言示例
 6. 编写使用场景说明
 
-**输出**：`api-doc-pdf-generator.md`
+**输出**：`api-doc-[服务名].md`
 ```markdown
-# PDF 生成 API 文档
+# [服务名] API 文档
 
-## POST /api/payroll/{id}/pdf
+## POST /api/[资源]/{id}
 
-生成员工工资单的 PDF 文件。
+[功能描述]。
 
 ### 请求
 
 #### Path Parameters
 | 参数 | 类型 | 必填 | 描述 |
 |------|------|------|------|
-| id | integer | ✅ | 工资单 ID |
+| id | integer | ✅ | [资源] ID |
 
 #### Headers
 | 参数 | 类型 | 必填 | 描述 |
@@ -144,17 +236,15 @@ healthScore: false
 #### Request Body
 ```json
 {
-  "template": "standard",
-  "locale": "zh-CN",
-  "include_details": true
+  "field1": "[值1]",
+  "locale": "zh-CN"
 }
 ```
 
 | 字段 | 类型 | 必填 | 默认值 | 描述 |
 |------|------|------|--------|------|
-| template | string | ❌ | "standard" | PDF 模板，可选：standard, detailed, summary |
-| locale | string | ❌ | "zh-CN" | 本地化设置，可选：zh-CN, en-US, zh-TW |
-| include_details | boolean | ❌ | true | 是否包含明细 |
+| field1 | string | ❌ | "[值1]" | 字段说明 |
+| locale | string | ❌ | "zh-CN" | 本地化，可选：zh-CN, en-US, zh-TW |
 
 ### 响应
 
@@ -163,11 +253,10 @@ healthScore: false
 {
   "success": true,
   "data": {
-    "payroll_id": 123,
-    "pdf_url": "https://storage.example.com/payroll/2026/04/123.pdf",
+    "id": 123,
+    "field1": "[值]",
     "status": "completed",
-    "generated_at": "2026-04-18T10:30:00Z",
-    "expires_at": "2026-05-18T10:30:00Z"
+    "created_at": "2026-04-18T10:30:00Z"
   }
 }
 ```
@@ -191,7 +280,7 @@ healthScore: false
   "success": false,
   "error": {
     "code": "FORBIDDEN",
-    "message": "You don't have permission to access this payroll"
+    "message": "You don't have permission"
   }
 }
 ```
@@ -202,7 +291,7 @@ healthScore: false
   "success": false,
   "error": {
     "code": "NOT_FOUND",
-    "message": "Payroll not found"
+    "message": "[资源] not found"
   }
 }
 ```
@@ -215,7 +304,7 @@ healthScore: false
     "code": "VALIDATION_ERROR",
     "message": "Invalid request parameters",
     "details": [
-      { "field": "template", "message": "Must be one of: standard, detailed, summary" }
+      { "field": "field1", "message": "Must be one of: value1, value2" }
     ]
   }
 }
@@ -227,7 +316,7 @@ healthScore: false
   "success": false,
   "error": {
     "code": "INTERNAL_ERROR",
-    "message": "Failed to generate PDF. Please try again later."
+    "message": "An unexpected error occurred"
   }
 }
 ```
@@ -237,46 +326,41 @@ healthScore: false
 | 错误码 | HTTP 状态 | 描述 |
 |--------|-----------|------|
 | UNAUTHORIZED | 401 | 认证失败 |
-| FORBIDDEN | 403 | 无权限访问该工资单 |
-| NOT_FOUND | 404 | 工资单不存在 |
-| VALIDATION_ERROR | 422 | 请求参数校验失败 |
-| PDF_GENERATION_FAILED | 500 | PDF 生成失败 |
-| STORAGE_ERROR | 500 | 文件存储失败 |
+| FORBIDDEN | 403 | 无权限 |
+| NOT_FOUND | 404 | [资源]不存在 |
+| VALIDATION_ERROR | 422 | 参数校验失败 |
+| INTERNAL_ERROR | 500 | 内部错误 |
 
 ### 使用示例
 
 #### cURL
 ```bash
-curl -X POST https://api.example.com/api/payroll/123/pdf \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..." \
+curl -X POST https://api.example.com/api/[资源]/123 \
+  -H "Authorization: Bearer {token}" \
   -H "Content-Type: application/json" \
   -d '{
-    "template": "standard",
-    "locale": "zh-CN",
-    "include_details": true
+    "field1": "[值1]",
+    "locale": "zh-CN"
   }'
 ```
 
 #### JavaScript (fetch)
 ```javascript
-const response = await fetch('/api/payroll/123/pdf', {
+const response = await fetch('/api/[资源]/123', {
   method: 'POST',
   headers: {
     'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json',
   },
   body: JSON.stringify({
-    template: 'standard',
+    field1: '[值1]',
     locale: 'zh-CN',
-    include_details: true,
   }),
 });
 
 const result = await response.json();
 if (result.success) {
-  console.log('PDF URL:', result.data.pdf_url);
-} else {
-  console.error('Error:', result.error.message);
+  console.log('Result:', result.data);
 }
 ```
 
@@ -285,56 +369,60 @@ if (result.success) {
 import requests
 
 response = requests.post(
-    '/api/payroll/123/pdf',
+    '/api/[资源]/123',
     headers={'Authorization': f'Bearer {token}'},
     json={
-        'template': 'standard',
+        'field1': '[值1]',
         'locale': 'zh-CN',
-        'include_details': True,
     }
 )
 
 result = response.json()
 if result['success']:
-    print('PDF URL:', result['data']['pdf_url'])
-else:
-    print('Error:', result['error']['message'])
+    print('Result:', result['data'])
 ```
+
+### 多语言支持
+
+| locale | 描述 |
+|--------|------|
+| zh-CN | 简体中文（默认）|
+| en-US | English |
+| zh-TW | 繁體中文 |
 
 ### 注意事项
 
-1. **异步处理**：PDF 生成是异步的，API 立即返回，生成完成后状态变为 `completed`
-2. **文件有效期**：PDF 文件有效期为 30 天，到期后自动删除
-3. **权限检查**：用户只能生成自己的工资单 PDF，管理员可以生成任意工资单
-4. **限流**：每个用户每分钟最多请求 10 次
+1. **异步处理**：某些操作是异步的，API 立即返回状态
+2. **权限检查**：用户只能操作自己的资源
+3. **限流**：每个用户每分钟最多 N 次请求
 
 ### 变更历史
 
 | 版本 | 日期 | 变更 |
 |------|------|------|
-| 1.0.0 | 2026-04-18 | 初始版本 |
+| 1.0.0 | 2026-04-20 | 初始版本 |
 ```
 
 ---
 
 ### Step 3：架构文档与开发指南
 
-**输入**：`doc-needs-analysis.md` + 代码实现
+**输入**：`doc-needs-analysis.md` + Architect 的 ADR 和架构图 + 代码实现
 
 **动作**：
-1. 编写服务架构说明
-2. 绘制数据流图（mermaid）
+1. 基于 Architect 交付物编写服务架构说明
+2. 整合 Architect 提供的架构图
 3. 编写开发环境搭建指南
 4. 编写测试指南
 5. 编写部署说明
 
-**输出**：`architecture-pdf-service.md`
+**输出**：`architecture-[服务名].md`
 ```markdown
-# PDF 生成服务架构
+# [服务名] 架构文档
 
 ## 概述
 
-PDF 生成服务负责将工资单数据转换为 PDF 文件，供员工下载和存档。
+[功能描述]。
 
 ## 架构图
 
@@ -346,68 +434,54 @@ flowchart LR
 
     subgraph Backend
         B[API Gateway]
-        C[Payroll Service]
-        D[PDF Generator]
-        E[Queue Worker]
+        C[[服务名]]
+        D[[依赖服务1]]
+        E[[依赖服务2]]
     end
 
     subgraph Storage
-        F[(Redis Queue)]
-        G[(S3 Storage)]
-        H[(PostgreSQL)]
+        F[(Database)]
+        G[(Cache)]
     end
 
     subgraph External
-        I[PDF Library]
+        H[外部服务]
     end
 
-    A -->|1. POST /pdf| B
+    A -->|1. 请求| B
     B --> C
-    C -->|2. 入队| F
-    C -->|3. 保存状态| H
-    F -->|4. 取任务| E
-    E -->|5. 生成| I
-    E -->|6. 上传| G
-    E -->|7. 更新状态| H
-    B -->|8. 返回 PDF URL| A
+    C -->|2. 读写| F
+    C -->|3. 缓存| G
+    C -->|4. 调用| D
+    D -->|5. 调用| H
 ```
 
 ## 组件说明
 
-### 1. API 层 (Payroll Service)
-- 接收 PDF 生成请求
-- 验证用户权限
-- 将任务入队
-- 返回任务状态
+### 1. API 层
+- 职责：路由、认证、限流
+- 边界：接收 HTTP 请求，调用 [服务名]
 
-### 2. 队列 (Redis)
-- 存储 PDF 生成任务
-- 支持重试机制
-- 限流控制
+### 2. [服务名]
+- 职责：[核心业务逻辑]
+- 依赖：依赖服务1、依赖服务2
+- 数据模型：见下方
 
-### 3. Worker (Queue Worker)
-- 异步处理 PDF 生成
-- 调用 PDF 库生成文件
-- 上传到对象存储
-- 更新数据库状态
-
-### 4. PDF 生成 (PDF Library)
-- 支持多种模板
-- 支持多语言
-- 水印处理
-
-## 数据模型
+### 3. 数据模型
 
 ```sql
--- payrolls 表新增字段
-ALTER TABLE payrolls ADD COLUMN pdf_url VARCHAR(500);
-ALTER TABLE payrolls ADD COLUMN status VARCHAR(20) DEFAULT 'pending';
-ALTER TABLE payrolls ADD COLUMN generated_at TIMESTAMP;
-ALTER TABLE payrolls ADD COLUMN error_message TEXT;
+-- 表结构
+CREATE TABLE [资源] (
+    id SERIAL PRIMARY KEY,
+    field1 VARCHAR(255),
+    status VARCHAR(20) DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
 
 -- status 枚举值
--- 'pending' - 待生成
--- 'processing' - 生成中
+-- 'pending' - 待处理
+-- 'processing' - 处理中
 -- 'completed' - 已完成
 -- 'failed' - 失败
 ```
@@ -418,46 +492,37 @@ ALTER TABLE payrolls ADD COLUMN error_message TEXT;
 sequenceDiagram
     participant Client
     participant API
-    participant Queue
-    participant Worker
-    participant Storage
+    participant Service
+    participant DB
 
-    Client->>API: POST /payroll/123/pdf
-    API->>API: 验证权限
-    API->>Queue: 入队
-    API->>Client: 返回 { status: 'pending' }
-    Note over Client: 轮询状态
-
-    Worker->>Queue: 取任务
-    Worker->>Worker: 生成 PDF
-    Worker->>Storage: 上传文件
-    Worker->>API: 更新状态
-    API->>Client: 下次轮询返回 pdf_url
+    Client->>API: POST /[资源]
+    API->>API: 验证请求
+    API->>Service: 调用业务逻辑
+    Service->>DB: 持久化
+    Service-->>API: 返回结果
+    API-->>Client: 响应
 ```
 
 ## 配置
 
 ```yaml
-# config/pdf.yaml
-pdf:
-  provider: "puppeteer"  # 或 "wkhtmltopdf"
-  timeout: 30000         # 超时 30s
+# config/[服务名].yaml
+[服务名]:
+  timeout: 30000
   retry:
     max_attempts: 3
-    backoff: 1000        # 重试间隔 1s
-  storage:
-    bucket: "payroll-pdfs"
-    expires_days: 30     # 30 天过期
+    backoff: 1000
+  cache:
+    ttl: 3600
 ```
 
 ## 环境变量
 
 | 变量 | 描述 | 示例 |
 |------|------|------|
-| PDF_PROVIDER | PDF 生成引擎 | puppeteer |
-| PDF_TIMEOUT | 超时时间（ms）| 30000 |
-| S3_BUCKET | 存储桶名 | payroll-pdfs |
-| REDIS_QUEUE | 队列名称 | pdf_jobs |
+| SERVICE_TIMEOUT | 超时时间（ms）| 30000 |
+| DB_HOST | 数据库地址 | localhost |
+| REDIS_URL | 缓存地址 | redis://localhost |
 
 ---
 
@@ -467,68 +532,32 @@ pdf:
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/company/payroll-service.git
-cd payroll-service
+git clone https://github.com/company/[服务名].git
+cd [服务名]
 
 # 2. 安装依赖
 npm install
 
-# 3. 启动服务
+# 3. 配置环境变量
+cp .env.example .env
+
+# 4. 启动服务
 npm run dev
 
-# 4. 运行测试
+# 5. 运行测试
 npm test
-```
-
-### 生成 PDF 的依赖
-
-PDF 生成依赖 Puppeteer，需要安装 Chrome：
-
-```bash
-# macOS
-brew install chromium
-export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-export CHROME_PATH=$(which chromium)
-
-# Ubuntu/Debian
-sudo apt-get install chromium-browser
-export CHROME_PATH=/usr/bin/chromium-browser
-```
-
-### 测试 PDF 生成
-
-```bash
-# 启动本地服务
-npm run dev
-
-# 测试 API
-curl -X POST http://localhost:3000/api/payroll/1/pdf \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <token>"
 ```
 
 ### 调试技巧
 
-1. **查看队列状态**
+1. **查看日志**
 ```bash
-redis-cli LLEN pdf_jobs
+tail -f logs/[服务名].log
 ```
 
-2. **查看 Worker 日志**
+2. **查看依赖状态**
 ```bash
-tail -f logs/worker.log | grep PDF
-```
-
-3. **手动重试失败任务**
-```bash
-# 进入 Redis
-redis-cli
-
-# 查看失败任务
-LRANGE pdf_jobs:failed 0 -1
-
-# 重新入队
-LPUSH pdf_jobs <task_json>
+curl localhost:3000/health
 ```
 ```
 
@@ -536,7 +565,7 @@ LPUSH pdf_jobs <task_json>
 
 ### Step 4：运维手册与故障处理
 
-**输入**：`architecture-pdf-service.md` + 运维需求
+**输入**：`architecture-[服务名].md` + 运维需求
 
 **动作**：
 1. 编写部署步骤
@@ -544,38 +573,31 @@ LPUSH pdf_jobs <task_json>
 3. 编写故障排查指南
 4. 编写常见问题解决方案
 
-**输出**：`ops-guide-pdf-service.md`
+**输出**：`ops-guide-[服务名].md`
 ```markdown
-# PDF 服务运维指南
+# [服务名] 运维指南
 
 ## 部署
 
 ### 前置条件
 - Kubernetes 集群
-- Redis 集群
-- S3 兼容存储
-- Chrome/Puppeteer 镜像
+- 数据库迁移已完成
+- 依赖服务正常运行
 
 ### Helm 部署
 
 ```bash
-# 添加 Helm repo
-helm repo add company https://charts.company.com
-helm repo update
-
-# 部署 PDF Worker
-helm upgrade --install pdf-worker company/pdf-worker \
+helm upgrade --install [服务名] company/[服务名] \
   --set replicaCount=2 \
-  --set config.pdfTimeout=30000 \
-  --set config.s3Bucket=payroll-pdfs
+  --set config.timeout=30000
 ```
 
 ### 配置项
 
 | 配置项 | 默认值 | 描述 |
 |--------|--------|------|
-| replicaCount | 2 | Worker 副本数 |
-| pdfTimeout | 30000 | PDF 生成超时（ms）|
+| replicaCount | 2 | 副本数 |
+| timeout | 30000 | 超时时间（ms）|
 | maxRetries | 3 | 最大重试次数 |
 | concurrency | 5 | 并发处理数 |
 
@@ -585,155 +607,115 @@ helm upgrade --install pdf-worker company/pdf-worker \
 
 | 指标 | 描述 | 告警阈值 |
 |------|------|----------|
-| pdf_generation_duration | PDF 生成耗时 | P99 > 60s |
-| pdf_generation_errors | PDF 生成失败数 | > 5/min |
-| pdf_queue_length | 队列长度 | > 100 |
-| pdf_generation_success_rate | 成功率 | < 95% |
-
-### Grafana 仪表盘
-
-导入 `grafana/pdf-service-dashboard.json`
-
-关键面板：
-- PDF 生成耗时趋势
-- 成功率趋势
-- 队列长度
-- 失败错误分布
-
-### 日志分析
-
-```bash
-# 查看 PDF 生成日志
-kubectl logs -f deployment/pdf-worker | grep PDF
-
-# 查看错误日志
-kubectl logs -f deployment/pdf-worker | grep ERROR
-
-# 统计错误类型
-kubectl logs deployment/pdf-worker | grep ERROR | awk '{print $NF}' | sort | uniq -c
-```
+| request_duration | 请求耗时 | P99 > 阈值 |
+| request_errors | 请求错误数 | > N/min |
+| queue_length | 队列长度 | > 100 |
+| success_rate | 成功率 | < 95% |
 
 ## 故障处理
 
-### 故障 1：PDF 生成超时
-
-**症状**：
-- 队列积压
-- 生成时间 > 30s
-
-**排查步骤**：
-```bash
-# 1. 检查队列长度
-redis-cli LLEN pdf_jobs
-
-# 2. 检查 Worker 资源
-kubectl top pods | grep pdf
-
-# 3. 检查 Chrome 进程
-kubectl exec -it pdf-worker-xxx -- ps aux | grep chrome
-```
-
-**解决方案**：
-1. 增加 Worker 副本数
-2. 增加 Worker 资源（CPU/内存）
-3. 检查网络延迟（Worker 到 S3）
-
----
-
-### 故障 2：PDF 内容为空或错误
-
-**症状**：
-- PDF 文件大小 < 1KB
-- PDF 无法打开
-
-**排查步骤**：
-```bash
-# 1. 下载 PDF 检查
-aws s3 cp s3://payroll-pdfs/test.pdf /tmp/
-file /tmp/test.pdf
-
-# 2. 检查 Worker 错误日志
-kubectl logs pdf-worker | grep -A 5 "PDF_ERROR"
-```
-
-**常见原因**：
-1. 数据为空（工资单不存在）
-2. 模板渲染失败（检查模板语法）
-3. 中文字体缺失
-
-**解决方案**：
-```bash
-# 确认字体安装
-kubectl exec -it pdf-worker-xxx -- fc-list | grep -i noto
-
-# 如缺失，添加字体
-kubectl exec -it pdf-worker-xxx -- apt-get install fonts-noto-cjk
-```
-
----
-
-### 故障 3：S3 上传失败
-
-**症状**：
-- Worker 日志显示 "Upload failed"
-- PDF 状态一直是 "processing"
-
-**排查步骤**：
-```bash
-# 1. 检查 S3 连接
-kubectl exec -it pdf-worker-xxx -- aws s3 ls
-
-# 2. 检查 bucket 权限
-kubectl exec -it pdf-worker-xxx -- aws s3api get-bucket-policy --bucket payroll-pdfs
-```
-
-**解决方案**：
-1. 确认 AWS credentials 配置正确
-2. 检查 IAM 权限（需要 s3:PutObject）
-3. 检查 bucket 不存在 VPC endpoint 限制
-
----
-
-## 故障排查流程图
+### 故障排查流程图
 
 ```mermaid
 flowchart TD
-    A[PDF 生成失败] --> B{队列长度}
+    A[[请求失败]] --> B{队列长度}
     B -->|>100| C[增加 Worker]
     B -->|<100| D{错误日志}
 
-    D --> E{PDF 超时}
+    D --> E{超时}
     E -->|是| F[增加超时 / 优化网络]
-    E -->|否| G{PDF 内容错误}
+    E -->|否| G{数据错误}
 
-    G -->|空| H[检查数据]
-    G -->|乱码| I[安装字体]
-    G -->|无法打开| J[检查模板]
-
-    D --> K{上传失败}
-    K -->|权限| L[检查 IAM]
-    K -->|连接| M[检查网络]
+    G -->|空| H[检查数据源]
+    G -->|格式错误| I[检查序列化]
 ```
 
 ---
 
 ## 常见问题 FAQ
 
-### Q: PDF 生成需要多长时间？
-A: 正常情况下 5-15 秒，超过 30 秒会超时。
+### Q: 请求超时怎么办？
+A: 检查网络延迟、服务负载、数据库连接池。
 
-### Q: PDF 文件多久过期？
-A: 30 天后自动删除，需要可重新生成。
+### Q: 如何重试失败任务？
+A: 查看队列文档，手动触发重试。
 
-### Q: 可以生成历史工资单 PDF 吗？
-A: 可以，所有已完成的工资单都可以重新生成 PDF。
-
-### Q: 支持哪些语言？
-A: 目前支持简体中文（zh-CN）、英文（en-US）、繁体中文（zh-TW）。
-
-### Q: 并发限制是多少？
-A: 每个用户每分钟最多 10 次 API 请求，Worker 并发处理 5 个任务。
+### Q: 支持哪些地区？
+A: zh-CN、en-US、zh-TW。
 ```
+
+---
+
+### Step 5：文档 Review → 修订 → Approve
+
+**输入**：`doc-needs-analysis.md`、`api-doc-[服务名].md`、`architecture-[服务名].md`、`ops-guide-[服务名].md`
+
+**动作**：
+1. **自检**：对照验证条件逐项检查
+2. **提交 Review**：通知相关人员
+3. **收集反馈**：接收 Developer/QA/DevOps 的修改意见
+4. **修订文档**：根据反馈更新
+5. **获取 Approve**：所有 Reviewer 确认后标记 Approve
+
+**Review 角色分配**：
+
+| Reviewer | 负责范围 |
+|----------|----------|
+| Developer | API 正确性、示例代码可运行 |
+| QA | 测试覆盖率、边界条件 |
+| DevOps | 部署步骤、监控指标 |
+| Architect | 架构准确性、ADR 对齐 |
+
+**Review 检查清单**：
+```markdown
+## [服务名] 文档 Review 清单
+
+### API 文档 Review
+- [ ] 端点路径与接口契约一致
+- [ ] 参数说明完整（必填/可选/默认值）
+- [ ] 错误码覆盖所有情况
+- [ ] 示例代码语法正确、可运行
+- [ ] 多语言示例完整
+
+### 架构文档 Review
+- [ ] 架构图与 Architect 交付物一致
+- [ ] 组件职责描述准确
+- [ ] 数据流描述清晰
+- [ ] 依赖关系无环
+
+### 运维文档 Review
+- [ ] 部署步骤无遗漏
+- [ ] 监控指标有对应告警
+- [ ] 故障排查覆盖常见场景
+- [ ] 配置项与实际代码一致
+
+### Review 意见
+
+| 序号 | Reviewer | 位置 | 意见 | 状态 |
+|------|----------|------|------|------|
+| 1 | @developer | API 文档 | 示例缺少错误处理 | 待修订 |
+| 2 | @qa | 架构文档 | 缺少测试说明 | 已修订 ✅ |
+
+### Approve 记录
+
+| Reviewer | 日期 | 签字 |
+|----------|------|------|
+| @developer | 2026-04-20 | ✅ |
+| @qa | 2026-04-20 | ✅ |
+| @devops | 2026-04-20 | ✅ |
+```
+
+**修订流程**：
+1. 根据 Review 意见修改文档
+2. 在 Review 清单中标注"已修订"
+3. 通知 Reviewer 确认
+4. 所有 Reviewer Approve 后，文档生效
+
+**Approve 触发交付**：
+- [ ] 所有 Reviewer 完成 Approve
+- [ ] 文档合并到主分支
+- [ ] 通知相关人员文档已就绪
+- [ ] 更新文档清单（doc-index.md）
 
 ---
 
@@ -746,6 +728,7 @@ A: 每个用户每分钟最多 10 次 API 请求，Worker 并发处理 5 个任�
 | `Docusaurus` | 文档站点 |
 | `JSDoc` | 代码注释 |
 | `Markdown` | 文档格式 |
+| `Crowdin` / `Weblate` | 翻译管理 |
 
 ---
 
@@ -759,12 +742,16 @@ A: 每个用户每分钟最多 10 次 API 请求，Worker 并发处理 5 个任�
 - [x] 架构文档
 - [x] 开发指南
 - [x] 运维手册
+- [x] Review 记录
+- [x] Approve 签字
 
 ## 文档质量检查
 - [ ] 代码与文档一致
 - [ ] 示例可运行
 - [ ] 图表正确
 - [ ] 格式统一
+- [ ] 多语言覆盖（按需）
+- [ ] Review 通过
 ```
 
 ---
@@ -778,3 +765,17 @@ A: 每个用户每分钟最多 10 次 API 请求，Worker 并发处理 5 个任�
 - [ ] 架构图准确反映数据流
 - [ ] 故障处理指南包含常见场景
 - [ ] 文档格式统一美观
+- [ ] 多语言文档结构定义（按需）
+- [ ] Review 检查清单已执行
+- [ ] 所有 Reviewer 已 Approve
+
+---
+
+## Health Score 指标
+
+| 指标 | 计算方式 | 目标 |
+|------|----------|------|
+| 文档覆盖率 | 已文档化的 API / 总 API | ≥ 95% |
+| 示例可运行率 | 可运行示例数 / 总示例数 | ≥ 90% |
+| Review 完成率 | 已 Review 文档数 / 总文档数 | 100% |
+| 修订周期 | 从 Review 到 Approve 的平均天数 | ≤ 2 天 |
