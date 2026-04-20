@@ -150,6 +150,11 @@ class SindrisExecutor:
         """
         v3.8: 自动运行真实验证
         返回验证结果（不再返回固定的verified=True）
+        
+        P0修复:
+        - 使用正确的role_id而不是中文描述
+        - 使用.passed而不是.success（与EvolutionVerifier返回键对齐）
+        - 验证失败时返回success=False让执行门控生效
         """
         try:
             # 动态导入避免循环依赖
@@ -157,27 +162,33 @@ class SindrisExecutor:
             verifier = EvolutionVerifier(self.workspace_root)
             
             # 根据任务类型确定要验证的角色
+            # P0-2修复：使用正确的role_id而不是中文描述
             if task_type == "audit":
                 # 审计任务：验证AUDIT_TEAM配置
                 target = "AUDIT_TEAM"
-                improver = "审计团队"
+                improver_id = "engineering_code_reviewer"  # 审计团队主角色
             elif task_type == "evolution":
                 # 改进任务：验证EVOLUTION_DISTRIBUTOR
                 target = "EVOLUTION_DISTRIBUTOR"
-                improver = "改进分配器"
+                improver_id = "engineering_software_architect"  # 架构改进主角色
             else:
                 # 开发任务：验证FIXED_TEAM
                 target = "FIXED_TEAM"
-                improver = "固定团队"
+                improver_id = "engineering_senior_developer"  # 开发主角色
             
-            # v3.8: 真正调用验证器（需要传入improver_id）
-            verification_result = verifier.verify(target, improver_id=improver)
+            # v3.8: 真正调用验证器（传入role_id）
+            verification_result = verifier.verify(target, improver_id=improver_id)
+            
+            # P0-1修复：使用.passed（与EvolutionVerifier返回键对齐）
+            # P0-3修复：验证失败时返回success=False让执行门控生效
+            passed = verification_result.get("passed", False)
             
             result = {
-                "verified": verification_result.get("success", False),
+                "verified": passed,
+                "success": passed,  # P0-3: 用于执行门控
                 "task_type": task_type,
                 "target": target,
-                "message": verification_result.get("message", f"{improver}验证完成"),
+                "message": verification_result.get("recommendation", f"{improver_id}验证完成"),
                 "details": verification_result,
             }
             return result
@@ -381,12 +392,14 @@ class SindrisExecutor:
             subtasks = self._add_verification_step(subtasks, "evolution")
             # 自动运行验证
             verification_result = self._run_auto_verification("evolution")
+            # P0-3修复：验证失败时返回success=False
+            verification_success = verification_result.get("success", False)
             result = {
-                "success": True,
+                "success": verification_success,
                 "task_id": self.session_id,
                 "subtasks": subtasks,
                 "plan_summary": f"角色完善任务分解为{len(subtasks)}个子任务（包含验证步骤）",
-                "phase": "planned",
+                "phase": "planned" if verification_success else "verification_failed",
                 "roles": roles,
                 "verification": verification_result,
             }
@@ -419,12 +432,14 @@ class SindrisExecutor:
                 subtasks = self._add_verification_step(subtasks, "evolution")
                 # 自动运行验证
                 verification_result = self._run_auto_verification("evolution")
+                # P0-3修复：验证失败时返回success=False
+                verification_success = verification_result.get("success", False)
                 result = {
-                    "success": True,
+                    "success": verification_success,
                     "task_id": self.session_id,
                     "subtasks": subtasks,
                     "plan_summary": f"角色改进任务：使用{role_name}改进（包含验证步骤）",
-                    "phase": "planned",
+                    "phase": "planned" if verification_success else "verification_failed",
                     "roles": roles,
                     "verification": verification_result,
                 }
@@ -467,13 +482,15 @@ class SindrisExecutor:
         
         # 自动运行验证
         verification_result = self._run_auto_verification("dev")
+        # P0-3修复：验证失败时返回success=False
+        verification_success = verification_result.get("success", False)
         
         result = {
-            "success": True,
+            "success": verification_success,
             "task_id": self.session_id,
             "subtasks": subtasks,
             "plan_summary": f"分解为{len(subtasks)}个子任务（包含验证步骤）：{[s['role'] for s in subtasks]}",
-            "phase": "planned",
+            "phase": "planned" if verification_success else "verification_failed",
             "roles": roles,
             "verification": verification_result,  # 自动验证结果
         }
