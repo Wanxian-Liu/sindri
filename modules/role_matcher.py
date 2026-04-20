@@ -22,8 +22,8 @@ from .role_hierarchical_matcher import classify_domain, RoleHierarchicalMatcher
 FIXED_TEAM = [
     {"id": "product_product_manager", "name": "Product Manager", "category": "product"},
     {"id": "coordination_agents_orchestrator", "name": "Agents Orchestrator", "category": "coordination"},
-    {"id": "engineering_software_architect", "name": "Software Architect", "category": "engineering"},
-    {"id": "engineering_senior_developer", "name": "Senior Developer", "category": "engineering"},
+    {"id": "engineering_staff_engineer", "name": "Staff Engineer", "category": "engineering"},
+    {"id": "engineering_debugger", "name": "Debugger", "category": "engineering"},
     {"id": "engineering_frontend_developer", "name": "Frontend Developer", "category": "engineering"},
     {"id": "testing_api_tester", "name": "API Tester", "category": "testing"},
     {"id": "testing_reality_checker", "name": "Reality Checker", "category": "testing"},

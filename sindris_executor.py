@@ -246,7 +246,7 @@ class SindrisExecutor:
         }
     
     def _find_role_file(self, role_name: str) -> Optional[str]:
-        """查找角色文件路径"""
+        """查找角色文件路径（优先精确匹配）"""
         roles_dir = Path(SCRIPT_DIR) / "roles"
         if not roles_dir.exists():
             return None
@@ -257,15 +257,34 @@ class SindrisExecutor:
         if normalized.startswith("sindri-"):
             normalized = normalized[7:]
         
+        # 收集所有匹配的文件
+        exact_matches = []  # 精确匹配 (normalized == stem)
+        contains_matches = []  # 包含匹配 (normalized in stem)
+        part_matches = []  # 部分匹配 (any part in stem)
+        
         for md_file in roles_dir.rglob("*.md"):
             stem = md_file.stem.lower()
             # 去掉sindri-前缀
             if stem.startswith("sindri-"):
                 stem = stem[7:]
-            # 检查是否匹配（支持部分匹配）
-            if (normalized in stem or 
-                any(part in stem for part in normalized.split("-"))):
-                return str(md_file.relative_to(SCRIPT_DIR))
+            
+            # 优先级1: 精确匹配
+            if normalized == stem:
+                exact_matches.append(str(md_file.relative_to(SCRIPT_DIR)))
+            # 优先级2: 包含匹配
+            elif normalized in stem:
+                contains_matches.append(str(md_file.relative_to(SCRIPT_DIR)))
+            # 优先级3: 部分匹配（单词匹配）
+            elif any(part in stem for part in normalized.split("-")):
+                part_matches.append(str(md_file.relative_to(SCRIPT_DIR)))
+        
+        # 按优先级返回：精确 > 包含 > 部分
+        if exact_matches:
+            return exact_matches[0]
+        if contains_matches:
+            return contains_matches[0]
+        if part_matches:
+            return part_matches[0]
         
         return None
     

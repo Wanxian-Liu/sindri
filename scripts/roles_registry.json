@@ -4504,9 +4504,240 @@
         "write",
         "browser"
       ]
+    },
+    {
+      "id": "testing_qa_engineer",
+      "name": "QA Engineer",
+      "category": "testing",
+      "description": "QA Engineer - testing role",
+      "emoji": "🧪",
+      "vibe": "Professional agent",
+      "trigger_keywords": [
+        "When running QA tests, executing test plans, or verifying bug fixes"
+      ]
+    },
+    {
+      "id": "testing_qa_reporter",
+      "name": "QA Reporter",
+      "category": "testing",
+      "description": "QA Reporter - testing role",
+      "emoji": "📊",
+      "vibe": "Professional agent",
+      "trigger_keywords": [
+        "When needing to communicate QA results to non-technical stakeholders or leadership"
+      ]
+    },
+    {
+      "id": "testing_performance_engineer",
+      "name": "Performance Engineer",
+      "category": "testing",
+      "description": "Performance Engineer - testing role",
+      "emoji": "⚡",
+      "vibe": "Professional agent",
+      "trigger_keywords": [
+        "When running performance tests, optimizing slow endpoints, or planning capacity"
+      ]
+    },
+    {
+      "id": "testing_qa_lead",
+      "name": "QA Lead",
+      "category": "testing",
+      "description": "QA Lead - testing role",
+      "emoji": "🧭",
+      "vibe": "Professional agent",
+      "trigger_keywords": [
+        "When starting a new sprint, planning test coverage, or evaluating ship readiness"
+      ]
+    },
+    {
+      "id": "testing_autoplan",
+      "name": "Autoplan",
+      "category": "testing",
+      "description": "Autoplan - testing role",
+      "emoji": "📋",
+      "vibe": "Professional agent",
+      "trigger_keywords": [
+        "When generating test plans automatically, or analyzing test coverage gaps"
+      ]
+    },
+    {
+      "id": "testing_sre",
+      "name": "SRE",
+      "category": "testing",
+      "description": "SRE - testing role",
+      "emoji": "🏥",
+      "vibe": "Professional agent",
+      "trigger_keywords": [
+        "When deploying, handling incidents, or assessing system reliability"
+      ]
+    },
+    {
+      "id": "qa_lead",
+      "name": "QA Lead",
+      "category": "testing",
+      "description": "Expert QA engineer specializing in systematic testing, bug discovery, root cause analysis, and automated regression prevention",
+      "emoji": "🧪",
+      "vibe": "Systematic tester who finds bugs before they find production. Breaks things so users don't have to.",
+      "trigger_keywords": [
+        "qa lead"
+      ]
+    },
+    {
+      "id": "strategy_cso",
+      "name": "CSO (Security)",
+      "category": "strategy",
+      "description": "CSO (Security) - strategy role",
+      "emoji": "🔐",
+      "vibe": "Professional agent",
+      "trigger_keywords": [
+        "When reviewing architecture, handling sensitive data, or planning security requirements"
+      ]
+    },
+    {
+      "id": "strategy_yc_office_hours",
+      "name": "Strategy Yc Office Hours",
+      "category": "strategy",
+      "description": "Strategy Yc Office Hours - strategy role",
+      "emoji": "📋",
+      "vibe": "Professional agent",
+      "trigger_keywords": [
+        "strategy yc office hours"
+      ]
+    },
+    {
+      "id": "strategy_technical_writer",
+      "name": "Technical Writer",
+      "category": "strategy",
+      "description": "Technical Writer - strategy role",
+      "emoji": "📝",
+      "vibe": "Professional agent",
+      "trigger_keywords": [
+        "When updating docs, writing READMEs, or creating technical documentation"
+      ]
+    },
+    {
+      "id": "strategy_second_opinion",
+      "name": "Second Opinion",
+      "category": "strategy",
+      "description": "Second Opinion - strategy role",
+      "emoji": "🤔",
+      "vibe": "Professional agent",
+      "trigger_keywords": [
+        "When making major architectural decisions, before shipping, or when consensus seems too easy"
+      ]
+    },
+    {
+      "id": "strategy_ceo_founder",
+      "name": "CEO/Founder Strategy",
+      "category": "strategy",
+      "description": "CEO/Founder Strategy - strategy role",
+      "emoji": "🚀",
+      "vibe": "Professional agent",
+      "trigger_keywords": [
+        "When making strategic decisions, planning product roadmap, fundraising prep, or defining company direction"
+      ]
+    },
+    {
+      "id": "engineering_release_engineer",
+      "name": "DevOps Automator",
+      "category": "engineering",
+      "description": "Expert DevOps engineer specializing in infrastructure automation, CI/CD pipeline development, and cloud operations",
+      "emoji": "⚙️",
+      "vibe": "Automates infrastructure so your team ships faster and sleeps better.",
+      "trigger_keywords": [
+        "engineering release engineer"
+      ]
+    },
+    {
+      "id": "engineering_staff_engineer",
+      "name": "Engineering Staff Engineer",
+      "category": "engineering",
+      "description": "Engineering Staff Engineer - engineering role",
+      "emoji": "📋",
+      "vibe": "Professional agent",
+      "trigger_keywords": [
+        "engineering staff engineer"
+      ]
+    },
+    {
+      "id": "engineering_ai_ml_engineer",
+      "name": "Engineering Ai Ml Engineer",
+      "category": "engineering",
+      "description": "Engineering Ai Ml Engineer - engineering role",
+      "emoji": "📋",
+      "vibe": "Professional agent",
+      "trigger_keywords": [
+        "engineering ai ml engineer"
+      ]
+    },
+    {
+      "id": "engineering_debugger",
+      "name": "Engineering Debugger",
+      "category": "engineering",
+      "description": "Engineering Debugger - engineering role",
+      "emoji": "📋",
+      "vibe": "Professional agent",
+      "trigger_keywords": [
+        "engineering debugger"
+      ]
+    },
+    {
+      "id": "canary_monitor",
+      "name": "Canary Monitor",
+      "category": "specialized",
+      "description": "Post-deploy monitoring loop. Watches for errors, performance regressions, and health status.",
+      "emoji": "🐦",
+      "vibe": "SRE-style health monitor. Catches problems before users do.",
+      "trigger_keywords": [
+        "canary monitor"
+      ]
+    },
+    {
+      "id": "gstack_cso",
+      "name": "CSO (Chief Security Officer)",
+      "category": "product",
+      "description": "OWASP Top 10 + STRIDE threat modeling security audit. Scans for injection, auth, crypto, and access control issues.",
+      "emoji": "🔒",
+      "vibe": "Finds vulnerabilities before attackers do.",
+      "trigger_keywords": [
+        "gstack cso"
+      ]
+    },
+    {
+      "id": "gstack_debugger",
+      "name": "Gstack Debugger",
+      "category": "product",
+      "description": "Gstack Debugger - product role",
+      "emoji": "📋",
+      "vibe": "Professional agent",
+      "trigger_keywords": [
+        "gstack debugger"
+      ]
+    },
+    {
+      "id": "gstack_second_opinion",
+      "name": "Gstack Second Opinion",
+      "category": "product",
+      "description": "Gstack Second Opinion - product role",
+      "emoji": "📋",
+      "vibe": "Professional agent",
+      "trigger_keywords": [
+        "gstack second opinion"
+      ]
+    },
+    {
+      "id": "gstack_autoplan",
+      "name": "Autoplan",
+      "category": "product",
+      "description": "One command, fully reviewed plan. Runs CEO → design → eng review automatically with encoded decision principles.",
+      "emoji": "🎯",
+      "vibe": "Automated pipeline. Surfaces only taste decisions for approval.",
+      "trigger_keywords": [
+        "gstack autoplan"
+      ]
     }
   ],
-  "total": 178,
+  "total": 199,
   "categories": {
     "academic": 5,
     "testing": 8,
@@ -4532,5 +4763,6 @@
     "blender": 1
   },
   "source": "agency-agents",
-  "url": "https://github.com/msitarzewski/agency-agents"
+  "url": "https://github.com/msitarzewski/agency-agents",
+  "updated_at": "2026-04-20T16:51:20.355304"
 }

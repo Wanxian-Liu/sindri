@@ -137,6 +137,31 @@ class BugClassifier:
                 return category
         
         return "logical"  # 默认
+    
+    def _guess_domain(self, bug_report: dict) -> str:
+        """推测问题所属领域"""
+        return self._determine_domain(bug_report)
+    
+    def _determine_domain(self, bug_report: dict) -> str:
+        """确定问题所属领域"""
+        
+        domain_indicators = {
+            "frontend": ["ui", "render", "click", "input", "display"],
+            "backend": ["api", "endpoint", "request", "response", "database"],
+            "infrastructure": ["network", "server", "deployment", "docker"],
+            "security": ["auth", "permission", "access", "token"],
+            "data": ["query", "pipeline", "etl", "migration"]
+        }
+        
+        description = (bug_report.get("description", "") + 
+                      " " + 
+                      bug_report.get("title", "")).lower()
+        
+        for domain, keywords in domain_indicators.items():
+            if any(kw in description for kw in keywords):
+                return domain
+        
+        return "backend"  # 默认
 ```
 
 #### 1.2 复现环境准备
@@ -178,15 +203,91 @@ class ReproductionEnvironment:
         else:
             return "local_isolated"
     
+    def _prepare_dependencies(self, bug: dict) -> dict:
+        """准备依赖"""
+        dependencies = bug.get("dependencies", [])
+        installed = []
+        failed = []
+        
+        for dep in dependencies:
+            try:
+                result = subprocess.run(
+                    ["pip", "install", dep],
+                    capture_output=True,
+                    timeout=120
+                )
+                if result.returncode == 0:
+                    installed.append(dep)
+                else:
+                    failed.append({"package": dep, "error": result.stderr.decode()})
+            except subprocess.TimeoutExpired:
+                failed.append({"package": dep, "error": "Installation timed out"})
+            except Exception as e:
+                failed.append({"package": dep, "error": str(e)})
+        
+        return {"installed": installed, "failed": failed}
+    
+    def _setup_initial_state(self, bug: dict) -> dict:
+        """设置初始状态"""
+        initial_state = {
+            "environment_variables": bug.get("env", {}),
+            "files": [],
+            "database": None
+        }
+        
+        # Apply environment variables
+        for key, value in bug.get("env", {}).items():
+            os.environ[key] = str(value)
+        
+        # Prepare test files if specified
+        for file_spec in bug.get("test_files", []):
+            try:
+                path = file_spec.get("path")
+                content = file_spec.get("content", "")
+                if path:
+                    os.makedirs(os.path.dirname(path), exist_ok=True)
+                    with open(path, "w") as f:
+                        f.write(content)
+                    initial_state["files"].append(path)
+            except Exception as e:
+                initial_state["files"].append({"error": str(e), "spec": file_spec})
+        
+        return initial_state
+    
+    def _configure_logging(self, bug: dict) -> dict:
+        """配置日志"""
+        log_config = {
+            "level": bug.get("log_level", "DEBUG"),
+            "handlers": ["console", "file"],
+            "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        }
+        
+        # Apply logging configuration
+        import logging
+        level = getattr(logging, log_config["level"], logging.DEBUG)
+        logging.basicConfig(
+            level=level,
+            format=log_config["format"]
+        )
+        
+        return log_config
+    
     def _create_reproduction_script(self, bug: dict) -> str:
         """创建复现脚本"""
+        
+        bug_id = bug.get('id', 'Unknown')
+        bug_title = bug.get('title', 'Unknown')
+        bug_severity = bug.get('severity', 'Unknown')
+        setup_cmds = bug.get("setup_commands", [])
+        repro_steps = bug.get("reproduction_steps", [])
+        expected_error = bug.get("expected_error", "")
         
         return f'''
 #!/usr/bin/env python3
 """
 Bug Reproduction Script
-Issue: {bug.get('title', 'Unknown')}
-Severity: {bug.get('severity', 'Unknown')}
+Issue: {bug_title}
+Severity: {bug_severity}
 """
 
 import os
@@ -204,7 +305,7 @@ def setup():
     os.environ["LOG_LEVEL"] = "DEBUG"
     
     # Initialize test data
-    setup_commands = {bug.get("setup_commands", [])}
+    setup_commands = {repr(setup_cmds)}
     
     for cmd in setup_commands:
         print(f"Running: {{cmd}}")
@@ -219,18 +320,37 @@ def reproduce():
     """Attempt to reproduce the bug"""
     print("Reproducing bug...")
     
-    reproduction_steps = {bug.get("reproduction_steps", [])}
+    reproduction_steps = {repr(repro_steps)}
     
     for i, step in enumerate(reproduction_steps, 1):
         print(f"Step {{i}}: {{step}}")
         result = subprocess.run(step, shell=True, capture_output=True)
         
         # Check for expected error
-        if bug.get("expected_error") in result.stderr.decode():
+        if "{expected_error}" in result.stderr.decode():
             print(f"✓ Bug reproduced at step {{i}}")
             return True
     
     return False
+
+def collect_recent_logs(lines=1000):
+    """Collect recent log entries"""
+    log_files = [
+        "/var/log/app/app.log",
+        "logs/application.log",
+        "logs/error.log"
+    ]
+    
+    collected_logs = []
+    for log_file in log_files:
+        if os.path.exists(log_file):
+            with open(log_file, "r") as f:
+                collected_logs.append(
+                    f"=== {{log_file}} ===\\n"
+                    + "".join(f.readlines()[-lines:])
+                )
+    
+    return "\\n".join(collected_logs)
 
 def collect_evidence():
     """Collect evidence for debugging"""
@@ -245,7 +365,7 @@ def collect_evidence():
         "network": subprocess.run(
             ["netstat", "-tuln"], capture_output=True
         ).stdout.decode(),
-        "logs": self._collect_recent_logs()
+        "logs": collect_recent_logs()
     }}
     
     with open("bug_evidence.json", "w") as f:
@@ -256,7 +376,7 @@ def collect_evidence():
 
 def main():
     print("=" * 60)
-    print("Bug Reproduction: {bug.get('id', 'Unknown')}")
+    print("Bug Reproduction: {bug_id}")
     print("=" * 60)
     
     if not setup():
@@ -529,21 +649,22 @@ class RootCauseAnalyzer:
         for hypothesis in verified_hypotheses:
             if hypothesis.get("verified") and hypothesis.get("probability", 0) >= 0.8:
                 return {
-                    "type": hypothesis["category"],
-                    "description": hypothesis["description"],
+                    "type": hypothesis.get("category", "unknown"),
+                    "description": hypothesis.get("description", hypothesis.get("description", "Unknown")),
                     "location": hypothesis.get("location", "Unknown"),
                     "mechanism": hypothesis.get("mechanism", "Detailed mechanism unknown")
                 }
         
         # 如果没有高置信度假设，返回最可能的
         if verified_hypotheses:
+            top_hypothesis = verified_hypotheses[0]
             return {
-                "type": verified_hypotheses[0]["category"],
-                "description": verified_hypotheses[0]["description"],
+                "type": top_hypothesis.get("category", "unknown"),
+                "description": top_hypothesis.get("description", "Unknown"),
                 "confidence": "low"
             }
         
-        return {"error": "Could not determine root cause"}
+        return {"error": "Could not determine root cause", "verified_hypotheses": verified_hypotheses}
 ```
 
 #### 2.2 高级调试技术

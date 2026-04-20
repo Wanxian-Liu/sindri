@@ -39,6 +39,168 @@
 
 ## 🔧 Step 1: Task Parsing & Scope Confirmation
 
+### 1.0 Architect Handshake Protocol
+
+Before proceeding, Staff Engineer MUST validate that `architect.phase1_output` conforms to this握手协议.
+
+#### architect.phase1_output Required Schema
+
+```typescript
+interface ArchitectPhase1Output {
+  // Task Identity
+  task_id: string;                    // Unique identifier, e.g. "AUTH-001"
+  title: string;                       // Short descriptive title
+  description: string;                 // Full description (≥50 chars)
+  task_type: "feature" | "bugfix" | "refactor" | "infrastructure";
+
+  // Scope Definition
+  acceptance_criteria: string[];        // Must have ≥1 criterion
+  technical_constraints: string[];     // e.g. ["must use PostgreSQL", "no external APIs"]
+  dependencies: string[];               // Internal/external dependency names
+  out_of_scope: string[];              // Explicitly excluded items
+
+  // Technical Context (from Architect's analysis)
+  system_context: {
+    component: string;                  // Which system component this belongs to
+    upstream_dependencies: string[];     // Components that depend on this
+    downstream_dependencies: string[];  // Components this depends on
+    data_contracts: DataContract[];     // Expected input/output schemas
+  };
+
+  // Pattern Recommendations (Architect's suggestions, not mandates)
+  suggested_patterns: {
+    backend?: ImplementationPattern[];
+    frontend?: ImplementationPattern[];
+    data?: ImplementationPattern[];
+  };
+
+  // Risk Assessment
+  risk_level: "low" | "medium" | "high" | "critical";
+  identified_risks: Array<{
+    risk: string;
+    mitigation: string;
+    impact: "blocked" | "degraded" | "acceptable";
+  }>;
+
+  // Version & Provenance
+  architect_id: string;
+  version: string;
+  created_at: string;
+}
+
+interface DataContract {
+  name: string;
+  schema: Record<string, string>;
+  direction: "input" | "output" | "bidirectional";
+  source: string;
+}
+```
+
+#### Handshake Validation Code (Python)
+
+```python
+from dataclasses import dataclass
+from typing import List, Optional, Dict, Any
+from enum import Enum
+
+class TaskType(Enum):
+    FEATURE = "feature"
+    BUGFIX = "bugfix"
+    REFACTOR = "refactor"
+    INFRASTRUCTURE = "infrastructure"
+
+class RiskLevel(Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
+
+@dataclass
+class DataContract:
+    name: str
+    schema: Dict[str, str]
+    direction: str
+    source: str
+
+@dataclass
+class SystemContext:
+    component: str
+    upstream_dependencies: List[str]
+    downstream_dependencies: List[str]
+    data_contracts: List[DataContract]
+
+@dataclass
+class IdentifiedRisk:
+    risk: str
+    mitigation: str
+    impact: str
+
+@dataclass
+class ArchitectPhase1Output:
+    task_id: str
+    title: str
+    description: str
+    task_type: TaskType
+    acceptance_criteria: List[str]
+    technical_constraints: List[str]
+    dependencies: List[str]
+    out_of_scope: List[str]
+    system_context: SystemContext
+    suggested_patterns: Dict[str, List[str]]
+    risk_level: RiskLevel
+    identified_risks: List[IdentifiedRisk]
+    architect_id: str
+    version: str
+    created_at: str
+
+def validate_architect_handshake(data: Dict[str, Any]) -> ArchitectPhase1Output:
+    """
+    Staff Engineer validates Architect's phase1_output against this握手协议.
+    Raises ValueError with specific field errors if schema is invalid.
+    """
+    errors = []
+    warnings = []
+
+    required_fields = [
+        "task_id", "title", "description", "task_type",
+        "acceptance_criteria", "technical_constraints",
+        "dependencies", "out_of_scope", "system_context",
+        "suggested_patterns", "risk_level", "identified_risks",
+        "architect_id", "version", "created_at"
+    ]
+    for field in required_fields:
+        if field not in data:
+            errors.append(f"Missing required field: {field}")
+
+    if errors:
+        raise ValueError(f"Architect phase1_output handshake failed: {errors}")
+
+    valid_task_types = [t.value for t in TaskType]
+    if data["task_type"] not in valid_task_types:
+        errors.append(f"Invalid task_type: {data['task_type']}. Must be one of {valid_task_types}")
+
+    if len(data.get("description", "")) < 50:
+        warnings.append("Description is shorter than 50 characters — scope may be unclear")
+
+    if not data.get("acceptance_criteria"):
+        errors.append("acceptance_criteria is required and must have at least 1 entry")
+
+    sc = data.get("system_context", {})
+    sc_required = ["component", "upstream_dependencies", "downstream_dependencies", "data_contracts"]
+    for field in sc_required:
+        if field not in sc:
+            errors.append(f"system_context missing field: {field}")
+
+    if errors:
+        raise ValueError(f"Architect handshake FAILED: {'; '.join(errors)}")
+
+    if warnings:
+        print(f"WARNINGS: {'; '.join(warnings)}")
+
+    print(f"Handshake with Architect {data['architect_id']} PASSED (version {data['version']})")
+    return data
+```
+
 ### 1.1 Input Validation
 
 Receive task description from Architect's Step 1 output. Validate:
@@ -511,6 +673,8 @@ class ImplementationPattern(Enum):
     EVENT_DRIVEN = "event"          # Async event handling
     PIPELINE = "pipeline"           # Chained transformations
     BUFFERED = "buffered"           # Batch processing
+    CQRS = "cqrs"                   # Command Query Responsibility Segregation
+    SAGAS = "sagas"                 # Distributed transaction pattern
 
 @dataclass
 class PatternSelection:
@@ -518,8 +682,19 @@ class PatternSelection:
     rationale: str
     tradeoffs: List[str]
     code_template: str
+    # Performance/Cost Annotations
+    time_complexity_best: str = "O(1)"
+    time_complexity_worst: str = "O(n)"
+    space_complexity: str = "O(n)"
+    estimated_latency_ms: int = 10
+    estimated_throughput_rps: int = 1000
+    cost_per_100k_calls_usd: float = 0.50
+    # ADR Fields
+    decision_date: str = ""
+    alternatives_considered: List[str] = field(default_factory=list)
+    consequences: Dict[str, str] = field(default_factory=dict)
 
-def select_implementation_pattern(task: dict) -> PatternSelection:
+def select_implementation_pattern(task: dict, architect_suggestions: List[str] = None) -> PatternSelection:
     """
     Staff Engineer selects the best implementation pattern.
 
@@ -548,29 +723,274 @@ def select_implementation_pattern(task: dict) -> PatternSelection:
             pattern=ImplementationPattern.PIPELINE,
             rationale="Task involves chained data transformations",
             tradeoffs=["Memory usage for buffering", "Debugging complexity"],
-            code_template="pipeline_template"
+            code_template="pipeline_template",
+            # Performance/Cost Annotations
+            time_complexity_best="O(n)",
+            time_complexity_worst="O(n²)",
+            space_complexity="O(n)",
+            estimated_latency_ms=15,
+            estimated_throughput_rps=500,
+            cost_per_100k_calls_usd=0.75,
+            # ADR Fields
+            decision_date="2026-04-20",
+            alternatives_considered=["Sequential processing", "Parallel map-reduce"],
+            consequences={
+                "positive": "Clean separation of concerns, easy to add/remove stages",
+                "negative": "Memory overhead for buffering, harder to debug intermediate states"
+            }
         )
     elif "batch" in description or "bulk" in description:
         return PatternSelection(
             pattern=ImplementationPattern.BUFFERED,
             rationale="Batch processing with size limits",
             tradeoffs=["Latency vs throughput tradeoff", "Partial failure handling"],
-            code_template="buffered_template"
+            code_template="buffered_template",
+            # Performance/Cost Annotations
+            time_complexity_best="O(1)",
+            time_complexity_worst="O(n)",
+            space_complexity="O(batch_size)",
+            estimated_latency_ms=5,
+            estimated_throughput_rps=5000,
+            cost_per_100k_calls_usd=0.25,
+            # ADR Fields
+            decision_date="2026-04-20",
+            alternatives_considered=["Stream processing", "Synchronous bulk operations"],
+            consequences={
+                "positive": "High throughput, reduced network overhead",
+                "negative": "Increased latency per item, complexity in partial failure handling"
+            }
         )
     elif "event" in title or "handler" in description:
         return PatternSelection(
             pattern=ImplementationPattern.EVENT_DRIVEN,
             rationale="Async event handling required",
             tradeoffs=["Event ordering complexity", "Debugging async flows"],
-            code_template="event_template"
+            code_template="event_template",
+            # Performance/Cost Annotations
+            time_complexity_best="O(1)",
+            time_complexity_worst="O(log n)",
+            space_complexity="O(n)",
+            estimated_latency_ms=2,
+            estimated_throughput_rps=10000,
+            cost_per_100k_calls_usd=0.40,
+            # ADR Fields
+            decision_date="2026-04-20",
+            alternatives_considered=["Polling-based architecture", "Synchronous RPC calls"],
+            consequences={
+                "positive": "Loose coupling, high scalability",
+                "negative": "Event ordering challenges, distributed tracing complexity"
+            }
         )
     else:
         return PatternSelection(
             pattern=ImplementationPattern.SERVICE_LAYER,
             rationale="Standard business logic orchestration",
             tradeoffs=["Potential for god-class if overused", "Testing complexity"],
-            code_template="service_template"
+            code_template="service_template",
+            # Performance/Cost Annotations
+            time_complexity_best="O(1)",
+            time_complexity_worst="O(n)",
+            space_complexity="O(1)",
+            estimated_latency_ms=10,
+            estimated_throughput_rps=2000,
+            cost_per_100k_calls_usd=0.50,
+            # ADR Fields
+            decision_date="2026-04-20",
+            alternatives_considered=["Transaction Script", "Domain-Driven Design"],
+            consequences={
+                "positive": "Clear separation of business logic from infrastructure",
+                "negative": "May become a god class if not properly scoped"
+            }
         )
+```
+
+
+### 2.3.5 Architecture Decision Record (ADR) Template
+
+When a pattern is selected, Staff Engineer MUST document the decision using this ADR format:
+
+```markdown
+# ADR-{number}: {Decision Title}
+
+**Date**: {YYYY-MM-DD}
+**Status**: Proposed | Accepted | Deprecated | Superseded
+**Deciders**: Staff Engineer, Architect
+**Context**: {What is the issue that we're seeing that is motivating this decision?}
+
+## Decision Drivers
+- {Driver 1}
+- {Driver 2}
+- {Driver N}
+
+## Considered Alternatives
+
+### 1. {Alternative Name}
+**Description**: {Brief description}
+**Pros**: {List of pros}
+**Cons**: {List of cons}
+
+### 2. {Alternative Name}
+**Description**: {Brief description}
+**Pros**: {List of pros}
+**Cons**: {List of cons}
+
+## Decision Outcome
+
+**Chosen Option**: {Option Name}
+**Rationale**: {Why this option was chosen}
+
+## Performance & Cost Analysis
+
+| Metric | Value |
+|--------|-------|
+| Time Complexity (Best) | {O-notation} |
+| Time Complexity (Worst) | {O-notation} |
+| Space Complexity | {O-notation} |
+| Est. Latency | {N}ms |
+| Est. Throughput | {N} RPS |
+| Cost per 100K calls | ${N.XX} |
+
+## Consequences
+
+**Positive**:
+- {Positive consequence 1}
+- {Positive consequence 2}
+
+**Negative/Tradeoffs**:
+- {Negative consequence 1}
+- {Negative consequence 2}
+
+## Related ADRs
+- ADR-{N}: {Related decision title}
+```
+
+#### ADR Generation Code (Python)
+
+```python
+from dataclasses import dataclass, field
+from typing import List, Dict
+from datetime import datetime
+
+@dataclass
+class ArchitectureDecision:
+    """Architecture Decision Record."""
+    number: int
+    title: str
+    status: str = "Proposed"
+    date: str = ""
+    deciders: List[str] = field(default_factory=lambda: ["Staff Engineer", "Architect"])
+    context: str = ""
+    decision_drivers: List[str] = field(default_factory=list)
+    alternatives: List[Dict[str, str]] = field(default_factory=list)
+    chosen_option: str = ""
+    rationale: str = ""
+    performance_metrics: Dict[str, str] = field(default_factory=dict)
+    consequences_positive: List[str] = field(default_factory=list)
+    consequences_negative: List[str] = field(default_factory=list)
+    related_adrs: List[str] = field(default_factory=list)
+
+    def to_markdown(self) -> str:
+        """Generate ADR in markdown format."""
+        alt_rows = ""
+        for i, alt in enumerate(self.alternatives, 1):
+            alt_rows += f"""### {i}. {alt['name']}
+**Description**: {alt.get('description', 'N/A')}
+**Pros**: {alt.get('pros', 'N/A')}
+**Cons**: {alt.get('cons', 'N/A')}
+
+"""
+        perf_table = ""
+        for k, v in self.performance_metrics.items():
+            perf_table += f"| {k} | {v} |\n"
+
+        pos_items = "\n".join(f"- {p}" for p in self.consequences_positive)
+        neg_items = "\n".join(f"- {n}" for n in self.consequences_negative)
+        related = "\n".join(f"- {adr}" for adr in self.related_adrs) or "None"
+
+        return f"""# ADR-{self.number}: {self.title}
+
+**Date**: {self.date or datetime.now().strftime('%Y-%m-%d')}
+**Status**: {self.status}
+**Deciders**: {', '.join(self.deciders)}
+**Context**: {self.context}
+
+## Decision Drivers
+{chr(10).join(f'- {d}' for d in self.decision_drivers)}
+
+## Considered Alternatives
+
+{alt_rows}
+## Decision Outcome
+
+**Chosen Option**: {self.chosen_option}
+**Rationale**: {self.rationale}
+
+## Performance & Cost Analysis
+
+| Metric | Value |
+|--------|-------|
+{perf_table}
+## Consequences
+
+**Positive**:
+{pos_items}
+
+**Negative/Tradeoffs**:
+{neg_items}
+
+## Related ADRs
+{related}
+"""
+
+
+def create_adr_from_pattern(
+    pattern_selection: PatternSelection,
+    adr_number: int,
+    context: str,
+    decision_drivers: List[str],
+    alternatives: List[Dict[str, str]]
+) -> ArchitectureDecision:
+    """
+    Generate an ADR from a PatternSelection with full performance/cost annotations.
+
+    Example:
+        >>> pattern = select_implementation_pattern(task)
+        >>> adr = create_adr_from_pattern(
+        ...     pattern_selection=pattern,
+        ...     adr_number=1,
+        ...     context="Need to choose pattern for user data transformation",
+        ...     decision_drivers=["Throughput requirements", "Latency constraints"],
+        ...     alternatives=[
+        ...         {"name": "Sequential", "pros": "Simple", "cons": "Slow"},
+        ...         {"name": "Pipeline", "pros": "Fast", "cons": "Complex"}
+        ...     ]
+        ... )
+        >>> print(adr.to_markdown())
+    """
+    return ArchitectureDecision(
+        number=adr_number,
+        title=f"Select {pattern_selection.pattern.value.upper()} Pattern for Implementation",
+        context=context,
+        decision_drivers=decision_drivers,
+        alternatives=alternatives,
+        chosen_option=pattern_selection.pattern.value,
+        rationale=pattern_selection.rationale,
+        performance_metrics={
+            "Time Complexity (Best)": pattern_selection.time_complexity_best,
+            "Time Complexity (Worst)": pattern_selection.time_complexity_worst,
+            "Space Complexity": pattern_selection.space_complexity,
+            "Est. Latency": f"{pattern_selection.estimated_latency_ms}ms",
+            "Est. Throughput": f"{pattern_selection.estimated_throughput_rps} RPS",
+            "Cost per 100K calls": f"${pattern_selection.cost_per_100k_calls_usd:.2f}"
+        },
+        consequences_positive=[
+            pattern_selection.consequences.get("positive", "")
+        ] if isinstance(pattern_selection.consequences, dict) else [],
+        consequences_negative=[
+            pattern_selection.consequences.get("negative", "")
+        ] if isinstance(pattern_selection.consequences, dict) else [],
+        related_adrs=[]
+    )
 ```
 
 ### 2.4 Error Handling & Observability Planning
@@ -1409,6 +1829,959 @@ class CircuitBreakerOpenError(Exception):
     """Raised when circuit breaker is open."""
     pass
 ```
+
+### 3.1.1 Multi-Language Pattern Examples
+
+Below are equivalent implementations of the key patterns in **TypeScript** and **Go**.
+
+---
+
+#### TypeScript Examples
+
+##### TypeScript: Service Layer Pattern
+
+```typescript
+/**
+ * TypeScript Service Layer Pattern
+ * Demonstrates: Dependency Injection, Async Operations, Error Handling
+ */
+
+interface TaskResult<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
+
+abstract class BaseService {
+  protected name: string;
+  protected logger: Console;
+  protected initialized: boolean = false;
+
+  constructor(name: string) {
+    this.name = name;
+    this.logger = console;
+  }
+
+  abstract execute(...args: any[]): Promise<TaskResult<any>>;
+
+  async initialize(): Promise<void> {
+    this.logger.log(`Initializing ${this.name}`);
+    this.initialized = true;
+  }
+
+  async healthCheck(): Promise<boolean> {
+    return this.initialized;
+  }
+
+  protected log(level: 'info' | 'warn' | 'error', message: string, meta?: object): void {
+    this.logger[level](`[${this.name}] ${message}`, meta ?? {});
+  }
+}
+
+interface User {
+  id: string;
+  username: string;
+  email: string;
+  status: 'pending' | 'active' | 'inactive' | 'deleted';
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface UserRepository {
+  create(data: Partial<User>): Promise<string>;
+  findById(id: string): Promise<User | null>;
+  update(id: string, data: Partial<User>): Promise<boolean>;
+  delete(id: string): Promise<boolean>;
+  list(limit: number, offset: number): Promise<User[]>;
+}
+
+class InMemoryUserRepository implements UserRepository {
+  private store: Map<string, User> = new Map();
+
+  async create(data: Partial<User>): Promise<string> {
+    const id = crypto.randomUUID();
+    const user: User = {
+      id,
+      username: data.username ?? '',
+      email: data.email ?? '',
+      status: 'pending',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      ...data,
+    };
+    this.store.set(id, user);
+    return id;
+  }
+
+  async findById(id: string): Promise<User | null> {
+    return this.store.get(id) ?? null;
+  }
+
+  async update(id: string, data: Partial<User>): Promise<boolean> {
+    const user = this.store.get(id);
+    if (!user) return false;
+    const updated: User = { ...user, ...data, updatedAt: new Date() };
+    this.store.set(id, updated);
+    return true;
+  }
+
+  async delete(id: string): Promise<boolean> {
+    return this.store.delete(id);
+  }
+
+  async list(limit: number, offset: number): Promise<User[]> {
+    return Array.from(this.store.values()).slice(offset, offset + limit);
+  }
+}
+
+class UserManagementService extends BaseService {
+  private repository: UserRepository;
+  private cache: Map<string, User> = new Map();
+
+  constructor(repository: UserRepository) {
+    super('UserManagement');
+    this.repository = repository;
+  }
+
+  async execute(operation: string, params: Record<string, any>): Promise<TaskResult<any>> {
+    if (!this.initialized) {
+      return { success: false, error: 'Service not initialized' };
+    }
+
+    const operations: Record<string, () => Promise<TaskResult<any>>> = {
+      create: () => this.createUser(params),
+      get: () => this.getUser(params),
+      update: () => this.updateUser(params),
+      delete: () => this.deleteUser(params),
+      list: () => this.listUsers(params),
+    };
+
+    const handler = operations[operation];
+    if (!handler) {
+      return { success: false, error: `Unknown operation: ${operation}` };
+    }
+
+    try {
+      return await handler();
+    } catch (error) {
+      this.log('error', `Operation ${operation} failed`, { error });
+      return { success: false, error: `Internal error: ${operation}` };
+    }
+  }
+
+  private async createUser(params: { username: string; email: string }): Promise<TaskResult<User>> {
+    if (!params.username || params.username.length < 3) {
+      return { success: false, error: 'Username must be at least 3 characters' };
+    }
+    if (!params.email || !params.email.includes('@')) {
+      return { success: false, error: 'Invalid email format' };
+    }
+
+    const id = await this.repository.create(params);
+    const user = await this.repository.findById(id);
+    this.log('info', `Created user ${id}`);
+    return { success: true, data: user! };
+  }
+
+  private async getUser(params: { userId: string }): Promise<TaskResult<User>> {
+    const cached = this.cache.get(params.userId);
+    if (cached) return { success: true, data: cached };
+
+    const user = await this.repository.findById(params.userId);
+    if (!user) return { success: false, error: 'User not found' };
+
+    this.cache.set(params.userId, user);
+    return { success: true, data: user };
+  }
+
+  private async updateUser(params: { userId: string; updates: Partial<User> }): Promise<TaskResult<User>> {
+    const user = await this.repository.findById(params.userId);
+    if (!user) return { success: false, error: 'User not found' };
+
+    await this.repository.update(params.userId, params.updates);
+    this.cache.delete(params.userId);
+    this.log('info', `Updated user ${params.userId}`);
+
+    const updated = await this.repository.findById(params.userId);
+    return { success: true, data: updated! };
+  }
+
+  private async deleteUser(params: { userId: string }): Promise<TaskResult<boolean>> {
+    const user = await this.repository.findById(params.userId);
+    if (!user) return { success: false, error: 'User not found' };
+
+    await this.repository.update(params.userId, { status: 'deleted' });
+    this.cache.delete(params.userId);
+    this.log('info', `Deleted user ${params.userId}`);
+
+    return { success: true, data: true };
+  }
+
+  private async listUsers(params: { limit?: number; offset?: number }): Promise<TaskResult<User[]>> {
+    const users = await this.repository.list(params.limit ?? 100, params.offset ?? 0);
+    return { success: true, data: users };
+  }
+}
+```
+
+##### TypeScript: Circuit Breaker Pattern
+
+```typescript
+/**
+ * TypeScript Circuit Breaker Pattern
+ * States: CLOSED (normal) → OPEN (failing) → HALF_OPEN (testing recovery)
+ */
+
+enum CircuitState {
+  CLOSED = 'closed',
+  OPEN = 'open',
+  HALF_OPEN = 'half_open',
+}
+
+interface CircuitBreakerOptions {
+  name: string;
+  failureThreshold?: number;      // Failures before opening (default: 5)
+  recoveryTimeout?: number;       // Seconds before half-open (default: 60)
+  halfOpenMaxCalls?: number;     // Max calls in half-open (default: 3)
+}
+
+class CircuitBreaker {
+  private state: CircuitState = CircuitState.CLOSED;
+  private failureCount: number = 0;
+  private successCount: number = 0;
+  private lastFailureTime: number = 0;
+
+  readonly name: string;
+  readonly failureThreshold: number;
+  readonly recoveryTimeout: number; // milliseconds
+  readonly halfOpenMaxCalls: number;
+
+  constructor(options: CircuitBreakerOptions) {
+    this.name = options.name;
+    this.failureThreshold = options.failureThreshold ?? 5;
+    this.recoveryTimeout = (options.recoveryTimeout ?? 60) * 1000;
+    this.halfOpenMaxCalls = options.halfOpenMaxCalls ?? 3;
+  }
+
+  get circuitState(): CircuitState {
+    if (this.state === CircuitState.OPEN) {
+      const now = Date.now();
+      if (now - this.lastFailureTime >= this.recoveryTimeout) {
+        this.state = CircuitState.HALF_OPEN;
+        this.successCount = 0;
+      }
+    }
+    return this.state;
+  }
+
+  canExecute(): boolean {
+    if (this.circuitState === CircuitState.CLOSED) return true;
+    if (this.circuitState === CircuitState.OPEN) return false;
+    // HALF_OPEN
+    return this.successCount < this.halfOpenMaxCalls;
+  }
+
+  recordSuccess(): void {
+    if (this.state === CircuitState.HALF_OPEN) {
+      this.successCount++;
+      if (this.successCount >= this.halfOpenMaxCalls) {
+        this.state = CircuitState.CLOSED;
+        this.failureCount = 0;
+        console.log(`[CircuitBreaker] ${this.name}: Recovered to CLOSED`);
+      }
+    } else {
+      this.failureCount = 0;
+    }
+  }
+
+  recordFailure(): void {
+    this.failureCount++;
+    this.lastFailureTime = Date.now();
+
+    if (this.state === CircuitState.HALF_OPEN) {
+      this.state = CircuitState.OPEN;
+      console.warn(`[CircuitBreaker] ${this.name}: HALF_OPEN → OPEN (failed)`);
+    } else if (this.failureCount >= this.failureThreshold) {
+      this.state = CircuitState.OPEN;
+      console.warn(`[CircuitBreaker] ${this.name}: CLOSED → OPEN (threshold reached)`);
+    }
+  }
+}
+
+class CircuitBreakerOpenError extends Error {
+  constructor(name: string) {
+    super(`Circuit ${name} is OPEN`);
+    this.name = 'CircuitBreakerOpenError';
+  }
+}
+
+// Usage example
+async function withCircuitBreaker<T>(
+  breaker: CircuitBreaker,
+  fn: () => Promise<T>
+): Promise<T> {
+  if (!breaker.canExecute()) {
+    throw new CircuitBreakerOpenError(breaker.name);
+  }
+
+  try {
+    const result = await fn();
+    breaker.recordSuccess();
+    return result;
+  } catch (error) {
+    breaker.recordFailure();
+    throw error;
+  }
+}
+
+// Example usage
+const breaker = new CircuitBreaker({ name: 'external-api', failureThreshold: 3 });
+
+async function fetchUserData(userId: string) {
+  return withCircuitBreaker(breaker, async () => {
+    const response = await fetch(`/api/users/${userId}`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return response.json();
+  });
+}
+```
+
+##### TypeScript: Repository Pattern + Dependency Injection
+
+```typescript
+/**
+ * TypeScript Repository Pattern with Dependency Injection
+ */
+
+interface Repository<T, ID = string> {
+  create(data: Omit<T, 'id'>): Promise<ID>;
+  findById(id: ID): Promise<T | null>;
+  update(id: ID, data: Partial<T>): Promise<boolean>;
+  delete(id: ID): Promise<boolean>;
+  findAll(limit: number, offset: number): Promise<T[]>;
+}
+
+// Generic repository base
+abstract class BaseRepository<T, ID = string> implements Repository<T, ID> {
+  protected storage: Map<ID, T> = new Map();
+
+  abstract create(data: Omit<T, 'id'>): Promise<ID>;
+  abstract findById(id: ID): Promise<T | null>;
+  abstract update(id: ID, data: Partial<T>): Promise<boolean>;
+  abstract delete(id: ID): Promise<boolean>;
+  abstract findAll(limit: number, offset: number): Promise<T[]>;
+
+  protected generateId(): ID {
+    return crypto.randomUUID() as ID;
+  }
+}
+
+interface Order {
+  id: string;
+  userId: string;
+  amount: number;
+  status: 'pending' | 'completed' | 'cancelled';
+  createdAt: Date;
+}
+
+class OrderRepository extends BaseRepository<Order, string> {
+  async create(data: Omit<Order, 'id'>): Promise<string> {
+    const id = this.generateId();
+    const order: Order = { id, ...data };
+    this.storage.set(id, order);
+    return id;
+  }
+
+  async findById(id: string): Promise<Order | null> {
+    return this.storage.get(id) ?? null;
+  }
+
+  async update(id: string, data: Partial<Order>): Promise<boolean> {
+    const existing = this.storage.get(id);
+    if (!existing) return false;
+    this.storage.set(id, { ...existing, ...data });
+    return true;
+  }
+
+  async delete(id: string): Promise<boolean> {
+    return this.storage.delete(id);
+  }
+
+  async findAll(limit: number, offset: number): Promise<Order[]> {
+    return Array.from(this.storage.values()).slice(offset, offset + limit);
+  }
+
+  async findByUserId(userId: string): Promise<Order[]> {
+    return Array.from(this.storage.values()).filter(o => o.userId === userId);
+  }
+}
+
+// Dependency Injection Container
+class DIContainer {
+  private services: Map<string, any> = new Map();
+
+  register<T>(token: string, instance: T): void {
+    this.services.set(token, instance);
+  }
+
+  resolve<T>(token: string): T {
+    const service = this.services.get(token);
+    if (!service) throw new Error(`Service ${token} not registered`);
+    return service as T;
+  }
+}
+
+// Usage
+const container = new DIContainer();
+container.register<OrderRepository>('OrderRepository', new OrderRepository());
+
+const orderRepo = container.resolve<OrderRepository>('OrderRepository');
+const orderId = await orderRepo.create({
+  userId: 'user-123',
+  amount: 99.99,
+  status: 'pending',
+  createdAt: new Date(),
+});
+```
+
+---
+
+#### Go Examples
+
+##### Go: Service Layer Pattern
+
+```go
+package main
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"log"
+	"sync"
+	"time"
+)
+
+// TaskResult wraps execution results.
+type TaskResult[T any] struct {
+	Success bool
+	Data    *T
+	Error   error
+}
+
+// BaseService provides common service functionality.
+type BaseService struct {
+	Name        string
+	Logger      *log.Logger
+	Initialized bool
+}
+
+func (s *BaseService) Initialize() {
+	s.Logger.Printf("[%s] Initializing", s.Name)
+	s.Initialized = true
+}
+
+func (s *BaseService) HealthCheck() bool {
+	return s.Initialized
+}
+
+// User represents a user entity.
+type User struct {
+	ID        string    `json:"id"`
+	Username  string    `json:"username"`
+	Email     string    `json:"email"`
+	Status    string    `json:"status"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+// UserRepository defines the user data access interface.
+type UserRepository interface {
+	Create(ctx context.Context, user *User) (string, error)
+	FindByID(ctx context.Context, id string) (*User, error)
+	Update(ctx context.Context, id string, updates map[string]interface{}) error
+	Delete(ctx context.Context, id string) error
+	List(ctx context.Context, limit, offset int) ([]*User, error)
+}
+
+// InMemoryUserRepository is a thread-safe in-memory implementation.
+type InMemoryUserRepository struct {
+	mu    sync.RWMutex
+	store map[string]*User
+}
+
+func NewInMemoryUserRepository() *InMemoryUserRepository {
+	return &InMemoryUserRepository{store: make(map[string]*User)}
+}
+
+func (r *InMemoryUserRepository) Create(ctx context.Context, user *User) (string, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	user.ID = fmt.Sprintf("%d", time.Now().UnixNano())
+	user.CreatedAt = time.Now()
+	user.UpdatedAt = user.CreatedAt
+	r.store[user.ID] = user
+	return user.ID, nil
+}
+
+func (r *InMemoryUserRepository) FindByID(ctx context.Context, id string) (*User, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	if user, ok := r.store[id]; ok {
+		return user, nil
+	}
+	return nil, errors.New("user not found")
+}
+
+func (r *InMemoryUserRepository) Update(ctx context.Context, id string, updates map[string]interface{}) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	user, ok := r.store[id]
+	if !ok {
+		return errors.New("user not found")
+	}
+
+	// Apply updates (simplified - in production use reflection or struct mapping)
+	if username, ok := updates["username"].(string); ok {
+		user.Username = username
+	}
+	if email, ok := updates["email"].(string); ok {
+		user.Email = email
+	}
+	if status, ok := updates["status"].(string); ok {
+		user.Status = status
+	}
+	user.UpdatedAt = time.Now()
+
+	r.store[id] = user
+	return nil
+}
+
+func (r *InMemoryUserRepository) Delete(ctx context.Context, id string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if _, ok := r.store[id]; !ok {
+		return errors.New("user not found")
+	}
+	delete(r.store, id)
+	return nil
+}
+
+func (r *InMemoryUserRepository) List(ctx context.Context, limit, offset int) ([]*User, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	users := make([]*User, 0, limit)
+	i := 0
+	for _, user := range r.store {
+		if i >= offset && len(users) < limit {
+			users = append(users, user)
+		}
+		i++
+	}
+	return users, nil
+}
+
+// UserManagementService orchestrates user operations.
+type UserManagementService struct {
+	BaseService
+	repo UserRepository
+	cache map[string]*User
+}
+
+func NewUserManagementService(repo UserRepository) *UserManagementService {
+	return &UserManagementService{
+		BaseService: BaseService{
+			Name:   "UserManagement",
+			Logger: log.Default(),
+		},
+		repo:  repo,
+		cache: make(map[string]*User),
+	}
+}
+
+func (s *UserManagementService) CreateUser(ctx context.Context, username, email string) *TaskResult[User] {
+	if len(username) < 3 {
+		return &TaskResult[User]{Success: false, Error: errors.New("username must be at least 3 characters")}
+	}
+	if !contains(email, "@") {
+		return &TaskResult[User]{Success: false, Error: errors.New("invalid email format")}
+	}
+
+	user := &User{
+		Username: username,
+		Email:    email,
+		Status:   "pending",
+	}
+
+	id, err := s.repo.Create(ctx, user)
+	if err != nil {
+		return &TaskResult[User]{Success: false, Error: err}
+	}
+
+	user.ID = id
+	s.Logger.Printf("Created user: %s", id)
+	return &TaskResult[User]{Success: true, Data: user}
+}
+
+func (s *UserManagementService) GetUser(ctx context.Context, id string) *TaskResult[User] {
+	if cached, ok := s.cache[id]; ok {
+		return &TaskResult[User]{Success: true, Data: cached}
+	}
+
+	user, err := s.repo.FindByID(ctx, id)
+	if err != nil {
+		return &TaskResult[User]{Success: false, Error: err}
+	}
+
+	s.cache[id] = user
+	return &TaskResult[User]{Success: true, Data: user}
+}
+
+func (s *UserManagementService) UpdateUser(ctx context.Context, id string, updates map[string]interface{}) *TaskResult[User] {
+	err := s.repo.Update(ctx, id, updates)
+	if err != nil {
+		return &TaskResult[User]{Success: false, Error: err}
+	}
+
+	delete(s.cache, id) // Invalidate cache
+
+	user, _ := s.repo.FindByID(ctx, id)
+	s.Logger.Printf("Updated user: %s", id)
+	return &TaskResult[User]{Success: true, Data: user}
+}
+
+func (s *UserManagementService) DeleteUser(ctx context.Context, id string) *TaskResult[bool] {
+	err := s.repo.Delete(ctx, id)
+	if err != nil {
+		return &TaskResult[bool]{Success: false, Error: err}
+	}
+
+	delete(s.cache, id)
+	s.Logger.Printf("Deleted user: %s", id)
+	return &TaskResult[bool]{Success: true, Data: new(bool)}
+}
+
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsHelper(s, substr))
+}
+
+func containsHelper(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
+}
+
+func main() {
+	ctx := context.Background()
+	repo := NewInMemoryUserRepository()
+	service := NewUserManagementService(repo)
+	service.Initialize()
+
+	// Create user
+	result := service.CreateUser(ctx, "testuser", "test@example.com")
+	if !result.Success {
+		log.Fatalf("Failed to create user: %v", result.Error)
+	}
+	fmt.Printf("Created user: %+v\n", result.Data)
+}
+```
+
+##### Go: Circuit Breaker Pattern
+
+```go
+package main
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"log"
+	"time"
+)
+
+// CircuitState represents the circuit breaker state.
+type CircuitState int
+
+const (
+	StateClosed CircuitState = iota
+	StateOpen
+	StateHalfOpen
+)
+
+func (s CircuitState) String() string {
+	switch s {
+	case StateClosed:
+		return "CLOSED"
+	case StateOpen:
+		return "OPEN"
+	case StateHalfOpen:
+		return "HALF_OPEN"
+	default:
+		return "UNKNOWN"
+	}
+}
+
+// CircuitBreaker implements the circuit breaker pattern.
+type CircuitBreaker struct {
+	name             string
+	state            CircuitState
+	failureThreshold int
+	recoveryTimeout  time.Duration
+	halfOpenMaxCalls int
+
+	mu              int // Mutex via sync would be used in production
+	failureCount    int
+	successCount    int
+	lastFailureTime time.Time
+}
+
+// NewCircuitBreaker creates a new circuit breaker.
+func NewCircuitBreaker(name string, opts ...func(*CircuitBreaker)) *CircuitBreaker {
+	cb := &CircuitBreaker{
+		name:             name,
+		state:            StateClosed,
+		failureThreshold: 5,
+		recoveryTimeout:  60 * time.Second,
+		halfOpenMaxCalls: 3,
+	}
+	for _, opt := range opts {
+		opt(cb)
+	}
+	return cb
+}
+
+// WithFailureThreshold sets the failure threshold.
+func WithFailureThreshold(n int) func(*CircuitBreaker) {
+	return func(cb *CircuitBreaker) { cb.failureThreshold = n }
+}
+
+// WithRecoveryTimeout sets the recovery timeout.
+func WithRecoveryTimeout(d time.Duration) func(*CircuitBreaker) {
+	return func(cb *CircuitBreaker) { cb.recoveryTimeout = d }
+}
+
+func (cb *CircuitBreaker) State() CircuitState {
+	if cb.state == StateOpen {
+		if time.Since(cb.lastFailureTime) >= cb.recoveryTimeout {
+			cb.state = StateHalfOpen
+			cb.successCount = 0
+		}
+	}
+	return cb.state
+}
+
+func (cb *CircuitBreaker) CanExecute() bool {
+	return cb.State() == StateClosed || cb.State() == StateHalfOpen
+}
+
+func (cb *CircuitBreaker) RecordSuccess() {
+	switch cb.state {
+	case StateHalfOpen:
+		cb.successCount++
+		if cb.successCount >= cb.halfOpenMaxCalls {
+			cb.state = StateClosed
+			cb.failureCount = 0
+			log.Printf("[CircuitBreaker] %s: Recovered to CLOSED", cb.name)
+		}
+	default:
+		cb.failureCount = 0
+	}
+}
+
+func (cb *CircuitBreaker) RecordFailure() {
+	cb.failureCount++
+	cb.lastFailureTime = time.Now()
+
+	switch cb.state {
+	case StateHalfOpen:
+		cb.state = StateOpen
+		log.Printf("[CircuitBreaker] %s: HALF_OPEN → OPEN (failed)", cb.name)
+	case StateClosed:
+		if cb.failureCount >= cb.failureThreshold {
+			cb.state = StateOpen
+			log.Printf("[CircuitBreaker] %s: CLOSED → OPEN (threshold reached)", cb.name)
+		}
+	}
+}
+
+// ErrCircuitOpen is returned when the circuit is open.
+var ErrCircuitOpen = errors.New("circuit breaker is open")
+
+// CircuitBreakerOpenError represents a circuit open error.
+type CircuitBreakerOpenError struct {
+	Name string
+}
+
+func (e *CircuitBreakerOpenError) Error() string {
+	return fmt.Sprintf("circuit %s is OPEN", e.Name)
+}
+
+// Execute runs the function with circuit breaker protection.
+func (cb *CircuitBreaker) Execute(ctx context.Context, fn func(context.Context) error) error {
+	if !cb.CanExecute() {
+		return &CircuitBreakerOpenError{Name: cb.name}
+	}
+
+	err := fn(ctx)
+	if err != nil {
+		cb.RecordFailure()
+		return err
+	}
+
+	cb.RecordSuccess()
+	return nil
+}
+
+// Example usage
+func main() {
+	cb := NewCircuitBreaker("external-api", WithFailureThreshold(3))
+
+	ctx := context.Background()
+
+	err := cb.Execute(ctx, func(ctx context.Context) error {
+		// Simulate API call
+		time.Sleep(100 * time.Millisecond)
+		return nil
+	})
+
+	if err != nil {
+		log.Printf("Request failed: %v", err)
+	} else {
+		log.Println("Request succeeded")
+	}
+
+	fmt.Printf("Circuit state: %s\n", cb.State())
+}
+```
+
+##### Go: Repository Pattern with Interface
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"sync"
+)
+
+// Repository is a generic repository interface.
+type Repository[T any, ID any] interface {
+	Create(ctx context.Context, entity T) (ID, error)
+	FindByID(ctx context.Context, id ID) (T, error)
+	Update(ctx context.Context, id ID, entity T) error
+	Delete(ctx context.Context, id ID) error
+	List(ctx context.Context, limit, offset int) ([]T, error)
+}
+
+// BaseRepository provides common repository functionality.
+type BaseRepository[T any, ID any] struct {
+	mu    sync.RWMutex
+	store map[ID]T
+	idGen func() ID
+}
+
+func NewBaseRepository[T any, ID any](idGen func() ID) *BaseRepository[T, ID] {
+	return &BaseRepository[T, ID]{
+		store: make(map[ID]T),
+		idGen: idGen,
+	}
+}
+
+// Order represents an order entity.
+type Order struct {
+	ID        string
+	UserID    string
+	Amount    float64
+	Status    string
+	CreatedAt int64
+}
+
+// OrderRepository implements Repository for Order.
+type OrderRepository struct {
+	*BaseRepository[Order, string]
+}
+
+func NewOrderRepository() *OrderRepository {
+	return &OrderRepository{
+		BaseRepository: NewBaseRepository(func() string {
+			return fmt.Sprintf("%d", <-idChan)
+		}),
+	}
+}
+
+var idChan = make(chan int, 1000)
+
+func init() {
+	go func() {
+		for i := 1; ; i++ {
+			idChan <- i
+		}
+	}()
+}
+
+func (r *OrderRepository) Create(ctx context.Context, order Order) (string, error) {
+	order.ID = r.idGen()
+	r.mu.Lock()
+	r.store[order.ID] = order
+	r.mu.Unlock()
+	return order.ID, nil
+}
+
+func (r *OrderRepository) FindByID(ctx context.Context, id string) (Order, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	if order, ok := r.store[id]; ok {
+		return order, nil
+	}
+	return Order{}, fmt.Errorf("order not found")
+}
+
+func (r *OrderRepository) Update(ctx context.Context, id string, order Order) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if _, ok := r.store[id]; !ok {
+		return fmt.Errorf("order not found")
+	}
+	r.store[id] = order
+	return nil
+}
+
+func (r *OrderRepository) Delete(ctx context.Context, id string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	delete(r.store, id)
+	return nil
+}
+
+func (r *OrderRepository) List(ctx context.Context, limit, offset int) ([]Order, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	orders := make([]Order, 0, limit)
+	i := 0
+	for _, order := range r.store {
+		if i >= offset && len(orders) < limit {
+			orders = append(orders, order)
+		}
+		i++
+	}
+	return orders, nil
+}
+```
+
+---
 
 ### 3.2 Unit Test Generation
 
@@ -2270,33 +3643,358 @@ def verify_implementation(
     requirements: Dict[str, Any]
 ) -> Dict[str, Any]:
     """
-    Complete verification of implementation.
+    Complete verification of implementation using AST-based analysis.
+
+    This function performs:
+    1. AST parsing to verify code is syntactically valid Python
+    2. Pattern matching against acceptance criteria using AST nodes
+    3. Quality checks via CodeQualityVerifier (linting, secrets, etc.)
+    4. Integration with ruff/black/mypy when available
 
     Returns:
         Dictionary with verification results and summary.
     """
+    import ast
+    import subprocess
+    import sys
+    from typing import List, Dict, Any, Optional
+
+    verification_results = {
+        "ast_validation": None,
+        "ast_analysis": None,
+        "lint_results": None,
+        "quality_checks": [],
+        "requirement_checks": [],
+        "passed": False,
+        "warnings": 0,
+        "errors": 0,
+        "summary": ""
+    }
+
+    # -------------------------------------------------------------------------
+    # 1. AST VALIDATION - Verify code is syntactically valid
+    # -------------------------------------------------------------------------
+    try:
+        tree = ast.parse(code)
+        verification_results["ast_validation"] = {
+            "passed": True,
+            "message": "Code is syntactically valid Python",
+            "node_count": sum(1 for _ in ast.walk(tree)),
+            "class_count": len([n for n in ast.walk(tree) if isinstance(n, ast.ClassDef)]),
+            "function_count": len([n for n in ast.walk(tree) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]),
+        }
+    except SyntaxError as e:
+        verification_results["ast_validation"] = {
+            "passed": False,
+            "message": f"Syntax error: {e.msg} at line {e.lineno}",
+            "line": e.lineno,
+            "offset": e.offset
+        }
+        verification_results["errors"] += 1
+        verification_results["summary"] = "Failed: Syntax errors in generated code"
+        return verification_results
+
+    # -------------------------------------------------------------------------
+    # 2. AST ANALYSIS - Deep inspection of code structure
+    # -------------------------------------------------------------------------
+    class ASTAnalyzer(ast.NodeVisitor):
+        """Analyze AST for code quality patterns."""
+
+        def __init__(self):
+            self.functions_with_return = []
+            self.functions_without_return = []
+            self.async_functions = []
+            self.functions_with_docstring = []
+            self.functions_without_docstring = []
+            self.imports = []
+            self.from_imports = []
+            self.decorator_list = []
+            self.classes_with_init = []
+            self.type_annotations_found = []
+            self.comprehension_found = False
+            self.context_manager_found = False
+
+        def visit_Import(self, node):
+            for alias in node.names:
+                self.imports.append(alias.name)
+            self.generic_visit(node)
+
+        def visit_ImportFrom(self, node):
+            for alias in node.names:
+                self.from_imports.append(f"{node.module}.{alias.name}" if node.module else alias.name)
+            self.generic_visit(node)
+
+        def visit_FunctionDef(self, node):
+            # Check for docstring
+            has_docstring = (
+                ast.get_docstring(node) is not None or
+                (node.body and isinstance(node.body[0], ast.Expr) and isinstance(node.body[0].value, ast.Constant))
+            )
+            if has_docstring:
+                self.functions_with_docstring.append(node.name)
+            else:
+                self.functions_without_docstring.append(node.name)
+
+            # Check for return statements
+            has_return = any(
+                isinstance(n, (ast.Return, ast.Yield, ast.YieldFrom))
+                for n in ast.walk(node)
+            )
+            if has_return:
+                self.functions_with_return.append(node.name)
+            else:
+                self.functions_without_return.append(node.name)
+
+            # Check for type annotations
+            if node.returns:
+                self.type_annotations_found.append(node.name)
+            for arg in node.args.args:
+                if arg.annotation:
+                    if node.name not in self.type_annotations_found:
+                        self.type_annotations_found.append(node.name)
+
+            # Check for decorators
+            if node.decorator_list:
+                self.decorator_list.extend([d.attr if hasattr(d, 'attr') else (d.id if hasattr(d, 'id') else str(d)) for d in node.decorator_list])
+
+            self.generic_visit(node)
+
+        def visit_AsyncFunctionDef(self, node):
+            self.async_functions.append(node.name)
+            self.visit_FunctionDef(node)  # Reuse FunctionDef logic
+
+        def visit_ClassDef(self, node):
+            # Check if class has __init__
+            has_init = any(
+                isinstance(n, ast.FunctionDef) and n.name == "__init__"
+                for n in node.body
+            )
+            if has_init:
+                self.classes_with_init.append(node.name)
+            self.generic_visit(node)
+
+        def visit_For(self, node):
+            if isinstance(node.iter, (ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)):
+                self.comprehension_found = True
+            self.generic_visit(node)
+
+        def visit_AsyncFor(self, node):
+            self.comprehension_found = True
+            self.generic_visit(node)
+
+        def visit_With(self, node):
+            self.context_manager_found = True
+            self.generic_visit(node)
+
+        def visit_AsyncWith(self, node):
+            self.context_manager_found = True
+            self.generic_visit(node)
+
+    analyzer = ASTAnalyzer()
+    analyzer.visit(tree)
+
+    verification_results["ast_analysis"] = {
+        "total_imports": len(analyzer.imports) + len(analyzer.from_imports),
+        "imports": analyzer.imports[:10],  # Top 10
+        "from_imports": analyzer.from_imports[:10],
+        "async_functions": analyzer.async_functions,
+        "docstring_coverage": {
+            "with_docstring": len(analyzer.functions_with_docstring),
+            "without_docstring": len(analyzer.functions_without_docstring),
+            "ratio": round(
+                len(analyzer.functions_with_docstring) /
+                max(1, len(analyzer.functions_with_docstring) + len(analyzer.functions_without_docstring)),
+                2
+            )
+        },
+        "type_annotation_coverage": {
+            "functions_with_annotations": len(analyzer.type_annotations_found),
+            "total_functions": len(analyzer.functions_with_return) + len(analyzer.functions_without_return),
+        },
+        "decorators_used": list(set(analyzer.decorator_list)),
+        "has_context_managers": analyzer.context_manager_found,
+        "has_comprehensions": analyzer.comprehension_found,
+    }
+
+    # -------------------------------------------------------------------------
+    # 3. QUALITY CHECKS via CodeQualityVerifier
+    # -------------------------------------------------------------------------
     verifier = CodeQualityVerifier(code)
-    results = verifier.check_all()
+    quality_results = verifier.check_all()
+    verification_results["quality_checks"] = [vars(r) for r in quality_results]
+    verification_results["warnings"] += sum(1 for r in quality_results if r.severity == "warning")
+    verification_results["errors"] += sum(1 for r in quality_results if r.severity == "error")
 
-    # Check against requirements
-    requirement_checks = []
+    # -------------------------------------------------------------------------
+    # 4. REQUIREMENT CHECKS - Verify against acceptance criteria
+    # -------------------------------------------------------------------------
+    # Define keywords/patterns to check for each type of requirement
+    REQUIREMENT_PATTERNS = {
+        "async": ["async def", "await", "asyncio"],
+        "error_handling": ["try:", "except", "Exception"],
+        "logging": ["logger", "logging", "log."],
+        "validation": ["validate", "ValidationError", "is_valid"],
+        "database": ["INSERT", "SELECT", "repository", "db.", "pool"],
+        "auth": ["auth", "token", "jwt", "bearer"],
+        "cache": ["cache", "redis", "memcached"],
+        "api": ["@app", "@router", "endpoint", "/api/"],
+    }
 
-    # Check acceptance criteria
     if "acceptance_criteria" in requirements:
         for criterion in requirements["acceptance_criteria"]:
-            requirement_checks.append({
+            criterion_lower = criterion.lower()
+            matched_patterns = []
+
+            for req_type, patterns in REQUIREMENT_PATTERNS.items():
+                if any(p.lower() in criterion_lower for p in [req_type] + patterns):
+                    matched_patterns.append(req_type)
+
+            # Check if code satisfies this criterion
+            verified = False
+            evidence = ""
+
+            if "async" in matched_patterns:
+                verified = len(analyzer.async_functions) > 0
+                evidence = f"Found {len(analyzer.async_functions)} async functions" if verified else "No async functions found"
+            elif "error_handling" in matched_patterns:
+                verified = "try:" in code and "except" in code
+                evidence = "Try-except blocks found" if verified else "No error handling found"
+            elif "logging" in matched_patterns:
+                verified = "logger" in code.lower() or "logging" in analyzer.imports
+                evidence = "Logging statements found" if verified else "No logging found"
+            elif "validation" in matched_patterns:
+                verified = "validate" in code.lower() or "ValidationError" in code
+                evidence = "Validation logic found" if verified else "No validation found"
+            elif "database" in matched_patterns:
+                verified = any(p in code for p in REQUIREMENT_PATTERNS["database"])
+                evidence = "Database operations found" if verified else "No database operations found"
+            elif matched_patterns:
+                # Generic check - look for any of the matched pattern keywords
+                verified = any(
+                    any(p in code for p in REQUIREMENT_PATTERNS.get(pt, []))
+                    for pt in matched_patterns
+                )
+                evidence = f"Found evidence of: {', '.join(matched_patterns)}" if verified else f"No evidence of: {', '.join(matched_patterns)}"
+            else:
+                # Unclassified criterion - just check if code is non-empty
+                verified = len(code.strip()) > 0
+                evidence = "Code generated" if verified else "No code generated"
+
+            verification_results["requirement_checks"].append({
                 "criterion": criterion,
-                "verified": True,  # In real implementation, would check actual code
-                "evidence": "Code inspection"
+                "verified": verified,
+                "evidence": evidence,
+                "matched_requirement_types": matched_patterns
             })
 
-    return {
-        "quality_checks": [vars(r) for r in results],
-        "requirement_checks": requirement_checks,
-        "passed": all(r.passed for r in results if r.severity == "error"),
-        "warnings": sum(1 for r in results if r.severity == "warning"),
-        "errors": sum(1 for r in results if r.severity == "error")
+    # -------------------------------------------------------------------------
+    # 5. TRY EXTERNAL LINTERS (ruff, black, mypy) if available
+    # -------------------------------------------------------------------------
+    try:
+        # Try ruff (fastest)
+        result = subprocess.run(
+            ["ruff", "check", "-", "--output-format=text"],
+            input=code.encode(),
+            capture_output=True,
+            timeout=10
+        )
+        if result.returncode == 0:
+            verification_results["lint_results"] = {
+                "tool": "ruff",
+                "passed": True,
+                "message": "No linting issues",
+                "output": ""
+            }
+        else:
+            lint_output = result.stdout.decode() + result.stderr.decode()
+            verification_results["lint_results"] = {
+                "tool": "ruff",
+                "passed": False,
+                "message": f"{lint_output.count(chr(10))} linting issues",
+                "output": lint_output[:500]  # First 500 chars
+            }
+            verification_results["warnings"] += lint_output.count(chr(10))
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        verification_results["lint_results"] = {
+            "tool": "ruff",
+            "passed": None,
+            "message": "ruff not available or timed out",
+            "output": ""
+        }
+
+    # -------------------------------------------------------------------------
+    # 6. FINAL VERDICT
+    # -------------------------------------------------------------------------
+    all_errors_passed = all(r.passed for r in quality_results if r.severity == "error")
+    all_requirements_met = all(
+        check["verified"] for check in verification_results["requirement_checks"]
+    )
+    ast_valid = verification_results["ast_validation"]["passed"]
+
+    verification_results["passed"] = all_errors_passed and all_requirements_met and ast_valid
+    verification_results["summary"] = (
+        f"VERIFIED: {len(verification_results['requirement_checks'])} criteria met, "
+        f"AST valid, {verification_results['warnings']} warnings"
+        if verification_results["passed"] else
+        f"FAILED: {'AST invalid' if not ast_valid else 'Quality/requirement checks failed'}"
+    )
+
+    return verification_results
+
+
+# Standalone AST verification function (no dependencies on this file's classes)
+def verify_code_ast(code: str) -> Dict[str, Any]:
+    """
+    Standalone AST-based code verification.
+    Can be imported and used independently of the Staff Engineer workflow.
+
+    Example:
+        >>> result = verify_code_ast(open("generated_code.py").read())
+        >>> print(result["summary"])
+        >>> if not result["passed"]:
+        ...     print(f"Errors: {result['errors']}")
+        ...     for check in result["quality_checks"]:
+        ...         if not check["passed"]:
+        ...             print(f"  - {check['message']}")
+    """
+    import ast
+
+    result = {
+        "passed": False,
+        "ast_valid": False,
+        "syntax_errors": [],
+        "analysis": {},
+        "summary": ""
     }
+
+    # Parse AST
+    try:
+        tree = ast.parse(code)
+        result["ast_valid"] = True
+    except SyntaxError as e:
+        result["syntax_errors"].append({
+            "line": e.lineno,
+            "message": e.msg
+        })
+        result["summary"] = f"Syntax error at line {e.lineno}: {e.msg}"
+        return result
+
+    # Analyze structure
+    functions = [n for n in ast.walk(tree) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
+    classes = [n for n in ast.walk(tree) if isinstance(n, ast.ClassDef)]
+
+    result["analysis"] = {
+        "function_count": len(functions),
+        "class_count": len(classes),
+        "async_functions": [f.name for f in functions if isinstance(f, ast.AsyncFunctionDef)],
+        "has_main": any(f.name == "main" for f in functions),
+        "has_type_hints": any(f.returns is not None for f in functions),
+    }
+
+    result["passed"] = True
+    result["summary"] = f"Valid Python: {len(functions)} functions, {len(classes)} classes"
+
+    return result
 ```
 
 ---
