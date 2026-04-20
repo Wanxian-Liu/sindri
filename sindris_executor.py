@@ -208,6 +208,38 @@ class SindrisExecutor:
             self._save_fastpath_cache(task, result)
             return result
         
+        # 检查是否使用角色改进分配器
+        is_evolution = any(r.get('team_type') == 'evolution' for r in roles) if roles else False
+        if is_evolution:
+            # 角色改进任务：直接使用改进角色
+            improver_match = [m for m in task_decomposer.role_matcher.match(task) if getattr(m, 'source', None) == 'evolution_distributor']
+            if improver_match:
+                improver_role = improver_match[0].role
+                role_name = improver_role.get('name', improver_role.get('id', 'Specialist'))
+                role_file = self._find_role_file(role_name)
+                role_prompt = self.get_role_prompt(role_name) if role_file else f"你是 {role_name}。"
+                subtasks = [{
+                    "task_id": "evolution_improver",
+                    "role": role_name,
+                    "role_file": role_file,
+                    "role_prompt": role_prompt,
+                    "title": f"改进角色任务",
+                    "tools": ["read", "exec", "write"],
+                    "timeout": 600,
+                    "phase": "evolution",
+                    "verify": [f"{role_name}完成角色改进"],
+                }]
+                result = {
+                    "success": True,
+                    "task_id": self.session_id,
+                    "subtasks": subtasks,
+                    "plan_summary": f"角色改进任务：使用{role_name}改进",
+                    "phase": "planned",
+                    "roles": roles,
+                }
+                self._save_fastpath_cache(task, result)
+                return result
+        
         # 普通任务：使用Round分解
         decomposed = task_decomposer.decompose_by_round(task, roles)
         

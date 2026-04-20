@@ -1,63 +1,5 @@
 [
   {
-    "id": "task_64a9295d01a5",
-    "title": "运行sindri测试套件，验证所有核心模块功能正常",
-    "kind": "sindris_planning",
-    "phase": "round1",
-    "status": "pending",
-    "priority": "high",
-    "owner": null,
-    "verify": [],
-    "notes": [],
-    "metadata": {
-      "session_id": "session_975981b6ba0f",
-      "matched_roles": []
-    },
-    "dependencies": [],
-    "blockers": [],
-    "review_status": "none",
-    "claimed_at": null,
-    "completed_at": null,
-    "result": null,
-    "history": [
-      {
-        "status": "pending",
-        "at": "2026-04-11T09:30:26.915509"
-      }
-    ],
-    "created_at": "2026-04-11T09:30:26.915495",
-    "updated_at": "2026-04-11T09:30:26.915508"
-  },
-  {
-    "id": "task_c8996fba9556",
-    "title": "运行sindri测试套件 验证核心模块",
-    "kind": "sindris_planning",
-    "phase": "round1",
-    "status": "pending",
-    "priority": "high",
-    "owner": null,
-    "verify": [],
-    "notes": [],
-    "metadata": {
-      "session_id": "session_50cafd93a047",
-      "matched_roles": []
-    },
-    "dependencies": [],
-    "blockers": [],
-    "review_status": "none",
-    "claimed_at": null,
-    "completed_at": null,
-    "result": null,
-    "history": [
-      {
-        "status": "pending",
-        "at": "2026-04-11T10:03:24.069889"
-      }
-    ],
-    "created_at": "2026-04-11T10:03:24.069873",
-    "updated_at": "2026-04-11T10:03:24.069887"
-  },
-  {
     "id": "task_6584530eb97f",
     "title": "运行sindri测试套件 验证核心模块",
     "kind": "sindris_planning",
@@ -888,36 +830,6 @@
     "updated_at": "2026-04-11T10:36:56.418352"
   },
   {
-    "id": "task_4c321773acee",
-    "title": "Round1 Plan: 分解为5个子任务",
-    "kind": "sindris_plan",
-    "phase": "round1",
-    "status": "pending",
-    "priority": "high",
-    "owner": null,
-    "verify": [],
-    "notes": [
-      "分解为5个子任务"
-    ],
-    "metadata": {
-      "round1_verified": true
-    },
-    "dependencies": [],
-    "blockers": [],
-    "review_status": "none",
-    "claimed_at": null,
-    "completed_at": null,
-    "result": null,
-    "history": [
-      {
-        "status": "pending",
-        "at": "2026-04-11T10:36:56.426418"
-      }
-    ],
-    "created_at": "2026-04-11T10:36:56.426412",
-    "updated_at": "2026-04-11T10:36:56.426417"
-  },
-  {
     "id": "task_c2001ee6edf2",
     "title": "运行测试套件",
     "kind": "sindris_planning",
@@ -1028,36 +940,6 @@
     ],
     "created_at": "2026-04-11T10:36:57.473154",
     "updated_at": "2026-04-11T10:36:57.487479"
-  },
-  {
-    "id": "task_6fe5a2835caf",
-    "title": "Round1 Plan: 分解为3个子任务",
-    "kind": "sindris_plan",
-    "phase": "round1",
-    "status": "pending",
-    "priority": "high",
-    "owner": null,
-    "verify": [],
-    "notes": [
-      "分解为3个子任务"
-    ],
-    "metadata": {
-      "round1_verified": true
-    },
-    "dependencies": [],
-    "blockers": [],
-    "review_status": "none",
-    "claimed_at": null,
-    "completed_at": null,
-    "result": null,
-    "history": [
-      {
-        "status": "pending",
-        "at": "2026-04-11T10:36:57.499611"
-      }
-    ],
-    "created_at": "2026-04-11T10:36:57.499602",
-    "updated_at": "2026-04-11T10:36:57.499609"
   },
   {
     "id": "task_4ea43d3aa9cc",
@@ -1300,35 +1182,6 @@
     "updated_at": "2026-04-11T10:49:15.541425"
   },
   {
-    "id": "task_0af3a620f42a",
-    "title": "验证sindri",
-    "kind": "sindris_planning",
-    "phase": "round1",
-    "status": "pending",
-    "priority": "high",
-    "owner": null,
-    "verify": [],
-    "notes": [],
-    "metadata": {
-      "session_id": "session_3c01ebbd21a7",
-      "matched_roles": []
-    },
-    "dependencies": [],
-    "blockers": [],
-    "review_status": "none",
-    "claimed_at": null,
-    "completed_at": null,
-    "result": null,
-    "history": [
-      {
-        "status": "pending",
-        "at": "2026-04-11T10:49:15.575686"
-      }
-    ],
-    "created_at": "2026-04-11T10:49:15.575678",
-    "updated_at": "2026-04-11T10:49:15.575685"
-  },
-  {
     "id": "task_bb0d83ad3c7c",
     "title": "运行sindri测试",
     "kind": "sindris_planning",
@@ -1521,122 +1374,6 @@
     "updated_at": "2026-04-11T10:57:54.450818"
   },
   {
-    "id": "task_cb53f152b8fa",
-    "title": "最终验证",
-    "kind": "sindris_planning",
-    "phase": "round1",
-    "status": "pending",
-    "priority": "high",
-    "owner": null,
-    "verify": [],
-    "notes": [],
-    "metadata": {
-      "session_id": "session_64a780d4333d",
-      "matched_roles": []
-    },
-    "dependencies": [],
-    "blockers": [],
-    "review_status": "none",
-    "claimed_at": null,
-    "completed_at": null,
-    "result": null,
-    "history": [
-      {
-        "status": "pending",
-        "at": "2026-04-11T10:57:59.244011"
-      }
-    ],
-    "created_at": "2026-04-11T10:57:59.243995",
-    "updated_at": "2026-04-11T10:57:59.244010"
-  },
-  {
-    "id": "task_056b22032051",
-    "title": "subagent确认",
-    "kind": "sindris_planning",
-    "phase": "round1",
-    "status": "pending",
-    "priority": "high",
-    "owner": null,
-    "verify": [],
-    "notes": [],
-    "metadata": {
-      "session_id": "session_0ab03c0e65ce",
-      "matched_roles": []
-    },
-    "dependencies": [],
-    "blockers": [],
-    "review_status": "none",
-    "claimed_at": null,
-    "completed_at": null,
-    "result": null,
-    "history": [
-      {
-        "status": "pending",
-        "at": "2026-04-11T10:58:52.503436"
-      }
-    ],
-    "created_at": "2026-04-11T10:58:52.503420",
-    "updated_at": "2026-04-11T10:58:52.503434"
-  },
-  {
-    "id": "task_4ad7290daf39",
-    "title": "确认sindri可用",
-    "kind": "sindris_planning",
-    "phase": "round1",
-    "status": "pending",
-    "priority": "high",
-    "owner": null,
-    "verify": [],
-    "notes": [],
-    "metadata": {
-      "session_id": "session_ea2a8b8646cc",
-      "matched_roles": []
-    },
-    "dependencies": [],
-    "blockers": [],
-    "review_status": "none",
-    "claimed_at": null,
-    "completed_at": null,
-    "result": null,
-    "history": [
-      {
-        "status": "pending",
-        "at": "2026-04-11T10:58:52.519389"
-      }
-    ],
-    "created_at": "2026-04-11T10:58:52.519380",
-    "updated_at": "2026-04-11T10:58:52.519388"
-  },
-  {
-    "id": "task_5adb5a9aa891",
-    "title": "分析sindris代码库，找出可改进的点：\n    1. 检查sindris_executor.py中是否有冗余代码\n    2. 检查错误处理是否完善\n    3. 检查中文→英文关键词映射是否完整",
-    "kind": "sindris_planning",
-    "phase": "round1",
-    "status": "pending",
-    "priority": "high",
-    "owner": null,
-    "verify": [],
-    "notes": [],
-    "metadata": {
-      "session_id": "session_a72a13d7ea70",
-      "matched_roles": []
-    },
-    "dependencies": [],
-    "blockers": [],
-    "review_status": "none",
-    "claimed_at": null,
-    "completed_at": null,
-    "result": null,
-    "history": [
-      {
-        "status": "pending",
-        "at": "2026-04-11T11:10:09.190949"
-      }
-    ],
-    "created_at": "2026-04-11T11:10:09.190930",
-    "updated_at": "2026-04-11T11:10:09.190947"
-  },
-  {
     "id": "task_6b797daf270c",
     "title": "修复Python代码bug",
     "kind": "sindris_planning",
@@ -1691,36 +1428,6 @@
     ],
     "created_at": "2026-04-11T11:11:24.689987",
     "updated_at": "2026-04-11T11:11:24.700000"
-  },
-  {
-    "id": "task_2675e7722eb6",
-    "title": "Round1 Plan: 分解为2个子任务",
-    "kind": "sindris_plan",
-    "phase": "round1",
-    "status": "pending",
-    "priority": "high",
-    "owner": null,
-    "verify": [],
-    "notes": [
-      "分解为2个子任务"
-    ],
-    "metadata": {
-      "round1_verified": true
-    },
-    "dependencies": [],
-    "blockers": [],
-    "review_status": "none",
-    "claimed_at": null,
-    "completed_at": null,
-    "result": null,
-    "history": [
-      {
-        "status": "pending",
-        "at": "2026-04-11T11:11:24.706646"
-      }
-    ],
-    "created_at": "2026-04-11T11:11:24.706641",
-    "updated_at": "2026-04-11T11:11:24.706645"
   },
   {
     "id": "task_3b060dc3ea83",
@@ -1803,35 +1510,6 @@
     "updated_at": "2026-04-11T11:11:24.725092"
   },
   {
-    "id": "task_695693064ff3",
-    "title": "部署Docker容器",
-    "kind": "sindris_planning",
-    "phase": "round1",
-    "status": "pending",
-    "priority": "high",
-    "owner": null,
-    "verify": [],
-    "notes": [],
-    "metadata": {
-      "session_id": "session_6bacabd18391",
-      "matched_roles": []
-    },
-    "dependencies": [],
-    "blockers": [],
-    "review_status": "none",
-    "claimed_at": null,
-    "completed_at": null,
-    "result": null,
-    "history": [
-      {
-        "status": "pending",
-        "at": "2026-04-11T11:11:24.756396"
-      }
-    ],
-    "created_at": "2026-04-11T11:11:24.756389",
-    "updated_at": "2026-04-11T11:11:24.756395"
-  },
-  {
     "id": "task_05835a9c05d2",
     "title": "优化数据库性能",
     "kind": "sindris_planning",
@@ -1910,35 +1588,6 @@
     ],
     "created_at": "2026-04-11T11:11:24.765125",
     "updated_at": "2026-04-11T11:11:24.777477"
-  },
-  {
-    "id": "task_099a2df726ae",
-    "title": "生成技术文档",
-    "kind": "sindris_planning",
-    "phase": "round1",
-    "status": "pending",
-    "priority": "high",
-    "owner": null,
-    "verify": [],
-    "notes": [],
-    "metadata": {
-      "session_id": "session_d848a583dd7c",
-      "matched_roles": []
-    },
-    "dependencies": [],
-    "blockers": [],
-    "review_status": "none",
-    "claimed_at": null,
-    "completed_at": null,
-    "result": null,
-    "history": [
-      {
-        "status": "pending",
-        "at": "2026-04-11T11:11:24.811663"
-      }
-    ],
-    "created_at": "2026-04-11T11:11:24.811649",
-    "updated_at": "2026-04-11T11:11:24.811662"
   },
   {
     "id": "task_5f1030672686",
@@ -2203,151 +1852,6 @@
     ],
     "created_at": "2026-04-11T11:13:40.083549",
     "updated_at": "2026-04-11T11:13:40.097930"
-  },
-  {
-    "id": "task_e32275eadce8",
-    "title": "分析match_roles角色库的匹配问题：\n    1. 读取scripts/match_roles.py，理解角色评分算法\n    2. 统计178个角色的trigger_keywords数量分布",
-    "kind": "sindris_planning",
-    "phase": "round1",
-    "status": "pending",
-    "priority": "high",
-    "owner": null,
-    "verify": [],
-    "notes": [],
-    "metadata": {
-      "session_id": "session_0d7b1ba7c5f6",
-      "matched_roles": []
-    },
-    "dependencies": [],
-    "blockers": [],
-    "review_status": "none",
-    "claimed_at": null,
-    "completed_at": null,
-    "result": null,
-    "history": [
-      {
-        "status": "pending",
-        "at": "2026-04-11T11:17:48.919222"
-      }
-    ],
-    "created_at": "2026-04-11T11:17:48.919206",
-    "updated_at": "2026-04-11T11:17:48.919220"
-  },
-  {
-    "id": "task_751c6e97bf35",
-    "title": "sindri最终验证",
-    "kind": "sindris_planning",
-    "phase": "round1",
-    "status": "pending",
-    "priority": "high",
-    "owner": null,
-    "verify": [],
-    "notes": [],
-    "metadata": {
-      "session_id": "session_c4aa1e48ef4a",
-      "matched_roles": []
-    },
-    "dependencies": [],
-    "blockers": [],
-    "review_status": "none",
-    "claimed_at": null,
-    "completed_at": null,
-    "result": null,
-    "history": [
-      {
-        "status": "pending",
-        "at": "2026-04-11T12:03:25.316180"
-      }
-    ],
-    "created_at": "2026-04-11T12:03:25.316165",
-    "updated_at": "2026-04-11T12:03:25.316178"
-  },
-  {
-    "id": "task_0ce85ee77674",
-    "title": "工具权限验证",
-    "kind": "sindris_planning",
-    "phase": "round1",
-    "status": "pending",
-    "priority": "high",
-    "owner": null,
-    "verify": [],
-    "notes": [],
-    "metadata": {
-      "session_id": "session_348c7c9db7fc",
-      "matched_roles": []
-    },
-    "dependencies": [],
-    "blockers": [],
-    "review_status": "none",
-    "claimed_at": null,
-    "completed_at": null,
-    "result": null,
-    "history": [
-      {
-        "status": "pending",
-        "at": "2026-04-11T12:08:55.561004"
-      }
-    ],
-    "created_at": "2026-04-11T12:08:55.560988",
-    "updated_at": "2026-04-11T12:08:55.561003"
-  },
-  {
-    "id": "task_9d1b84ae2e6d",
-    "title": "工具白名单验证",
-    "kind": "sindris_planning",
-    "phase": "round1",
-    "status": "pending",
-    "priority": "high",
-    "owner": null,
-    "verify": [],
-    "notes": [],
-    "metadata": {
-      "session_id": "session_d6178cf66b69",
-      "matched_roles": []
-    },
-    "dependencies": [],
-    "blockers": [],
-    "review_status": "none",
-    "claimed_at": null,
-    "completed_at": null,
-    "result": null,
-    "history": [
-      {
-        "status": "pending",
-        "at": "2026-04-11T12:11:17.886604"
-      }
-    ],
-    "created_at": "2026-04-11T12:11:17.886589",
-    "updated_at": "2026-04-11T12:11:17.886603"
-  },
-  {
-    "id": "task_fa7a2245d7b6",
-    "title": "优雅降级验证",
-    "kind": "sindris_planning",
-    "phase": "round1",
-    "status": "pending",
-    "priority": "high",
-    "owner": null,
-    "verify": [],
-    "notes": [],
-    "metadata": {
-      "session_id": "session_846ffc8432ce",
-      "matched_roles": []
-    },
-    "dependencies": [],
-    "blockers": [],
-    "review_status": "none",
-    "claimed_at": null,
-    "completed_at": null,
-    "result": null,
-    "history": [
-      {
-        "status": "pending",
-        "at": "2026-04-11T12:32:31.720416"
-      }
-    ],
-    "created_at": "2026-04-11T12:32:31.720402",
-    "updated_at": "2026-04-11T12:32:31.720415"
   },
   {
     "id": "task_595233a0f25b",
@@ -3019,35 +2523,6 @@
     "updated_at": "2026-04-11T14:11:44.385093"
   },
   {
-    "id": "task_6f5c8a478a16",
-    "title": "sindris v1.2验证",
-    "kind": "sindris_planning",
-    "phase": "round1",
-    "status": "pending",
-    "priority": "high",
-    "owner": null,
-    "verify": [],
-    "notes": [],
-    "metadata": {
-      "session_id": "session_edbcede40877",
-      "matched_roles": []
-    },
-    "dependencies": [],
-    "blockers": [],
-    "review_status": "none",
-    "claimed_at": null,
-    "completed_at": null,
-    "result": null,
-    "history": [
-      {
-        "status": "pending",
-        "at": "2026-04-11T14:12:28.901594"
-      }
-    ],
-    "created_at": "2026-04-11T14:12:28.901578",
-    "updated_at": "2026-04-11T14:12:28.901593"
-  },
-  {
     "id": "task_f69f17b31c45",
     "title": "修复Python代码bug",
     "kind": "sindris_planning",
@@ -3126,35 +2601,6 @@
     ],
     "created_at": "2026-04-11T16:54:13.625257",
     "updated_at": "2026-04-11T16:54:13.649170"
-  },
-  {
-    "id": "task_13253f341836",
-    "title": "分析sindris自身代码质量和改进建议",
-    "kind": "sindris_planning",
-    "phase": "round1",
-    "status": "pending",
-    "priority": "high",
-    "owner": null,
-    "verify": [],
-    "notes": [],
-    "metadata": {
-      "session_id": "session_b3f6b61d1052",
-      "matched_roles": []
-    },
-    "dependencies": [],
-    "blockers": [],
-    "review_status": "none",
-    "claimed_at": null,
-    "completed_at": null,
-    "result": null,
-    "history": [
-      {
-        "status": "pending",
-        "at": "2026-04-12T19:52:25.811650"
-      }
-    ],
-    "created_at": "2026-04-12T19:52:25.811638",
-    "updated_at": "2026-04-12T19:52:25.811649"
   },
   {
     "id": "task_0ebbb91ebf15",
@@ -3475,35 +2921,6 @@
     ],
     "created_at": "2026-04-12T20:08:43.533495",
     "updated_at": "2026-04-12T20:08:43.560651"
-  },
-  {
-    "id": "task_44f4461957c2",
-    "title": "分析sindris第三次自进化：优化性能、提升稳定性、修复剩余P1问题",
-    "kind": "sindris_planning",
-    "phase": "round1",
-    "status": "pending",
-    "priority": "high",
-    "owner": null,
-    "verify": [],
-    "notes": [],
-    "metadata": {
-      "session_id": "session_6792607b7b9c",
-      "matched_roles": []
-    },
-    "dependencies": [],
-    "blockers": [],
-    "review_status": "none",
-    "claimed_at": null,
-    "completed_at": null,
-    "result": null,
-    "history": [
-      {
-        "status": "pending",
-        "at": "2026-04-12T21:55:38.258870"
-      }
-    ],
-    "created_at": "2026-04-12T21:55:38.258853",
-    "updated_at": "2026-04-12T21:55:38.258869"
   },
   {
     "id": "task_a916703dcdaa",
@@ -4105,36 +3522,6 @@
     "updated_at": "2026-04-14T08:27:13.852584"
   },
   {
-    "id": "task_7fe73610b170",
-    "title": "Round1 Plan: 分解为139个子任务",
-    "kind": "sindris_plan",
-    "phase": "round1",
-    "status": "pending",
-    "priority": "high",
-    "owner": null,
-    "verify": [],
-    "notes": [
-      "分解为139个子任务"
-    ],
-    "metadata": {
-      "round1_verified": true
-    },
-    "dependencies": [],
-    "blockers": [],
-    "review_status": "none",
-    "claimed_at": null,
-    "completed_at": null,
-    "result": null,
-    "history": [
-      {
-        "status": "pending",
-        "at": "2026-04-14T08:27:13.883219"
-      }
-    ],
-    "created_at": "2026-04-14T08:27:13.883211",
-    "updated_at": "2026-04-14T08:27:13.883217"
-  },
-  {
     "id": "task_08fd90f0e42e",
     "title": "sindris深度学习claw code，形成完整的mimir升级方案",
     "kind": "sindris_planning",
@@ -4517,5 +3904,365 @@
     ],
     "created_at": "2026-04-14T15:25:00",
     "updated_at": "2026-04-14T15:25:00"
+  },
+  {
+    "id": "task_loki_001",
+    "title": "loki-blueprint角色完善: office-hours",
+    "kind": "loki_role_workflow",
+    "phase": "round1",
+    "status": "completed",
+    "priority": "medium",
+    "owner": null,
+    "verify": [],
+    "notes": [],
+    "metadata": {
+      "skill": "loki-blueprint",
+      "role": "office-hours",
+      "target_path": "~/.openclaw/skills/loki-blueprint/roles/office-hours/SKILL.md"
+    },
+    "dependencies": [],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": "2026-04-18T09:10:00.000Z",
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-18T08:56:10.364811"
+      }
+    ],
+    "created_at": "2026-04-18T08:56:10.364811",
+    "updated_at": "2026-04-18T08:56:10.364811"
+  },
+  {
+    "id": "task_loki_002",
+    "title": "loki-blueprint角色完善: plan-ceo-review",
+    "kind": "loki_role_workflow",
+    "phase": "round1",
+    "status": "completed",
+    "priority": "medium",
+    "owner": null,
+    "verify": [],
+    "notes": [],
+    "metadata": {
+      "skill": "loki-blueprint",
+      "role": "plan-ceo-review",
+      "target_path": "~/.openclaw/skills/loki-blueprint/roles/plan-ceo-review/SKILL.md"
+    },
+    "dependencies": [],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": "2026-04-18T09:19:00.000Z",
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-18T08:56:10.364811"
+      }
+    ],
+    "created_at": "2026-04-18T08:56:10.364811",
+    "updated_at": "2026-04-18T08:56:10.364811"
+  },
+  {
+    "id": "task_loki_003",
+    "title": "loki-blueprint角色完善: plan-eng-review",
+    "kind": "loki_role_workflow",
+    "phase": "round1",
+    "status": "completed",
+    "priority": "medium",
+    "owner": null,
+    "verify": [],
+    "notes": [],
+    "metadata": {
+      "skill": "loki-blueprint",
+      "role": "plan-eng-review",
+      "target_path": "~/.openclaw/skills/loki-blueprint/roles/plan-eng-review/SKILL.md"
+    },
+    "dependencies": [],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": "2026-04-18T09:25:00.000Z",
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-18T08:56:10.364811"
+      }
+    ],
+    "created_at": "2026-04-18T08:56:10.364811",
+    "updated_at": "2026-04-18T08:56:10.364811"
+  },
+  {
+    "id": "task_loki_004",
+    "title": "loki-blueprint角色完善: plan-design-review",
+    "kind": "loki_role_workflow",
+    "phase": "round1",
+    "status": "completed",
+    "priority": "medium",
+    "owner": null,
+    "verify": [],
+    "notes": [],
+    "metadata": {
+      "skill": "loki-blueprint",
+      "role": "plan-design-review",
+      "target_path": "~/.openclaw/skills/loki-blueprint/roles/plan-design-review/SKILL.md"
+    },
+    "dependencies": [],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": "2026-04-18T09:44:00.000Z",
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-18T08:56:10.364811"
+      }
+    ],
+    "created_at": "2026-04-18T08:56:10.364811",
+    "updated_at": "2026-04-18T08:56:10.364811"
+  },
+  {
+    "id": "task_loki_005",
+    "title": "loki-blueprint角色完善: plan-industry",
+    "kind": "loki_role_workflow",
+    "phase": "round1",
+    "status": "completed",
+    "priority": "medium",
+    "owner": null,
+    "verify": [],
+    "notes": [],
+    "metadata": {
+      "skill": "loki-blueprint",
+      "role": "plan-industry",
+      "target_path": "~/.openclaw/skills/loki-blueprint/roles/plan-industry/SKILL.md"
+    },
+    "dependencies": [],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": "2026-04-18T09:56:00.000Z",
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-18T08:56:10.364811"
+      }
+    ],
+    "created_at": "2026-04-18T08:56:10.364811",
+    "updated_at": "2026-04-18T08:56:10.364811"
+  },
+  {
+    "id": "task_loki_006",
+    "title": "loki-blueprint角色完善: plan-finance",
+    "kind": "loki_role_workflow",
+    "phase": "round1",
+    "status": "completed",
+    "priority": "medium",
+    "owner": null,
+    "verify": [],
+    "notes": [],
+    "metadata": {
+      "skill": "loki-blueprint",
+      "role": "plan-finance",
+      "target_path": "~/.openclaw/skills/loki-blueprint/roles/plan-finance/SKILL.md"
+    },
+    "dependencies": [],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": "2026-04-18T10:03:00.000Z",
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-18T08:56:10.364811"
+      }
+    ],
+    "created_at": "2026-04-18T08:56:10.364811",
+    "updated_at": "2026-04-18T08:56:10.364811"
+  },
+  {
+    "id": "task_loki_007",
+    "title": "loki-blueprint角色完善: plan-env",
+    "kind": "loki_role_workflow",
+    "phase": "round1",
+    "status": "completed",
+    "priority": "medium",
+    "owner": null,
+    "verify": [],
+    "notes": [],
+    "metadata": {
+      "skill": "loki-blueprint",
+      "role": "plan-env",
+      "target_path": "~/.openclaw/skills/loki-blueprint/roles/plan-env/SKILL.md"
+    },
+    "dependencies": [],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": "2026-04-18T10:11:00.000Z",
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-18T08:56:10.364811"
+      }
+    ],
+    "created_at": "2026-04-18T08:56:10.364811",
+    "updated_at": "2026-04-18T08:56:10.364811"
+  },
+  {
+    "id": "task_loki_008",
+    "title": "loki-blueprint角色完善: plan-social",
+    "kind": "loki_role_workflow",
+    "phase": "round1",
+    "status": "completed",
+    "priority": "medium",
+    "owner": null,
+    "verify": [],
+    "notes": [],
+    "metadata": {
+      "skill": "loki-blueprint",
+      "role": "plan-social",
+      "target_path": "~/.openclaw/skills/loki-blueprint/roles/plan-social/SKILL.md"
+    },
+    "dependencies": [],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": "2026-04-18T10:16:00.000Z",
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-18T08:56:10.364811"
+      }
+    ],
+    "created_at": "2026-04-18T08:56:10.364811",
+    "updated_at": "2026-04-18T08:56:10.364811"
+  },
+  {
+    "id": "task_loki_009",
+    "title": "loki-blueprint角色完善: review",
+    "kind": "loki_role_workflow",
+    "phase": "round1",
+    "status": "completed",
+    "priority": "medium",
+    "owner": null,
+    "verify": [],
+    "notes": [],
+    "metadata": {
+      "skill": "loki-blueprint",
+      "role": "review",
+      "target_path": "~/.openclaw/skills/loki-blueprint/roles/review/SKILL.md"
+    },
+    "dependencies": [],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": "2026-04-18T10:22:00.000Z",
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-18T08:56:10.364811"
+      }
+    ],
+    "created_at": "2026-04-18T08:56:10.364811",
+    "updated_at": "2026-04-18T08:56:10.364811"
+  },
+  {
+    "id": "task_loki_010",
+    "title": "loki-blueprint角色完善: qa",
+    "kind": "loki_role_workflow",
+    "phase": "round1",
+    "status": "completed",
+    "priority": "medium",
+    "owner": null,
+    "verify": [],
+    "notes": [],
+    "metadata": {
+      "skill": "loki-blueprint",
+      "role": "qa",
+      "target_path": "~/.openclaw/skills/loki-blueprint/roles/qa/SKILL.md"
+    },
+    "dependencies": [],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": "2026-04-18T10:28:00.000Z",
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-18T08:56:10.364811"
+      }
+    ],
+    "created_at": "2026-04-18T08:56:10.364811",
+    "updated_at": "2026-04-18T08:56:10.364811"
+  },
+  {
+    "id": "task_loki_011",
+    "title": "loki-blueprint角色完善: ship",
+    "kind": "loki_role_workflow",
+    "phase": "round1",
+    "status": "completed",
+    "priority": "medium",
+    "owner": null,
+    "verify": [],
+    "notes": [],
+    "metadata": {
+      "skill": "loki-blueprint",
+      "role": "ship",
+      "target_path": "~/.openclaw/skills/loki-blueprint/roles/ship/SKILL.md"
+    },
+    "dependencies": [],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": "2026-04-18T10:32:00.000Z",
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-18T08:56:10.364811"
+      }
+    ],
+    "created_at": "2026-04-18T08:56:10.364811",
+    "updated_at": "2026-04-18T08:56:10.364811"
+  },
+  {
+    "id": "task_loki_012",
+    "title": "loki-blueprint角色完善: archive",
+    "kind": "loki_role_workflow",
+    "phase": "round1",
+    "status": "completed",
+    "priority": "medium",
+    "owner": null,
+    "verify": [],
+    "notes": [],
+    "metadata": {
+      "skill": "loki-blueprint",
+      "role": "archive",
+      "target_path": "~/.openclaw/skills/loki-blueprint/roles/archive/SKILL.md"
+    },
+    "dependencies": [],
+    "blockers": [],
+    "review_status": "none",
+    "claimed_at": null,
+    "completed_at": "2026-04-18T10:36:00.000Z",
+    "result": null,
+    "history": [
+      {
+        "status": "pending",
+        "at": "2026-04-18T08:56:10.364811"
+      }
+    ],
+    "created_at": "2026-04-18T08:56:10.364811",
+    "updated_at": "2026-04-18T08:56:10.364811"
   }
 ]

@@ -55,8 +55,43 @@ AUDIT_TEAM_TRIGGERS = [
     "审计", "评估", "审查", "review", "audit", "assess",
     "质量检查", "代码检查", "安全检查", "检查", "核查",
     "评分", "评级", "打分", "评价", "评审",
+]
+
+# 角色改进分配器（Role Evolution Distributor）
+# 分配规则：被改进角色category → 改进角色
+EVOLUTION_DISTRIBUTOR = {
+    "coordination": {
+        "improver": "engineering_software_architect",
+        "target": "Agents Orchestrator",
+        "reason": "架构不匹配需Software Architect重新设计"
+    },
+    "product": {
+        "improver": "engineering_technical_writer",
+        "target": "Product Manager",
+        "reason": "文档结构/工作流需Technical Writer规范化"
+    },
+    "engineering": {
+        "improver": "engineering_code_reviewer",
+        "target": "Staff Engineer/Frontend Developer",
+        "reason": "代码质量/接口契约问题"
+    },
+    "engineering_debugger": {
+        "improver": "engineering_security_engineer",
+        "target": "Debugger",
+        "reason": "安全调试/多语言问题"
+    },
+    "testing": {
+        "improver": "testing_qa_lead",
+        "target": "Reality Checker/API Tester",
+        "reason": "测试方法论/sindri集成问题"
+    },
+}
+
+EVOLUTION_TEAM_TRIGGERS = [
     # 改进/优化类
+    "改进角色", "优化角色", "升级角色", "完善角色", "修复角色",
     "改进", "改善", "提升", "优化", "upgrade", "improve",
+    "角色进化", "角色完善", "角色升级",
 ]
 
 
@@ -117,6 +152,35 @@ class RoleMatcher:
         task_lower = task.lower()
         return any(trigger in task_lower for trigger in AUDIT_TEAM_TRIGGERS)
     
+    def should_use_evolution_team(self, task: str) -> bool:
+        """判断是否使用角色改进分配器"""
+        task_lower = task.lower()
+        return any(trigger in task_lower for trigger in EVOLUTION_TEAM_TRIGGERS)
+    
+    def get_evolution_improver(self, task: str) -> Optional[Dict]:
+        """
+        根据任务中的被改进角色，返回最合适的改进角色
+        
+        Returns:
+            改进角色的role dict，如果没有匹配返回None
+        """
+        task_lower = task.lower()
+        
+        # 遍历分配矩阵，找匹配项
+        for category, config in EVOLUTION_DISTRIBUTOR.items():
+            target = config["target"]
+            # 支持多个目标（用/分隔），逐个检查
+            targets = [t.strip().lower() for t in target.split("/")]
+            for t in targets:
+                if t in task_lower:
+                    # 找到对应的改进角色
+                    improver_id = config["improver"]
+                    if improver_id in self._role_cache:
+                        print(f"[RoleMatcher] 角色改进分配：{config['target']} → {improver_id} ({config['reason']})")
+                        return self._role_cache[improver_id]
+        
+        return None
+    
     def classify_task_type(self, task: str) -> TaskType:
         """获取任务类型"""
         return self._task_classifier.classify(task)
@@ -141,6 +205,13 @@ class RoleMatcher:
                 RoleMatch(role=r, similarity=1.0, source="audit_team")
                 for r in AUDIT_TEAM
             ][:top_k]
+        
+        # 1.5. 角色改进分配器（改进角色任务使用分配器）
+        if self.should_use_evolution_team(task):
+            improver = self.get_evolution_improver(task)
+            if improver:
+                print(f"[RoleMatcher] 检测到角色改进任务，使用改进角色: {improver['name']}")
+                return [RoleMatch(role=improver, similarity=1.0, source="evolution_distributor")]
         
         # 2. 任务类型识别 + 固定小组（creative/specialized域不用固定团队）
         if task_domain not in ["creative", "data", "research"] and self.should_use_fixed_team(task):
