@@ -71,6 +71,9 @@ from .evolution_task import (
     EVOLUTION_TASK_PROMPT,
 )
 
+# OMX集成器
+from scripts.omx_integrator import OMXIntegrator, get_integrator, reset_integrator
+
 __all__ = [
     # GStackPro
     "GStackRole",
@@ -118,4 +121,8 @@ __all__ = [
     "HERMES_CORE_COMPONENTS",
     "MIMIR_AETHER_COMPONENTS",
     "EVOLUTION_REPORT_TEMPLATE",
+    # OMX集成器
+    "OMXIntegrator",
+    "get_integrator",
+    "reset_integrator",
 ]

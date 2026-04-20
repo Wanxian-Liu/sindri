@@ -30,6 +30,19 @@ from .role_matcher import RoleMatcher, RoleMatch
 from .task_decomposer import TaskDecomposer, Task
 from .plan_engine import FastPathCache, CircuitBreaker, CircuitState, Plan, Subtask
 
+# OMX集成（延迟导入以支持可选依赖）
+_OMXIntegrator = None
+
+def _get_omx_integrator(workspace_root: str):
+    global _OMXIntegrator
+    if _OMXIntegrator is None:
+        try:
+            from scripts.omx_integrator import OMXIntegrator
+            _OMXIntegrator = OMXIntegrator(workspace_root)
+        except ImportError:
+            return None
+    return _OMXIntegrator
+
 logger = logging.getLogger(__name__)
 
 
@@ -82,8 +95,10 @@ class FusionPlanner:
         failure_threshold: float = DEFAULT_FAILURE_THRESHOLD,
         circuit_open_duration: int = DEFAULT_OPEN_DURATION,
         cache_ttl: int = DEFAULT_CACHE_TTL,
+        use_omx: bool = False,
     ):
         self.workspace_root = workspace_root
+        self.use_omx = use_omx
 
         # ── 核心组件（老架构）────────────────────────────
         self.role_matcher = RoleMatcher(workspace_root)
@@ -99,6 +114,9 @@ class FusionPlanner:
             window_seconds=self.DEFAULT_WINDOW_SECONDS,
             open_duration=circuit_open_duration,
         )
+
+        # ── OMX集成 ───────────────────────────────────
+        self._omx_integrator = _get_omx_integrator(workspace_root) if use_omx else None
 
         # ── 统计 ───────────────────────────────────────
         self._stats = {
@@ -132,6 +150,9 @@ class FusionPlanner:
         with self._stats_lock:
             self._stats["total_requests"] += 1
 
+        # ── OMX Round1 Start ───────────────────────────
+        omx_task_id = self._omx_track("round1_start", task=task, task_id=None, role_matches=None)
+
         # ── 第1层：缓存检查 ──────────────────────────────
         if use_cache:
             cached = self.fastpath.get(task)
@@ -139,13 +160,16 @@ class FusionPlanner:
                 with self._stats_lock:
                     self._stats["cache_hits"] += 1
                 logger.info(f"[FusionPlanner] FastPath HIT: {task[:50]}...")
-                return self._restore_fusion_plan(task_id, task, cached)
+                plan = self._restore_fusion_plan(task_id, task, cached)
+                self._omx_track("round1_complete", task=task, task_id=omx_task_id, verified=True, plan_summary=f"Cache HIT for {task[:50]}...")
+                return plan
 
         # ── 第2层：熔断检查 ──────────────────────────────
         if not self.circuit_breaker.is_allowed():
             with self._stats_lock:
                 self._stats["circuit_breaks"] += 1
             logger.warning("[FusionPlanner] Circuit breaker OPEN, using fallback")
+            self._omx_track("round1_complete", task=task, task_id=omx_task_id, verified=False, plan_summary="Circuit breaker open")
 
             if allow_fallback:
                 return self._fallback_plan(task_id, task)
@@ -173,6 +197,10 @@ class FusionPlanner:
             self.fastpath.set(task, self._fusion_plan_to_dict(plan))
             self.circuit_breaker.record_success()
 
+            # ── OMX Round1 Complete ─────────────────────
+            plan_summary = f"{len(subtasks)} subtasks across {[s.phase for s in subtasks]}"
+            self._omx_track("round1_complete", task=task, task_id=omx_task_id, verified=True, plan_summary=plan_summary, role_matches=role_matches)
+
             return plan
 
         except Exception as e:
@@ -182,6 +210,7 @@ class FusionPlanner:
                 self._stats["planning_errors"] += 1
 
             logger.error(f"[FusionPlanner] Planning failed: {e}")
+            self._omx_track("round1_complete", task=task, task_id=omx_task_id, verified=False, plan_summary=f"Planning error: {e}")
 
             if allow_fallback:
                 with self._stats_lock:
@@ -395,6 +424,41 @@ class FusionPlanner:
             self.circuit_breaker.record_success()
         else:
             self.circuit_breaker.record_failure()
+
+    def _omx_track(self, event: str, **kwargs) -> Any:
+        """
+        OMX事件跟踪（仅当 use_omx=True 时生效）
+
+        Events:
+            round1_start:   规划开始，调用 on_round1_start
+            round1_complete: 规划完成，调用 on_round1_complete
+        """
+        if not self.use_omx or self._omx_integrator is None:
+            return None
+
+        task = kwargs.get("task", "")
+        task_id = kwargs.get("task_id")
+        role_matches = kwargs.get("role_matches")
+        verified = kwargs.get("verified", True)
+        plan_summary = kwargs.get("plan_summary", "")
+
+        try:
+            if event == "round1_start":
+                matched_roles = [m.role.get("name", "") for m in role_matches] if role_matches else None
+                return self._omx_integrator.on_round1_start(
+                    task_description=task,
+                    task_id=task_id,
+                    matched_roles=matched_roles,
+                )
+            elif event == "round1_complete":
+                return self._omx_integrator.on_round1_complete(
+                    plan_summary=plan_summary,
+                    task_id=task_id,
+                    verified=verified,
+                )
+        except Exception as e:
+            logger.warning(f"[FusionPlanner] OMX track failed for {event}: {e}")
+        return None
 
 
 # ── 便捷函数 ─────────────────────────────────────────────
