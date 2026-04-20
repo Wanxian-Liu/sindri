@@ -72,7 +72,7 @@ def test_executor_init():
 
         executor = SindrisExecutor(workspace_root=ctx.temp_dir)
 
-        assert_true(executor.session_id.startswith("session_"))
+        assert_true(executor.session_id.startswith("sindris_"))
         assert_true(executor.workspace_root == ctx.temp_dir)
         assert_eq(len(executor.workers), 0)
         assert_eq(len(executor.tasks), 0)
@@ -196,7 +196,7 @@ def test_omx_integration():
             task_description="测试任务",
             matched_roles=["developer", "tester"],
         )
-        assert_true(session_id.startswith("session_"))
+        assert_true(session_id.startswith("sindris_"))
 
         # Round1完成
         task = integrator.on_round1_complete(
