@@ -105,6 +105,26 @@ class SindrisExecutor:
         
         self._log_jsonl("fastpath_save", {"cache_key": cache_key})
     
+    def _add_verification_step(self, subtasks: list, task_type: str) -> list:
+        """
+        为所有任务添加验证步骤
+        这个验证步骤是给主Agent看的，确保结果真实可用
+        """
+        verification_step = {
+            "task_id": f"{task_type}_verifier",
+            "role": "Verifier",
+            "role_file": None,
+            "role_prompt": "你是结果验证专家。验证任务执行结果是否满足要求：\n1. 代码是否在.py文件中实现\n2. 是否只是写在MD里\n3. 是否是MOCK/placeholder\n4. 是否已集成到主流程",
+            "title": "验证任务结果",
+            "tools": ["read", "exec"],
+            "timeout": 60,
+            "phase": "verification",
+            "verify": ["验证完成"],
+            "auto_run": True,  # 自动运行
+        }
+        # 添加到末尾
+        return subtasks + [verification_step]
+    
     def _setup_subagent_state_machine(self):
         """初始化子代理状态机"""
         # 状态定义
@@ -196,11 +216,13 @@ class SindrisExecutor:
                     "phase": "audit",
                     "verify": [f"{role_name}审计完成"],
                 })
+            # 添加验证步骤
+            subtasks = self._add_verification_step(subtasks, "audit")
             result = {
                 "success": True,
                 "task_id": self.session_id,
                 "subtasks": subtasks,
-                "plan_summary": f"审计任务分解为{len(subtasks)}个子任务",
+                "plan_summary": f"审计任务分解为{len(subtasks)}个子任务（包含验证步骤）",
                 "phase": "planned",
                 "roles": roles,
             }
@@ -229,11 +251,13 @@ class SindrisExecutor:
                     "phase": "evolution",
                     "verify": [f"{role_name}完成角色改进"],
                 }]
+                # 添加验证步骤
+                subtasks = self._add_verification_step(subtasks, "evolution")
                 result = {
                     "success": True,
                     "task_id": self.session_id,
                     "subtasks": subtasks,
-                    "plan_summary": f"角色改进任务：使用{role_name}改进",
+                    "plan_summary": f"角色改进任务：使用{role_name}改进（包含验证步骤）",
                     "phase": "planned",
                     "roles": roles,
                 }
@@ -271,11 +295,14 @@ class SindrisExecutor:
                 "verify": t.verify,  # 验证条件
             })
         
+        # 添加验证步骤
+        subtasks = self._add_verification_step(subtasks, "dev")
+        
         result = {
             "success": True,
             "task_id": self.session_id,
             "subtasks": subtasks,
-            "plan_summary": f"分解为{len(subtasks)}个子任务：{[s['role'] for s in subtasks]}",
+            "plan_summary": f"分解为{len(subtasks)}个子任务（包含验证步骤）：{[s['role'] for s in subtasks]}",
             "phase": "planned",
             "roles": roles,
         }
