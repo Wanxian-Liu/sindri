@@ -69,13 +69,31 @@ class TaskDecomposer:
     
     def get_roles(self, task: str, auto_matched_roles: List[Dict]) -> List[Dict]:
         """
-        获取任务角色（使用RoleMatcher混合方案，带错误处理）
+        获取任务角色
         
         优先级：
-        1. RoleMatcher.match() 返回的角色（固定小组/向量/claim）
-        2. 自动匹配的角色
+        1. auto_matched_roles（来自FusionPlanner._decompose_and_match的预匹配结果）
+        2. RoleMatcher.match() 的角色（仅当auto_matched_roles为空时）
         3. 默认固定小组
+        
+        注意：auto_matched_roles不为空时直接使用，不再重复调用RoleMatcher.match()
+              以避免FusionPlanner中RoleMatcher被调用两次的性能开销。
         """
+        # 优先使用预匹配结果（来自FusionPlanner._decompose_and_match的第一次调用）
+        if auto_matched_roles:
+            logger.info(f"[TaskDecomposer] 使用预匹配的角色（{len(auto_matched_roles)}个），跳过重复RoleMatcher调用")
+            # 检查是否是审计团队或evolution团队
+            is_audit = any(r.get('team_type') == 'audit' for r in auto_matched_roles)
+            is_evolution = any(r.get('team_type') == 'evolution' for r in auto_matched_roles)
+            if is_evolution:
+                for r in auto_matched_roles:
+                    r['team_type'] = 'evolution'
+            elif is_audit:
+                for r in auto_matched_roles:
+                    r['team_type'] = 'audit'
+            return auto_matched_roles
+        
+        # auto_matched_roles为空时才调用RoleMatcher（降级fallback）
         try:
             matches = self.role_matcher.match(task)
             if matches:
@@ -95,10 +113,6 @@ class TaskDecomposer:
                 return roles
         except Exception as e:
             logger.warning(f"[TaskDecomposer] RoleMatcher错误: {e}，使用fallback")
-        
-        if auto_matched_roles:
-            logger.info(f"[TaskDecomposer] 使用自动匹配的角色")
-            return auto_matched_roles
         
         # 默认使用固定小组
         logger.info(f"[TaskDecomposer] 默认使用固定小组")

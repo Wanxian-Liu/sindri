@@ -37,6 +37,12 @@ def _get_omx_integrator(workspace_root: str):
     global _OMXIntegrator
     if _OMXIntegrator is None:
         try:
+            import os
+            import sys
+            # 确保父目录(sindris/)在sys.path，使 from scripts.omx_integrator 可用
+            _sindris_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            if _sindris_root not in sys.path:
+                sys.path.insert(0, _sindris_root)
             from scripts.omx_integrator import OMXIntegrator
             _OMXIntegrator = OMXIntegrator(workspace_root)
         except ImportError:
@@ -95,7 +101,7 @@ class FusionPlanner:
         failure_threshold: float = DEFAULT_FAILURE_THRESHOLD,
         circuit_open_duration: int = DEFAULT_OPEN_DURATION,
         cache_ttl: int = DEFAULT_CACHE_TTL,
-        use_omx: bool = False,
+        use_omx: bool = True,
     ):
         self.workspace_root = workspace_root
         self.use_omx = use_omx
