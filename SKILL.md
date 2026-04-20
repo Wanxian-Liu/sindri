@@ -1,13 +1,19 @@
 ---
 name: sindris
-version: "3.5"
+version: "3.6"
 license: MIT
 copyright: "2026 琬弦 (Wanxian)"
 description: |
-  织界统一协调系统 v3.5 - 多Agent协作执行引擎
+  织界统一协调系统 v3.6 - 多Agent协作执行引擎
   
   基于sindris Round1-4流程，参考oh-my-codex v2设计，
   整合织界中枢模块（熔断/投票/worktree）和OMX持久化。
+  
+  v3.6更新：
+  - 真正集成Ralph 3轮验证机制
+  - verify_with_ralph()方法真正调用RalphLoop
+  - verify_subtask_result()用于子任务验证
+  - 不再是假的验证通过
   
   ⚠️ 重要：sindris是规划器+协调器，执行必须由主代理调用sessions_spawn
   ⚠️ 重要：启动子代理后必须调用sessions_yield()等待结果

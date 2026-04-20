@@ -3586,12 +3586,13 @@
     "title": "记忆殿堂 Phase1.1: ActiveKnowledgeDiscoverer 实现",
     "description": "实现主动知识发现器，参考hermes-agent _spawn_background_review机制",
     "phase": "round1",
-    "status": "pending",
+    "status": "abandoned",
     "priority": "high",
     "owner": null,
     "verify": [],
     "notes": [
-      "外环核心组件"
+      "外环核心组件",
+      "刘哥确认放弃：与当前sindri架构重复(2026-04-20)"
     ],
     "metadata": {
       "component": "memory-vault",
@@ -3621,12 +3622,13 @@
     "title": "记忆殿堂 Phase1.2: FTS5跨会话搜索实现",
     "description": "实现FTS5全文搜索，支持跨会话相似知识搜索",
     "phase": "round1",
-    "status": "pending",
+    "status": "abandoned",
     "priority": "high",
     "owner": null,
     "verify": [],
     "notes": [
-      "跨会话学习基础"
+      "跨会话学习基础",
+      "刘哥确认放弃：与当前sindri架构重复(2026-04-20)"
     ],
     "metadata": {
       "component": "memory-vault",
@@ -3658,12 +3660,13 @@
     "title": "记忆殿堂 Phase1.3: 与MemoryEvolver对接",
     "description": "让ActiveKnowledgeDiscoverer发现的知识进入MemoryEvolver进化流程",
     "phase": "round1",
-    "status": "pending",
+    "status": "abandoned",
     "priority": "high",
     "owner": null,
     "verify": [],
     "notes": [
-      "外环与内环连接"
+      "外环与内环连接",
+      "刘哥确认放弃：与当前sindri架构重复(2026-04-20)"
     ],
     "metadata": {
       "component": "memory-vault",
@@ -3695,12 +3698,13 @@
     "title": "记忆殿堂 Phase2: EvolutionCoordinator重构",
     "description": "重构MemoryEvolver为EvolutionCoordinator，实现四种触发器",
     "phase": "round1",
-    "status": "pending",
+    "status": "abandoned",
     "priority": "medium",
     "owner": null,
     "verify": [],
     "notes": [
-      "内环核心"
+      "内环核心",
+      "刘哥确认放弃：与当前sindri架构重复(2026-04-20)"
     ],
     "metadata": {
       "component": "memory-vault",
@@ -3732,12 +3736,13 @@
     "title": "记忆殿堂 Phase3: FusionEngine实现",
     "description": "实现五种融合类型的完整FusionEngine",
     "phase": "round1",
-    "status": "pending",
+    "status": "abandoned",
     "priority": "medium",
     "owner": null,
     "verify": [],
     "notes": [
-      "知识融合"
+      "知识融合",
+      "刘哥确认放弃：与当前sindri架构重复(2026-04-20)"
     ],
     "metadata": {
       "component": "memory-vault",
@@ -3768,12 +3773,13 @@
     "title": "记忆殿堂 Phase4: 双环联动整合",
     "description": "实现外环内环联动、cron调度、监控面板",
     "phase": "round1",
-    "status": "pending",
+    "status": "abandoned",
     "priority": "low",
     "owner": null,
     "verify": [],
     "notes": [
-      "完整闭环"
+      "完整闭环",
+      "刘哥确认放弃：与当前sindri架构重复(2026-04-20)"
     ],
     "metadata": {
       "component": "memory-vault",
