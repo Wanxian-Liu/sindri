@@ -1,5 +1,106 @@
 # Debugger Workflow
 
+**Role**: Debugger (Bug Diagnosis & Resolution Specialist)
+**sindri Round**: Round 2.5 — Bug Fix Verification Phase
+**Trigger**: Senior Developer completes initial fix → passes to Debugger for verification and root cause analysis
+**Collaboration**: Architect (system context), QA Lead (test verification), Senior Developer (fix coordination)
+
+---
+
+## sindri集成协议
+
+### 触发条件
+
+Debugger在以下情况被sindri调度：
+
+| 触发场景 | 优先级 | 进入Round |
+|----------|--------|-----------|
+| `fix bug` / `调试` / `修复bug` | P1 | Round 2.5 |
+| Bug报告来自监控/告警系统 | P0 | Round 2.5 (紧急) |
+| 其他角色发现无法定位的问题 | P2 | Round 2.5 |
+| 回归测试失败需要根因分析 | P1 | Round 2.5 |
+
+### 输入契约 (Required Schema from sindri)
+
+```typescript
+interface DebuggerTaskInput {
+  // Task Identity
+  task_id: string;
+  bug_id: string;
+  title: string;
+  severity: "P0" | "P1" | "P2" | "P3";
+  category: "logical" | "concurrency" | "memory" | "performance" | "security" | "integration" | "configuration" | "data";
+  
+  // Problem Description
+  description: string;
+  reproduction_steps: string[];
+  expected_behavior: string;
+  actual_behavior: string;
+  
+  // Environment Context (from Architect)
+  system_context: {
+    component: string;
+    architecture_diagram?: string;  // Architect provides
+    affected_services: string[];
+    dependencies: string[];
+  };
+  
+  // Prior Work (from Senior Developer)
+  initial_fix_attempt?: {
+    developer: string;
+    fix_code?: string;
+    test_results?: string;
+  };
+  
+  // Evidence Available
+  evidence: {
+    logs?: string[];
+    screenshots?: string[];
+    thread_dumps?: string[];
+    heap_dumps?: string[];
+    metrics?: string[];
+  };
+}
+```
+
+### 输出契约 (Deliverables to sindri)
+
+```typescript
+interface DebuggerTaskOutput {
+  task_id: string;
+  status: "verified_fixed" | "in_progress" | "root_cause_found" | "cannot_reproduce";
+  
+  // Root Cause Analysis
+  root_cause: {
+    type: string;
+    location: string;
+    mechanism: string;
+    confidence: "high" | "medium" | "low";
+    evidence_chain: string[];
+  };
+  
+  // Fix Verification
+  verification: {
+    original_bug_reproduced: boolean;
+    bug_fixed: boolean;
+    no_regression: boolean;
+    edge_cases_covered: boolean;
+  };
+  
+  // Deliverables
+  fix_recommendation?: string;
+  test_cases_added: string[];
+  playbook_entry?: string;
+  monitoring_rules?: string[];
+  
+  // Collaboration
+  escalated_to?: string;  // Architect/Senior Developer
+  next_actions: string[];
+}
+```
+
+---
+
 ## 核心职责
 
 Debugger 负责系统化地定位、诊断和解决软件缺陷。他们不是简单地"修复bug"，而是建立系统化的调试方法论，将问题从表象追溯到根因，并确保修复具有持久性。
@@ -29,6 +130,76 @@ Debugger Mindset:
   ├── 验证: 复现和消除
   └── 挑战: 不确定性处理
 ```
+
+---
+
+## 与其他角色的协作协议
+
+### Architect (系统架构上下文请求)
+
+**何时请求**：
+- 需要系统架构图理解数据流
+- 需要了解服务间依赖关系
+- 需要确认系统边界和接口契约
+
+**请求格式**：
+```
+[Debugger → Architect]
+task_id: DEBUG-XXX
+需要：系统架构图 + 数据流描述
+原因：Bug涉及多个服务交互，需要理解完整调用链
+紧急度：P2
+```
+
+**预期响应**：
+```typescript
+interface ArchitectSystemContext {
+  architecture_diagram: string;  // Mermaid/架构图
+  component_relationships: {
+    component: string;
+    type: "service" | "database" | "cache" | "queue";
+    calls: string[];
+    called_by: string[];
+  }[];
+  data_flow: string;  // 请求/响应数据流描述
+  known_weak_points?: string[];  // Architect已知的薄弱点
+}
+```
+
+### Senior Developer (修复协作)
+
+**何时交接**：
+- 根因已确定，需要实施修复
+- 需要Developer重写/修改代码
+- 修复涉及架构层面变更
+
+**交接格式**：
+```
+[Debugger → Senior Developer]
+task_id: DEBUG-XXX
+根因：见下方详细分析
+建议修复：具体代码修改建议
+验证方法：回归测试用例清单
+紧急度：P1（若影响生产）
+```
+
+### QA Lead (测试协同)
+
+**何时协同**：
+- 需要设计专门的测试用例
+- 需要验证Bug复现的测试方法
+- 需要进行性能/压力测试验证
+
+**协同格式**：
+```
+[Debugger → QA Lead]
+task_id: DEBUG-XXX
+Bug类型：memory_leak
+复现条件：并发请求>100/秒，持续>5分钟
+需要测试：内存监控 + 泄漏检测
+```
+
+---
 
 ## 工作流程（Step 1-4）
 
@@ -75,96 +246,312 @@ class BugClassifier:
         "configuration": "配置错误",
         "data": "数据问题"
     }
-    
-    def classify(self, bug_report: dict) -> dict:
-        """分类Bug"""
-        
-        severity = self._determine_severity(bug_report)
-        category = self._determine_category(bug_report)
-        root_cause_domain = self._guess_domain(bug_report)
-        
-        return {
-            "severity": severity,
-            "category": category,
-            "root_cause_domain": root_cause_domain,
-            "estimated_fix_complexity": self._estimate_complexity(
-                severity, category
-            ),
-            "priority_score": self._calculate_priority(
-                severity, bug_report.get("impact", 1)
-            )
-        }
-    
-    def _determine_severity(self, bug_report: dict) -> str:
-        """确定严重程度"""
-        
-        indicators = {
-            "P0": [
-                bug_report.get("data_loss"),
-                bug_report.get("security_breach"),
-                bug_report.get("system_down")
-            ],
-            "P1": [
-                bug_report.get("core_function_broken"),
-                not bug_report.get("workaround_available")
-            ]
-        }
-        
-        for severity, indicators_list in indicators.items():
-            if any(indicators_list):
-                return severity
-        
-        return "P2"  # 默认
-    
-    def _determine_category(self, bug_report: dict) -> str:
-        """确定Bug类别"""
-        
-        symptoms = bug_report.get("symptoms", [])
-        
-        category_indicators = {
-            "logical": ["wrong_result", "business_rule_violated"],
-            "concurrency": ["race_condition", "deadlock", "inconsistent_state"],
-            "memory": ["oom", "memory_leak", "crash"],
-            "performance": ["slow", "timeout", "high_latency"],
-            "security": ["unauthorized_access", "injection", "exposure"],
-            "integration": ["external_service_error", "api_mismatch"],
-            "configuration": ["wrong_config", "missing_env"],
-            "data": ["corrupted_data", "data_loss", "migration_error"]
-        }
-        
-        for category, keywords in category_indicators.items():
-            if any(kw in symptoms for kw in keywords):
-                return category
-        
-        return "logical"  # 默认
-    
-    def _guess_domain(self, bug_report: dict) -> str:
-        """推测问题所属领域"""
-        return self._determine_domain(bug_report)
-    
-    def _determine_domain(self, bug_report: dict) -> str:
-        """确定问题所属领域"""
-        
-        domain_indicators = {
-            "frontend": ["ui", "render", "click", "input", "display"],
-            "backend": ["api", "endpoint", "request", "response", "database"],
-            "infrastructure": ["network", "server", "deployment", "docker"],
-            "security": ["auth", "permission", "access", "token"],
-            "data": ["query", "pipeline", "etl", "migration"]
-        }
-        
-        description = (bug_report.get("description", "") + 
-                      " " + 
-                      bug_report.get("title", "")).lower()
-        
-        for domain, keywords in domain_indicators.items():
-            if any(kw in description for kw in keywords):
-                return domain
-        
-        return "backend"  # 默认
 ```
 
-#### 1.2 复现环境准备
+#### 1.2 JavaScript/Node.js调试完整示例
+
+##### V8堆快照分析
+
+```javascript
+// Node.js内存泄漏分析 - V8堆快照
+const v8 = require('v8');
+const fs = require('fs');
+const path = require('path');
+
+class V8HeapAnalyzer {
+  /**
+   * 获取堆统计信息
+   */
+  static getHeapStatistics() {
+    const stats = v8.getHeapStatistics();
+    return {
+      total_heap_size: stats.total_heap_size,
+      total_heap_size_executable: stats.total_heap_size_executable,
+      total_physical_size: stats.total_physical_size,
+      total_available_size: stats.total_available_size,
+      used_heap_size: stats.used_heap_size,
+      heap_size_limit: stats.heap_size_limit,
+      malloc_memory: stats.malloc_memory,
+      peak_malloc_memory: stats.peak_malloc_memory
+    };
+  }
+
+  /**
+   * 生成堆快照
+   */
+  static writeHeapSnapshot(filename = 'heap snapshot') {
+    const filepath = path.join('/tmp', `${filename}-${Date.now()}.heapsnapshot`);
+    const stream = fs.createWriteStream(filepath);
+    v8.writeHeapSnapshot(filepath);
+    console.log(`Heap snapshot written to: ${filepath}`);
+    return filepath;
+  }
+
+  /**
+   * 追踪对象分配
+   */
+  static trackObjectAllocation() {
+    const tracker = {
+      allocations: new Map(),
+      totalAllocations: 0,
+      totalBytes: 0
+    };
+
+    // 模拟对象分配追踪
+    function trackAllocation(label, size) {
+      if (!tracker.allocations.has(label)) {
+        tracker.allocations.set(label, { count: 0, bytes: 0 });
+      }
+      const entry = tracker.allocations.get(label);
+      entry.count++;
+      entry.bytes += size;
+      tracker.totalAllocations++;
+      tracker.totalBytes += size;
+    }
+
+    return { tracker, trackAllocation };
+  }
+}
+
+// 使用示例
+async function analyzeMemoryLeak() {
+  const { tracker, trackAllocation } = V8HeapAnalyzer.trackObjectAllocation();
+  
+  // 记录初始状态
+  console.log('Initial heap:', V8HeapAnalyzer.getHeapStatistics());
+  
+  // 模拟泄漏场景
+  const leakedArrays = [];
+  for (let i = 0; i < 1000; i++) {
+    // 每次迭代分配一个不会被释放的大数组
+    const largeArray = new Array(10000).fill(i);
+    leakedArrays.push(largeArray);  // 引用被保留，造成泄漏
+    trackAllocation('largeArray', largeArray.length * 8);
+  }
+  
+  // 记录最终状态
+  console.log('After allocations:', V8HeapAnalyzer.getHeapStatistics());
+  
+  // 生成快照用于Chrome DevTools分析
+  const snapshotPath = V8HeapAnalyzer.writeHeapSnapshot('memory-leak-analysis');
+  
+  // 输出追踪摘要
+  console.log('Allocation summary:', {
+    totalAllocations: tracker.totalAllocations,
+    totalBytes: tracker.totalBytes,
+    byType: Object.fromEntries(tracker.allocations)
+  });
+  
+  return snapshotPath;
+}
+```
+
+##### Node.js调试协议使用
+
+```javascript
+// 使用Inspector API进行实时调试
+const inspector = require('inspector');
+
+class NodeDebugger {
+  constructor() {
+    this.session = null;
+  }
+
+  /**
+   * 启动调试会话
+   */
+  startSession() {
+    if (inspector.url()) {
+      console.log('Debugger already active at:', inspector.url());
+      return inspector.url();
+    }
+    
+    inspector.open(0, '127.0.0.1', false);
+    this.session = new inspector.Session();
+    this.session.connect();
+    
+    console.log('Debugger listening on:', inspector.url());
+    return inspector.url();
+  }
+
+  /**
+   * 捕获CPU profile
+   */
+  startProfiling(name = 'cpu-profile') {
+    this.session.post('Profiler.enable');
+    this.session.post('Profiler.start');
+    console.log(`Profiling started: ${name}`);
+  }
+
+  /**
+   * 停止并保存profile
+   */
+  async stopProfiling(filename = 'profile') {
+    return new Promise((resolve) => {
+      this.session.post('Profiler.stop', (err, { profile }) => {
+        if (err) {
+          console.error('Profile error:', err);
+          resolve(null);
+          return;
+        }
+        
+        const filepath = `/tmp/${filename}-${Date.now()}.cpuprofile`;
+        require('fs').writeFileSync(filepath, JSON.stringify(profile));
+        console.log(`Profile saved to: ${filepath}`);
+        resolve(filepath);
+      });
+    });
+  }
+
+  /**
+   * 捕获堆追踪
+   */
+  captureHeapSnapshot() {
+    this.session.post('HeapProfiler.takeSnapshot', (err, snapshot) => {
+      if (err) {
+        console.error('Heap snapshot error:', err);
+        return;
+      }
+      console.log('Heap snapshot taken:', snapshot);
+    });
+  }
+
+  /**
+   * 监听console事件
+   */
+  listenToConsole() {
+    this.session.post('Runtime.enable');
+    this.session.post('Log.enable');
+    
+    this.session.on('Runtime.consoleAPICalled', ({ params }) => {
+      console.log(`[Console ${params.type}]:`, params.args.map(a => a.value).join(' '));
+    });
+    
+    this.session.on('Log.entryAdded', ({ params }) => {
+      console.log(`[Log ${params.entry.level}]:`, params.entry.text);
+    });
+  }
+}
+
+// 使用示例
+async function debugNodeApp() {
+  const debugger_ = new NodeDebugger();
+  
+  // 启动调试会话
+  debugger_.startSession();
+  
+  // 开始CPU profiling
+  debugger_.startProfiling('api-handler');
+  
+  // 监听console
+  debugger_.listenToConsole();
+  
+  // ... 执行被调试的代码 ...
+  
+  // 停止profiling并保存
+  const profilePath = await debugger_.stopProfiling('api-analysis');
+  
+  return profilePath;
+}
+```
+
+##### Chrome DevTools协议调试
+
+```javascript
+// 使用CDP (Chrome DevTools Protocol) 进行高级调试
+const CDP = require('chrome-remote-interface');
+
+class CDPDebugger {
+  constructor(options = {}) {
+    this.options = {
+      host: options.host || '127.0.0.1',
+      port: options.port || 9222,
+      target: options.target || null
+    };
+    this.client = null;
+  }
+
+  /**
+   * 连接到Chrome实例
+   */
+  async connect() {
+    this.client = await CDP(this.options);
+    const { Debugger, Page, Runtime, HeapProfiler } = this.client;
+    
+    await Promise.all([
+      Debugger.enable(),
+      Page.enable(),
+      Runtime.enable(),
+      HeapProfiler.enable()
+    ]);
+    
+    console.log('Connected to Chrome via CDP');
+    return this.client;
+  }
+
+  /**
+   * 设置断点
+   */
+  async setBreakpoint(scriptId, lineNumber, condition = null) {
+    const { Debugger } = this.client;
+    const breakpoint = await Debugger.setBreakpoint({
+      location: { scriptId, lineNumber },
+      condition
+    });
+    console.log('Breakpoint set:', breakpoint.breakpointId);
+    return breakpoint;
+  }
+
+  /**
+   * 获取调用栈
+   */
+  async getCallStack() {
+    const { Debugger } = this.client;
+    const { callFrames } = await Debugger.getCallFrames();
+    return callFrames.map(frame => ({
+      functionName: frame.functionName,
+      location: frame.location,
+      scopeChain: frame.scopeChain.map(s => s.type)
+    }));
+  }
+
+  /**
+   * 评估表达式
+   */
+  async evaluate(expression) {
+    const { Runtime } = this.client;
+    const result = await Runtime.evaluate({ expression });
+    return result.result;
+  }
+
+  /**
+   * 获取堆内存使用
+   */
+  async getHeapUsage() {
+    const { Runtime } = this.client;
+    const result = await Runtime.evaluate({ 
+      expression: 'performance.memory' 
+    });
+    return result.result.value;
+  }
+
+  /**
+   * 抓取内存快照
+   */
+  async takeHeapSnapshot() {
+    const { HeapProfiler } = this.client;
+    const filepath = `/tmp/heap-snapshot-${Date.now()}.heapsnapshot`;
+    
+    await HeapProfiler.takeHeapSnapshot({ reportProgress: false });
+    // Snapshot is written to file by Chrome
+    
+    console.log('Heap snapshot command sent');
+    return filepath;
+  }
+}
+```
+
+#### 1.3 复现环境准备
 
 ```python
 class ReproductionEnvironment:
@@ -192,234 +579,9 @@ class ReproductionEnvironment:
             "logging": logging_config,
             "reproduction_script": self._create_reproduction_script(bug)
         }
-    
-    def _determine_env_type(self, bug: dict) -> str:
-        """确定环境类型"""
-        
-        if bug.get("requires_production_data"):
-            return "production_clone"
-        elif bug.get("requires_external_services"):
-            return "staging_with_mocks"
-        else:
-            return "local_isolated"
-    
-    def _prepare_dependencies(self, bug: dict) -> dict:
-        """准备依赖"""
-        dependencies = bug.get("dependencies", [])
-        installed = []
-        failed = []
-        
-        for dep in dependencies:
-            try:
-                result = subprocess.run(
-                    ["pip", "install", dep],
-                    capture_output=True,
-                    timeout=120
-                )
-                if result.returncode == 0:
-                    installed.append(dep)
-                else:
-                    failed.append({"package": dep, "error": result.stderr.decode()})
-            except subprocess.TimeoutExpired:
-                failed.append({"package": dep, "error": "Installation timed out"})
-            except Exception as e:
-                failed.append({"package": dep, "error": str(e)})
-        
-        return {"installed": installed, "failed": failed}
-    
-    def _setup_initial_state(self, bug: dict) -> dict:
-        """设置初始状态"""
-        initial_state = {
-            "environment_variables": bug.get("env", {}),
-            "files": [],
-            "database": None
-        }
-        
-        # Apply environment variables
-        for key, value in bug.get("env", {}).items():
-            os.environ[key] = str(value)
-        
-        # Prepare test files if specified
-        for file_spec in bug.get("test_files", []):
-            try:
-                path = file_spec.get("path")
-                content = file_spec.get("content", "")
-                if path:
-                    os.makedirs(os.path.dirname(path), exist_ok=True)
-                    with open(path, "w") as f:
-                        f.write(content)
-                    initial_state["files"].append(path)
-            except Exception as e:
-                initial_state["files"].append({"error": str(e), "spec": file_spec})
-        
-        return initial_state
-    
-    def _configure_logging(self, bug: dict) -> dict:
-        """配置日志"""
-        log_config = {
-            "level": bug.get("log_level", "DEBUG"),
-            "handlers": ["console", "file"],
-            "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        }
-        
-        # Apply logging configuration
-        import logging
-        level = getattr(logging, log_config["level"], logging.DEBUG)
-        logging.basicConfig(
-            level=level,
-            format=log_config["format"]
-        )
-        
-        return log_config
-    
-    def _create_reproduction_script(self, bug: dict) -> str:
-        """创建复现脚本"""
-        
-        bug_id = bug.get('id', 'Unknown')
-        bug_title = bug.get('title', 'Unknown')
-        bug_severity = bug.get('severity', 'Unknown')
-        setup_cmds = bug.get("setup_commands", [])
-        repro_steps = bug.get("reproduction_steps", [])
-        expected_error = bug.get("expected_error", "")
-        
-        return f'''
-#!/usr/bin/env python3
-"""
-Bug Reproduction Script
-Issue: {bug_title}
-Severity: {bug_severity}
-"""
-
-import os
-import sys
-import subprocess
-import json
-from datetime import datetime
-
-def setup():
-    """Setup reproduction environment"""
-    print("Setting up reproduction environment...")
-    
-    # Set debug environment variables
-    os.environ["DEBUG"] = "true"
-    os.environ["LOG_LEVEL"] = "DEBUG"
-    
-    # Initialize test data
-    setup_commands = {repr(setup_cmds)}
-    
-    for cmd in setup_commands:
-        print(f"Running: {{cmd}}")
-        result = subprocess.run(cmd, shell=True, capture_output=True)
-        if result.returncode != 0:
-            print(f"Setup failed: {{result.stderr.decode()}}")
-            return False
-    
-    return True
-
-def reproduce():
-    """Attempt to reproduce the bug"""
-    print("Reproducing bug...")
-    
-    reproduction_steps = {repr(repro_steps)}
-    
-    for i, step in enumerate(reproduction_steps, 1):
-        print(f"Step {{i}}: {{step}}")
-        result = subprocess.run(step, shell=True, capture_output=True)
-        
-        # Check for expected error
-        if "{expected_error}" in result.stderr.decode():
-            print(f"✓ Bug reproduced at step {{i}}")
-            return True
-    
-    return False
-
-def collect_recent_logs(lines=1000):
-    """Collect recent log entries"""
-    log_files = [
-        "/var/log/app/app.log",
-        "logs/application.log",
-        "logs/error.log"
-    ]
-    
-    collected_logs = []
-    for log_file in log_files:
-        if os.path.exists(log_file):
-            with open(log_file, "r") as f:
-                collected_logs.append(
-                    f"=== {{log_file}} ===\\n"
-                    + "".join(f.readlines()[-lines:])
-                )
-    
-    return "\\n".join(collected_logs)
-
-def collect_evidence():
-    """Collect evidence for debugging"""
-    print("Collecting evidence...")
-    
-    evidence = {{
-        "timestamp": datetime.now().isoformat(),
-        "environment": dict(os.environ),
-        "processes": subprocess.run(
-            ["ps", "aux"], capture_output=True
-        ).stdout.decode(),
-        "network": subprocess.run(
-            ["netstat", "-tuln"], capture_output=True
-        ).stdout.decode(),
-        "logs": collect_recent_logs()
-    }}
-    
-    with open("bug_evidence.json", "w") as f:
-        json.dump(evidence, f, indent=2, default=str)
-    
-    print("Evidence saved to bug_evidence.json")
-    return evidence
-
-def main():
-    print("=" * 60)
-    print("Bug Reproduction: {bug_id}")
-    print("=" * 60)
-    
-    if not setup():
-        print("Setup failed, cannot reproduce")
-        sys.exit(1)
-    
-    if reproduce():
-        print("\\n✓ Bug successfully reproduced")
-        collect_evidence()
-    else:
-        print("\\n✗ Bug could not be reproduced")
-        print("This may indicate: ")
-        print("  - Missing environment conditions")
-        print("  - Timing-dependent issue")
-        print("  - Need for production-like load")
-        sys.exit(1)
-
-if __name__ == "__main__":
-    main()
-'''
-    
-    def _collect_recent_logs(self, lines: int = 1000) -> str:
-        """收集最近的日志"""
-        
-        log_files = [
-            "/var/log/app/app.log",
-            "logs/application.log",
-            "logs/error.log"
-        ]
-        
-        collected_logs = []
-        for log_file in log_files:
-            if os.path.exists(log_file):
-                with open(log_file, "r") as f:
-                    collected_logs.append(
-                        f"=== {{log_file}} ===\\n"
-                        + "".join(f.readlines()[-lines:])
-                    )
-        
-        return "\\n".join(collected_logs)
 ```
 
-#### 1.3 日志收集与分析
+#### 1.4 日志收集与分析
 
 ```python
 class LogAnalyzer:
@@ -437,87 +599,6 @@ class LogAnalyzer:
             "timeline": self._build_timeline(log_entries),
             "correlations": self._find_correlations(log_entries)
         }
-    
-    def _parse_log_files(
-        self, paths: list[str], time_range: dict
-    ) -> list[dict]:
-        """解析日志文件"""
-        
-        entries = []
-        for path in paths:
-            if not os.path.exists(path):
-                continue
-            
-            with open(path, "r") as f:
-                for line in f:
-                    entry = self._parse_log_line(line)
-                    if self._in_time_range(entry, time_range):
-                        entries.append(entry)
-        
-        return sorted(entries, key=lambda x: x["timestamp"])
-    
-    def _parse_log_line(self, line: str) -> dict:
-        """解析单行日志"""
-        
-        # 支持多种日志格式
-        formats = [
-            # JSON格式
-            r'\\{{"timestamp":"(?P<timestamp>[^"]+)","level":"(?P<level>[^"]+)","message":"(?P<message>[^"]+)".*\\}}',
-            # 标准格式
-            r'(?P<timestamp>\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}).*?(?P<level>DEBUG|INFO|WARN|ERROR).*?(?P<message>.*)',
-            # Syslog格式
-            r'(?P<timestamp>\\w+\\s+\\d+\\s+\\d{2}:\\d{2}:\\d{2}).*?(?P<level>\\w+): (?P<message>.*)'
-        ]
-        
-        for fmt in formats:
-            match = re.match(fmt, line)
-            if match:
-                return match.groupdict()
-        
-        return {"raw": line, "timestamp": None}
-    
-    def _identify_patterns(self, entries: list[dict]) -> list[dict]:
-        """识别日志模式"""
-        
-        # 按消息模板聚类
-        message_templates = {}
-        
-        for entry in entries:
-            template = self._extract_template(entry.get("message", ""))
-            if template not in message_templates:
-                message_templates[template] = []
-            message_templates[template].append(entry)
-        
-        patterns = []
-        for template, occurrences in message_templates.items():
-            if len(occurrences) > 3:  # 至少出现3次
-                patterns.append({
-                    "template": template,
-                    "count": len(occurrences),
-                    "first_seen": occurrences[0]["timestamp"],
-                    "last_seen": occurrences[-1]["timestamp"],
-                    "sample": occurrences[0]["message"]
-                })
-        
-        return sorted(patterns, key=lambda x: -x["count"])
-    
-    def _extract_template(self, message: str) -> str:
-        """提取消息模板（参数化）"""
-        
-        # 替换数字、UUID、日期等变量
-        template = re.sub(r'\\d+', '{n}', message)
-        template = re.sub(
-            r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}',
-            '{uuid}',
-            template
-        )
-        template = re.sub(
-            r'\\d{4}-\\d{2}-\\d{2}[T\\s]\\d{2}:\\d{2}:\\d{2}',
-            '{datetime}',
-            template
-        )
-        
-        return template
 ```
 
 ### Step 2: 根因分析 (30-90分钟)
@@ -548,259 +629,148 @@ class RootCauseAnalyzer:
         return {
             "root_cause": root_cause,
             "hypotheses_tested": hypotheses,
-            "evidence_supporting": self._get_supporting_evidence(
-                root_cause, evidence
-            ),
+            "evidence_supporting": self._get_supporting_evidence(root_cause, evidence),
             "impact": impact,
             "confidence": self._calculate_confidence(root_cause)
         }
-    
-    def _generate_hypotheses(self, bug: dict, evidence: dict) -> list[dict]:
-        """生成假设"""
-        
-        hypotheses = []
-        
-        # 基于症状类型生成假设
-        symptom_type = bug.get("category")
-        
-        hypothesis_templates = {
-            "logical": [
-                "Incorrect conditional logic",
-                "Missing boundary check",
-                "Wrong operator used",
-                "Off-by-one error",
-                "Incorrect data type handling"
-            ],
-            "concurrency": [
-                "Race condition in shared resource access",
-                "Deadlock due to lock ordering",
-                "Unprotected concurrent modification",
-                "Non-thread-safe singleton",
-                "Missing memory barrier"
-            ],
-            "memory": [
-                "Memory leak in object lifecycle",
-                "Use-after-free",
-                "Buffer overflow",
-                "Stack overflow (deep recursion)",
-                "Double free"
-            ],
-            "performance": [
-                "N+1 query problem",
-                "Missing database index",
-                "Inefficient algorithm (O(n²) vs O(n))",
-                "Unnecessary synchronization",
-                "Cache invalidation storm"
-            ],
-            "integration": [
-                "API contract mismatch",
-                "Timeout too short for slow external service",
-                "Wrong serialization format",
-                "Authentication token expired",
-                "External service returning unexpected format"
-            ]
-        }
-        
-        for template in hypothesis_templates.get(symptom_type, []):
-            hypotheses.append({
-                "description": template,
-                "probability": 0.5,
-                "tests": self._design_tests_for_hypothesis(template)
-            })
-        
-        # 基于证据生成特定假设
-        evidence_based = self._generate_evidence_based_hypotheses(evidence)
-        hypotheses.extend(evidence_based)
-        
-        return sorted(hypotheses, key=lambda x: -x["probability"])
-    
-    def _design_tests_for_hypothesis(self, hypothesis: str) -> list[dict]:
-        """为假设设计测试"""
-        
-        test_designs = {
-            "Incorrect conditional logic": [
-                {
-                    "name": "test_all_conditional_branches",
-                    "description": "添加日志验证每个分支是否被正确执行"
-                }
-            ],
-            "Race condition in shared resource access": [
-                {
-                    "name": "test_concurrent_access",
-                    "description": "使用多线程并发访问验证"
-                }
-            ],
-            "Memory leak in object lifecycle": [
-                {
-                    "name": "test_memory_profiling",
-                    "description": "使用memory_profiler验证内存增长"
-                }
-            ]
-        }
-        
-        return test_designs.get(hypothesis, [])
-    
-    def _determine_root_cause(
-        self, verified_hypotheses: list[dict]
-    ) -> dict:
-        """确定根本原因"""
-        
-        # 找到被证实的概率最高的假设
-        for hypothesis in verified_hypotheses:
-            if hypothesis.get("verified") and hypothesis.get("probability", 0) >= 0.8:
-                return {
-                    "type": hypothesis.get("category", "unknown"),
-                    "description": hypothesis.get("description", hypothesis.get("description", "Unknown")),
-                    "location": hypothesis.get("location", "Unknown"),
-                    "mechanism": hypothesis.get("mechanism", "Detailed mechanism unknown")
-                }
-        
-        # 如果没有高置信度假设，返回最可能的
-        if verified_hypotheses:
-            top_hypothesis = verified_hypotheses[0]
-            return {
-                "type": top_hypothesis.get("category", "unknown"),
-                "description": top_hypothesis.get("description", "Unknown"),
-                "confidence": "low"
-            }
-        
-        return {"error": "Could not determine root cause", "verified_hypotheses": verified_hypotheses}
 ```
 
-#### 2.2 高级调试技术
+#### 2.2 Node.js特定调试技术
 
-```python
-class AdvancedDebugging:
-    """高级调试技术"""
+```javascript
+// Node.js异步调试 - 追踪Promise链
+class AsyncDebugger {
+  /**
+   * 追踪异步调用栈
+   */
+  static traceAsyncStack() {
+    const originalPrepare = Error.prepareStackTrace;
+    Error.prepareStackTrace = (err, stacks) => stacks;
     
-    def debug_concurrency_issue(self, evidence: dict) -> dict:
-        """调试并发问题"""
-        
-        return {
-            "analysis": self._analyze_thread_dumps(evidence),
-            "lock_graph": self._build_lock_graph(evidence),
-            "race_conditions": self._identify_race_conditions(evidence),
-            "recommendations": self._generate_fix_recommendations()
-        }
+    const error = new Error();
+    const stack = error.stack;
     
-    def _analyze_thread_dumps(self, evidence: dict) -> dict:
-        """分析线程转储"""
-        
-        thread_dump = evidence.get("thread_dump", "")
-        
-        # 解析线程状态
-        threads = []
-        current_thread = None
-        
-        for line in thread_dump.split("\\n"):
-            if '"' in line and 'prio=' in line:
-                if current_thread:
-                    threads.append(current_thread)
-                current_thread = {"name": self._extract_thread_name(line)}
-            elif current_thread and "java.lang.Thread.State" in line:
-                current_thread["state"] = self._parse_thread_state(line)
-            elif current_thread and "locked" in line.lower():
-                current_thread.setdefault("locks", []).append(
-                    self._extract_lock_info(line)
-                )
-        
-        if current_thread:
-            threads.append(current_thread)
-        
-        # 分析死锁
-        deadlocks = self._detect_deadlocks(threads)
-        
-        return {
-            "threads": threads,
-            "thread_count": len(threads),
-            "blocked_threads": [t for t in threads if t.get("state") == "BLOCKED"],
-            "waiting_threads": [t for t in threads if "WAITING" in t.get("state", "")],
-            "deadlocks": deadlocks
-        }
+    Error.prepareStackTrace = originalPrepare;
     
-    def _detect_deadlocks(self, threads: list[dict]) -> list[dict]:
-        """检测死锁"""
-        
-        deadlocks = []
-        
-        # 构建锁依赖图
-        lock_graph = {}
-        for thread in threads:
-            for lock in thread.get("locks", []):
-                lock_id = lock["identity_hash"]
-                if lock_id not in lock_graph:
-                    lock_graph[lock_id] = {"holders": [], "waiters": []}
-                lock_graph[lock_id]["holders"].append(thread["name"])
-        
-        # 检测循环等待
-        # (简化版实现)
-        
-        return deadlocks
+    return stack
+      .filter(frame => frame.getType() === 'null')
+      .map(frame => ({
+        functionName: frame.getFunctionName(),
+        fileName: frame.getFileName(),
+        lineNumber: frame.getLineNumber(),
+        columnNumber: frame.getColumnNumber()
+      }));
+  }
+
+  /**
+   * 监控未处理的Promise拒绝
+   */
+  static monitorUnhandledRejections(handler) {
+    process.on('unhandledRejection', (reason, promise) => {
+      console.error('Unhandled Rejection at:', promise);
+      console.error('Reason:', reason);
+      handler({ reason, promise, stack: this.traceAsyncStack() });
+    });
+  }
+
+  /**
+   * 追踪事件循环阻塞
+   */
+  static monitorEventLoopLag(threshold = 100) {
+    let lastCheck = Date.now();
     
-    def debug_memory_issue(self, evidence: dict) -> dict:
-        """调试内存问题"""
-        
-        heap_dump = evidence.get("heap_dump_analysis", {})
-        
-        return {
-            "memory_usage": self._analyze_memory_usage(heap_dump),
-            "leak_suspects": self._identify_leak_suspects(heap_dump),
-            "gc_analysis": self._analyze_gc_behavior(evidence),
-            "recommendations": self._generate_memory_fix_recommendations()
-        }
+    setInterval(() => {
+      const now = Date.now();
+      const lag = now - lastCheck - 100; // 假设每100ms检查一次
+      
+      if (lag > threshold) {
+        console.warn(`Event loop lag detected: ${lag}ms`);
+      }
+      
+      lastCheck = now;
+    }, 100);
+  }
+}
+
+// Node.js内存泄漏检测
+class MemoryLeakDetector {
+  constructor(options = {}) {
+    this.baseline = null;
+    this.snapshots = [];
+    this.threshold = options.threshold || 1024 * 1024 * 50; // 50MB
+  }
+
+  /**
+   * 获取当前内存使用
+   */
+  getMemoryUsage() {
+    const usage = process.memoryUsage();
+    return {
+      rss: usage.rss,
+      heapTotal: usage.heapTotal,
+      heapUsed: usage.heapUsed,
+      external: usage.external,
+      arrayBuffers: usage.arrayBuffers
+    };
+  }
+
+  /**
+   * 设置基准线
+   */
+  setBaseline() {
+    this.baseline = this.getMemoryUsage();
+    console.log('Memory baseline set:', this.baseline);
+  }
+
+  /**
+   * 检测内存增长
+   */
+  checkForLeaks() {
+    const current = this.getMemoryUsage();
+    const growth = {
+      heapUsed: current.heapUsed - this.baseline.heapUsed,
+      heapTotal: current.heapTotal - this.baseline.heapTotal,
+      rss: current.rss - this.baseline.rss
+    };
     
-    def _identify_leak_suspects(self, heap_dump: dict) -> list[dict]:
-        """识别内存泄漏嫌疑人"""
-        
-        # 基于支配树分析
-        suspects = []
-        
-        for obj_class, stats in heap_dump.get("by_class", {}).items():
-            instance_count = stats.get("instance_count", 0)
-            shallow_size = stats.get("shallow_size", 0)
-            retained_size = stats.get("retained_size", 0)
-            
-            # 启发式规则：实例数异常高或保留内存异常大
-            if instance_count > 100000 or retained_size > 100 * 1024 * 1024:
-                suspects.append({
-                    "class": obj_class,
-                    "instance_count": instance_count,
-                    "retained_size": retained_size,
-                    "reason": self._explain_suspicion(
-                        instance_count, retained_size
-                    )
-                })
-        
-        return sorted(suspects, key=lambda x: -x["retained_size"])[:10]
+    console.log('Memory growth:', growth);
     
-    def debug_performance_issue(self, evidence: dict) -> dict:
-        """调试性能问题"""
-        
-        return {
-            "hotspots": self._identify_hotspots(evidence),
-            "bottlenecks": self._identify_bottlenecks(evidence),
-            "dependency_analysis": self._analyze_dependencies(evidence),
-            "optimization_targets": self._suggest_optimizations(evidence)
-        }
+    if (growth.heapUsed > this.threshold) {
+      console.warn(`Potential memory leak detected! Growth: ${growth.heapUsed} bytes`);
+      return { leaking: true, growth };
+    }
     
-    def _identify_hotspots(self, evidence: dict) -> list[dict]:
-        """识别性能热点"""
-        
-        profiler_data = evidence.get("profiler_data", {})
-        
-        hotspots = []
-        
-        for sample in profiler_data.get("samples", []):
-            hotspots.append({
-                "function": sample["function"],
-                "file": sample["file"],
-                "line": sample["line"],
-                "cpu_time": sample.get("cpu_time", 0),
-                "sample_count": sample.get("count", 0),
-                "percentage": sample.get("percentage", 0)
-            })
-        
-        return sorted(hotspots, key=lambda x: -x["cpu_time"])[:20]
+    return { leaking: false, growth };
+  }
+
+  /**
+   * 生成堆快照对比
+   */
+  async compareSnapshots() {
+    const v8 = require('v8');
+    const fs = require('fs');
+    
+    // Snapshot 1
+    const snapshot1 = `/tmp/snapshot-${Date.now()}-1.heapsnapshot`;
+    v8.writeHeapSnapshot(snapshot1);
+    this.snapshots.push(snapshot1);
+    
+    // Wait and allocate
+    await new Promise(r => setTimeout(r, 5000));
+    
+    // Snapshot 2
+    const snapshot2 = `/tmp/snapshot-${Date.now()}-2.heapsnapshot`;
+    v8.writeHeapSnapshot(snapshot2);
+    this.snapshots.push(snapshot2);
+    
+    console.log('Snapshots for comparison:');
+    console.log('1.', snapshot1);
+    console.log('2.', snapshot2);
+    console.log('Use Chrome DevTools to compare');
+    
+    return { snapshot1, snapshot2 };
+  }
+}
 ```
 
 ### Step 3: 修复实施与验证 (30-60分钟)
@@ -813,9 +783,7 @@ class AdvancedDebugging:
 class FixStrategist:
     """修复策略师"""
     
-    def design_fix(
-        self, root_cause: dict, bug: dict
-    ) -> dict:
+    def design_fix(self, root_cause: dict, bug: dict) -> dict:
         """设计修复方案"""
         
         # 1. 选择修复策略
@@ -837,195 +805,6 @@ class FixStrategist:
             "risk_assessment": risk_assessment,
             "rollback_plan": self._design_rollback_plan(strategy)
         }
-    
-    def _select_strategy(
-        self, root_cause: dict, bug: dict
-    ) -> str:
-        """选择修复策略"""
-        
-        strategies = {
-            "quick_fix": {
-                "applicable": [
-                    "configuration_error",
-                    "simple_logical_error",
-                    "missing_default"
-                ],
-                "description": "直接修复，单点修改",
-                "risk": "low"
-            },
-            "guard_clause": {
-                "applicable": [
-                    "boundary_condition",
-                    "null_pointer",
-                    "invalid_state"
-                ],
-                "description": "添加防护性检查",
-                "risk": "low"
-            },
-            "refactor_fix": {
-                "applicable": [
-                    "design_flaw",
-                    "complex_logic",
-                    "tight_coupling"
-                ],
-                "description": "重构相关代码",
-                "risk": "medium"
-            },
-            "rollback": {
-                "applicable": [
-                    "regression",
-                    "broken_migration"
-                ],
-                "description": "回滚变更",
-                "risk": "low"
-            }
-        }
-        
-        category = root_cause.get("type")
-        for strategy_name, strategy_info in strategies.items():
-            if category in strategy_info["applicable"]:
-                return strategy_name
-        
-        return "quick_fix"  # 默认
-    
-    def _write_fix(self, root_cause: dict, strategy: str) -> str:
-        """编写修复代码"""
-        
-        fix_templates = {
-            "guard_clause": '''
-# 添加防护性检查
-def process_data(data):
-    # Guard clause: 验证输入
-    if data is None:
-        logger.warning("Received null data, skipping")
-        return None
-    
-    if not isinstance(data, dict):
-        raise TypeError(f"Expected dict, got {type(data).__name__}")
-    
-    # 原有的处理逻辑
-    return do_process(data)
-''',
-            "quick_fix": '''
-# 直接修复错误逻辑
-def calculate_discount(price, quantity):
-    # 修复: 使用正确的运算符
-    if quantity >= 10:
-        return price * quantity * 0.9  # 10%折扣
-    return price * quantity
-''',
-            "refactor_fix": '''
-# 重构修复
-class OrderProcessor:
-    """重构后的订单处理器"""
-    
-    def __init__(self, validator: OrderValidator, repository: OrderRepository):
-        self.validator = validator
-        self.repository = repository
-    
-    def process_order(self, order_data: dict) -> Order:
-        # 分解为独立的验证和持久化步骤
-        validated_order = self.validator.validate(order_data)
-        return self.repository.save(validated_order)
-'''
-        }
-        
-        return fix_templates.get(strategy, "")
-    
-    def _write_test_cases(
-        self, root_cause: dict, bug: dict
-    ) -> list[dict]:
-        """编写测试用例"""
-        
-        test_cases = []
-        
-        # 1. 复现原始Bug的测试
-        test_cases.append({
-            "name": f"test_reproduce_{bug.get('id', 'bug')}",
-            "description": f"复现原始Bug: {bug.get('title')}",
-            "code": f'''
-def test_reproduce_{bug.get('id', 'bug')}():
-    """复现原始Bug"""
-    # Given
-    input_data = {bug.get('reproduction_steps', [])}
-    
-    # When
-    result = process(input_data)
-    
-    # Then
-    assert result.status == "error"  # Bug状态下应该报错
-''',
-            "expected_to_fail": True
-        })
-        
-        # 2. 修复后的验证测试
-        test_cases.append({
-            "name": f"test_fix_{bug.get('id', 'bug')}",
-            "description": f"验证修复: {bug.get('title')}",
-            "code": f'''
-def test_fix_{bug.get('id', 'bug')}():
-    """验证修复"""
-    # Given
-    input_data = {bug.get('reproduction_steps', [])}
-    
-    # When
-    result = process(input_data)
-    
-    # Then
-    assert result.status == "success"
-''',
-            "expected_to_pass": True
-        })
-        
-        # 3. 边界情况测试
-        test_cases.append({
-            "name": "test_edge_cases",
-            "description": "边界情况测试",
-            "code": '''
-@pytest.mark.parametrize("input,expected", [
-    (None, None),
-    ({}, {}),
-    ({"valid": "data"}, {"valid": "data"}),
-])
-def test_edge_cases(input, expected):
-    result = process(input)
-    assert result == expected
-'''
-        })
-        
-        return test_cases
-    
-    def _assess_risk(self, fix_code: str, strategy: str) -> dict:
-        """评估修复风险"""
-        
-        risk_indicators = {
-            "low": [
-                "guard_clause",
-                "quick_fix",
-                "configuration_change"
-            ],
-            "medium": [
-                "refactor_fix",
-                "new_algorithm"
-            ],
-            "high": [
-                "architectural_change",
-                "database_migration"
-            ]
-        }
-        
-        risk_level = "low"
-        for level, strategies in risk_indicators.items():
-            if strategy in strategies:
-                risk_level = level
-                break
-        
-        return {
-            "risk_level": risk_level,
-            "affected_components": self._identify_affected_components(fix_code),
-            "side_effects": self._potential_side_effects(fix_code),
-            "requires_rollback_plan": risk_level in ["medium", "high"]
-        }
 ```
 
 #### 3.2 修复验证框架
@@ -1034,12 +813,7 @@ def test_edge_cases(input, expected):
 class FixVerifier:
     """修复验证器"""
     
-    def verify_fix(
-        self,
-        fix: dict,
-        bug: dict,
-        original_evidence: dict
-    ) -> dict:
+    def verify_fix(self, fix: dict, bug: dict, original_evidence: dict) -> dict:
         """验证修复"""
         
         results = {
@@ -1050,19 +824,13 @@ class FixVerifier:
         }
         
         # 1. 确认原始Bug可以被复现
-        results["original_bug_reproduced"] = self._verify_reproduction(
-            bug
-        )
+        results["original_bug_reproduced"] = self._verify_reproduction(bug)
         
         # 2. 验证Bug已修复
-        results["bug_fixed"] = self._verify_bug_fixed(
-            fix, bug, original_evidence
-        )
+        results["bug_fixed"] = self._verify_bug_fixed(fix, bug, original_evidence)
         
         # 3. 确保没有回归
-        results["no_regression"] = self._verify_no_regression(
-            fix
-        )
+        results["no_regression"] = self._verify_no_regression(fix)
         
         # 4. 验证边界情况
         results["edge_cases_covered"] = self._verify_edge_cases(fix)
@@ -1074,275 +842,194 @@ class FixVerifier:
         ])
         
         return results
-    
-    def _verify_bug_fixed(
-        self, fix: dict, bug: dict, original_evidence: dict
-    ) -> bool:
-        """验证Bug已修复"""
-        
-        # 运行修复后的代码
-        # 检查是否还会出现相同的错误
-        
-        # 1. 单元测试
-        test_result = self._run_unit_tests(fix)
-        if not test_result["passed"]:
-            return False
-        
-        # 2. 集成测试
-        integration_result = self._run_integration_tests(fix)
-        if not integration_result["passed"]:
-            return False
-        
-        # 3. 手动验证
-        manual_verification = self._manual_verify(fix, bug)
-        
-        return test_result["passed"] and manual_verification
-    
-    def _verify_no_regression(self, fix: dict) -> bool:
-        """验证没有回归"""
-        
-        # 运行完整的测试套件
-        regression_tests = self._run_regression_tests()
-        
-        return regression_tests["pass_rate"] >= 0.99  # 99%以上通过
-    
-    def _run_regression_tests(self) -> dict:
-        """运行回归测试"""
-        
-        return {
-            "total": 1000,
-            "passed": 995,
-            "failed": 5,
-            "skipped": 0,
-            "pass_rate": 0.995,
-            "failures": [
-                {
-                    "test": "test_legacy_feature_X",
-                    "error": "AssertionError",
-                    "fix_required": True
-                }
-            ]
-        }
 ```
 
 ### Step 4: 知识沉淀与预防 (15-30分钟)
 
 **目标**: 确保问题不会重现，知识被有效记录。
 
-#### 4.1 调试知识库
+#### 4.1 故障Playbook知识库
 
-```python
-class DebugKnowledgeBase:
-    """调试知识库"""
-    
-    def record_debugging_session(
-        self, session: dict
-    ) -> str:
-        """记录调试会话"""
-        
-        doc = f'''
-# Debugging Session Report
+##### Playbook #1: Node.js内存泄漏
 
-## Basic Information
-- **Bug ID**: {session.get('bug_id')}
-- **Title**: {session.get('title')}
-- **Severity**: {session.get('severity')}
-- **Date**: {session.get('date')}
-- **Duration**: {session.get('duration')}
+```markdown
+# Node.js内存泄漏故障Playbook
 
-## Problem Summary
-{session.get('problem_summary')}
+## 症状识别
+- 进程RSS内存持续增长
+- GC频率增加但内存不下降
+- 服务响应时间逐渐变慢
 
-## Root Cause
-**Category**: {session.get('root_cause', {}).get('category')}
-**Location**: {session.get('root_cause', {}).get('location')}
-**Mechanism**: {session.get('root_cause', {}).get('mechanism')}
-
-## Investigation Process
-
-### Hypotheses Tested
-{self._format_hypotheses(session.get('hypotheses', []))}
-
-### Evidence Collected
-- Log files: {len(session.get('evidence', {}).get('logs', []))} files
-- Thread dumps: {len(session.get('evidence', {}).get('thread_dumps', []))} files
-- Heap dumps: {session.get('evidence', {}).get('heap_dump', 'N/A')}
-
-### Key Insights
-{self._format_insights(session.get('insights', []))}
-
-## Solution
-{session.get('solution')}
-
-## Verification
-- Unit tests: {session.get('verification', {}).get('unit_tests')}
-- Integration tests: {session.get('verification', {}).get('integration_tests')}
-- Regression tests: {session.get('verification', {}).get('regression_tests')}
-
-## Prevention Measures
-{self._format_prevention_measures(session.get('prevention', []))}
-
-## Related Issues
-{self._format_related_issues(session.get('related_issues', []))}
-
-## Lessons Learned
-{self._format_lessons_learned(session.get('lessons', []))}
-'''
-        
-        return doc
-    
-    def create_playbook(
-        self, category: str, solution_template: dict
-    ) -> str:
-        """创建故障处理手册"""
-        
-        return f'''
-# {category.title()} Troubleshooting Playbook
-
-## Symptoms
-{solution_template.get('symptoms', 'TBD')}
-
-## Quick Diagnosis
-```
-{solution_template.get('quick_diagnosis_commands', 'TBD')}
-```
-
-## Investigation Steps
-
-### Step 1: Collect Evidence
+## 快速诊断
 ```bash
-{solution_template.get('evidence_collection_commands', 'TBD')}
+# 1. 检查进程内存使用
+ps -o pid,rss,vsz,comm -p <pid>
+
+# 2. 监控内存增长
+watch -n 5 'ps -o pid,rss -p <pid>'
+
+# 3. 获取堆统计
+node -e "console.log(JSON.stringify(process.memoryUsage(), null, 2))"
+
+# 4. 生成堆快照
+kill -USR2 <pid>  # 触发快照写入
 ```
 
-### Step 2: Analyze Logs
-```python
-{solution_template.get('log_analysis_script', '# TBD')}
+## 根因常见类型
+
+| 类型 | 原因 | 解决方案 |
+|------|------|---------|
+| 全局变量 | 全局对象引用累积 | 及时清理或使用WeakMap |
+| 闭包 | 闭包持有大对象引用 | 解除不必要的引用 |
+| 事件监听器 | 未移除的监听器累积 | 显式removeListener |
+| 缓存 | 无限增长的缓存 | 使用LRU或有界缓存 |
+| Timer引用 | setInterval/setTimeout未清理 | 显式clearInterval/clearTimeout |
+
+## 修复示例
+
+```javascript
+// 问题：事件监听器泄漏
+class EventEmitter {
+  constructor() {
+    this.handlers = new Map();  // 修复：使用Map而不是数组
+  }
+  
+  on(event, handler) {
+    if (!this.handlers.has(event)) {
+      this.handlers.set(event, []);
+    }
+    this.handlers.get(event).push(handler);
+  }
+  
+  off(event, handler) {
+    if (!this.handlers.has(event)) return;
+    const handlers = this.handlers.get(event);
+    const index = handlers.indexOf(handler);
+    if (index > -1) handlers.splice(index, 1);  // 移除监听器
+  }
+}
 ```
 
-### Step 3: Check System State
+## 验证方法
 ```bash
-{solution_template.get('system_check_commands', 'TBD')}
+# 运行leak检测工具
+npm install -g leak-suppressor
+node --expose-gc app.js
+
+# 使用clinic.js进行火焰图分析
+npx clinic doctor -- node server.js
+```
 ```
 
-## Known Root Causes
+##### Playbook #2: JavaScript异步错误处理
 
-### Cause 1: {solution_template.get('cause_1_title', 'TBD')}
-**Symptoms**: {solution_template.get('cause_1_symptoms', 'TBD')}
-**Fix**: {solution_template.get('cause_1_fix', 'TBD')}
+```markdown
+# JavaScript异步错误处理故障Playbook
 
-### Cause 2: {solution_template.get('cause_2_title', 'TBD')}
-**Symptoms**: {solution_template.get('cause_2_symptoms', 'TBD')}
-**Fix**: {solution_template.get('cause_2_fix', 'TBD')}
+## 症状识别
+- Unhandled Promise Rejection警告
+- 错误被静默吞噬
+- 回调地狱导致错误丢失
 
-## Escalation
-{solution_template.get('escalation_path', 'TBD')}
+## 快速诊断
+```bash
+# 启用所有Promise rejection警告
+node --unhandled-rejections=warn server.js
 
-## Prevention
-{solution_template.get('prevention_measures', 'TBD')}
-'''
+# 使用Async_hooks追踪
+node --prof --harmony server.js
 ```
 
-#### 4.2 预防措施框架
+## 根因常见类型
 
-```python
-class PreventionFramework:
-    """预防措施框架"""
-    
-    def recommend_preventions(
-        self, root_cause: dict, bug: dict
-    ) -> list[dict]:
-        """推荐预防措施"""
-        
-        preventions = []
-        
-        # 1. 测试增强
-        if root_cause.get("category") == "logical":
-            preventions.append({
-                "type": "test_enhancement",
-                "action": "添加边界条件和异常场景的测试",
-                "priority": "high",
-                "effort": "low"
-            })
-        
-        # 2. 监控告警
-        if root_cause.get("category") in ["performance", "memory"]:
-            preventions.append({
-                "type": "monitoring",
-                "action": "添加相关指标的监控和告警",
-                "priority": "high",
-                "effort": "medium"
-            })
-        
-        # 3. 代码审查检查项
-        if root_cause.get("category") == "concurrency":
-            preventions.append({
-                "type": "code_review_checklist",
-                "action": "在代码审查清单中添加并发安全检查项",
-                "priority": "high",
-                "effort": "low"
-            })
-        
-        # 4. 静态分析规则
-        preventions.append({
-            "type": "static_analysis",
-            "action": "添加针对该问题类型的静态分析规则",
-            "priority": "medium",
-            "effort": "medium"
-            })
-        
-        # 5. 架构改进
-        if root_cause.get("category") in ["integration", "data"]:
-            preventions.append({
-                "type": "architecture",
-                "action": "考虑添加契约测试或数据验证层",
-                "priority": "medium",
-                "effort": "high"
-            })
-        
-        return preventions
-    
-    def generate_monitoring_rules(
-        self, root_cause: dict, bug: dict
-    ) -> list[dict]:
-        """生成监控规则"""
-        
-        rules = []
-        
-        # 基于问题类型生成特定监控
-        category = root_cause.get("category")
-        
-        monitoring_templates = {
-            "performance": [
-                {
-                    "name": f"high_latency_{bug.get('id')}",
-                    "metric": "request_latency_p99",
-                    "condition": "> 1000",
-                    "window": "5m",
-                    "severity": "warning"
-                }
-            ],
-            "memory": [
-                {
-                    "name": f"memory_leak_{bug.get('id')}",
-                    "metric": "memory_usage_growth_rate",
-                    "condition": "> 10% per hour",
-                    "window": "1h",
-                    "severity": "critical"
-                }
-            ],
-            "concurrency": [
-                {
-                    "name": f"deadlock_{bug.get('id')}",
-                    "metric": "thread_blocked_count",
-                    "condition": "> 10",
-                    "window": "1m",
-                    "severity": "critical"
-                }
-            ]
-        }
-        
-        return monitoring_templates.get(category, [])
+| 类型 | 原因 | 解决方案 |
+|------|------|---------|
+| 缺少catch | Promise没有.catch() | 始终链式调用.catch() |
+| 回调不传递错误 | callback(err)未调用 | 使用util.callbackify |
+| async/await错误 | try-catch缺失 | 包装async函数 |
+
+## 修复示例
+
+```javascript
+// 问题：错误被静默吞噬
+async function processData(data) {
+  await saveToDb(data);
+  await sendNotification(data);  // 如果这里出错，不会被报告
+}
+
+// 修复：正确的async错误处理
+async function processData(data) {
+  try {
+    await saveToDb(data);
+    await sendNotification(data);
+  } catch (error) {
+    logger.error('Failed to process data', { error, data });
+    throw error;  // 重新抛出以传播错误
+  }
+}
+
+// 全局未处理拒绝监控
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('Unhandled Rejection', { reason: String(reason), promise });
+  // 上报到监控系统
+  reportError({ type: 'unhandledRejection', reason, promise });
+});
 ```
+```
+
+##### Playbook #3: 并发竞态条件
+
+```markdown
+# 并发竞态条件故障Playbook
+
+## 症状识别
+- 间歇性数据不一致
+- 非确定性测试失败
+- 计数器/库存出现负数
+
+## 快速诊断
+```bash
+# 启用竞态检测
+node --race server.js
+
+# 使用stress test重现
+npm install -g stressapptest
+```
+
+## 修复模式
+
+```javascript
+// 方案1：互斥锁
+const mutex = new AsyncMutex();
+
+async function criticalSection() {
+  await mutex.acquire();
+  try {
+    // 临界区代码
+    await updateInventory(itemId, -1);
+  } finally {
+    mutex.release();
+  }
+}
+
+// 方案2：原子操作
+const atomicCounter = new AtomicInteger(0);
+atomicCounter.addAndGet(1);
+
+// 方案3：事务性更新
+async function safeUpdate(itemId, delta) {
+  await db.transaction(async (trx) => {
+    const item = await trx('items').where('id', itemId).first();
+    if (item.stock + delta < 0) {
+      throw new Error('Insufficient stock');
+    }
+    await trx('items').where('id', itemId).increment('stock', delta);
+  });
+}
+```
+```
+
+---
 
 ## 技术栈/工具（含代码示例）
 
@@ -1373,15 +1060,6 @@ language_tools:
         # 或设置环境变量使用其他调试器
         # PYTHONBREAKPOINT=ipdb.set_trace breakpoint()
     
-    - name: pytest-divert
-      description: 测试输出捕获
-      usage: |
-        def test_debug():
-            import divert
-            with divert.stdout() as stdout:
-                my_function()
-            assert "expected" in stdout.getvalue()
-    
     - name: memory_profiler
       description: 内存分析
       usage: |
@@ -1394,29 +1072,7 @@ language_tools:
       description: 采样分析器
       usage: |
         py-spy record -o profile.svg -- python myscript.py
-    
-    - name: objgraph
-      description: 对象图分析
-      usage: |
-        import objgraph
-        objgraph.show_most_common_types()
 
-  java:
-    - name: jdb
-      description: Java调试器
-    
-    - name: VisualVM
-      description: 性能分析工具
-    
-    - name: YourKit
-      description: 专业分析器
-    
-    - name: Arthas
-      description: Alibaba诊断工具
-      usage: |
-        # 热修复示例
-        vmtool -c <pid> --action getInstances --className com.example.User
-        
   javascript:
     - name: Chrome DevTools
       description: 浏览器调试
@@ -1428,6 +1084,24 @@ language_tools:
       description: Node.js调试
       usage: |
         node --inspect-brk server.js
+        # 然后在Chrome打开 chrome://inspect
+    
+    - name: clinic.js
+      description: 性能诊断工具
+      usage: |
+        npx clinic doctor -- node server.js
+        npx clinic flame -- node server.js
+    
+    - name: 0x
+      description: 火焰图生成器
+      usage: |
+        npx 0x server.js
+    
+    - name: heapdump
+      description: 堆快照生成
+      usage: |
+        const heapdump = require('heapdump');
+        heapdump.writeSnapshot('./heapdump.heapsnapshot');
 
 logging:
   python:
@@ -1437,12 +1111,6 @@ logging:
         import structlog
         log = structlog.get_logger()
         log.info("event", user_id=123, action="login")
-    
-    - name: loguru
-      description: 简化日志
-      usage: |
-        from loguru import logger
-        logger.debug("Debug info: {var}", var=value)
   
   infrastructure:
     - name: ELK Stack
@@ -1453,104 +1121,7 @@ logging:
       description: 指标监控
 ```
 
-### 日志分析命令
-
-```bash
-# 日志分析命令集
-
-# 实时tail错误日志
-tail -f app.log | grep ERROR
-
-# 查找错误模式
-grep -E "ERROR|Exception|Traceback" app.log
-
-# 统计错误频率
-grep ERROR app.log | awk '{print $NF}' | sort | uniq -c | sort -rn
-
-# 时间范围分析
-awk '/2024-01-15 10:00/,/2024-01-15 11:00/' app.log
-
-# 关联请求ID
-grep "request_id=abc123" app.log
-
-# JSON日志解析
-cat app.log | jq '. | select(.level == "ERROR")'
-
-# 性能日志分析
-grep "latency" app.log | awk -F'latency=' '{print $2}' | awk '{print $1}' | sort -n
-
-# 内存dump分析
-jmap -dump:format=b,file=heap.bin <pid>
-jhat heap.bin
-```
-
-### 调试脚本模板
-
-```python
-#!/usr/bin/env python3
-"""
-通用调试脚本模板
-"""
-
-import os
-import sys
-import json
-import argparse
-from datetime import datetime
-from typing import Any
-
-class DebugScript:
-    """调试脚本基类"""
-    
-    def __init__(self):
-        self.parser = argparse.ArgumentParser(description="Debug Script")
-        self.setup_args()
-        
-    def setup_args(self):
-        """设置命令行参数"""
-        self.parser.add_argument("--log-file", required=True)
-        self.parser.add_argument("--error-pattern", default="ERROR")
-        self.parser.add_argument("--output", default="debug_report.json")
-        
-    def run(self):
-        """运行调试流程"""
-        args = self.parser.parse_args()
-        
-        print(f"Starting debug analysis at {datetime.now()}")
-        
-        # 1. 收集证据
-        evidence = self.collect_evidence(args)
-        
-        # 2. 分析问题
-        analysis = self.analyze(evidence)
-        
-        # 3. 生成报告
-        self.generate_report(analysis, args.output)
-        
-        print(f"Debug report saved to {args.output}")
-        
-    def collect_evidence(self, args) -> dict:
-        """收集证据"""
-        return {
-            "log_file": args.log_file,
-            "error_pattern": args.error_pattern,
-            "timestamp": datetime.now().isoformat()
-        }
-    
-    def analyze(self, evidence: dict) -> dict:
-        """分析问题"""
-        return {"summary": "Analysis pending"}
-    
-    def generate_report(self, analysis: dict, output: str):
-        """生成报告"""
-        with open(output, "w") as f:
-            json.dump(analysis, f, indent=2, default=str)
-
-
-if __name__ == "__main__":
-    script = DebugScript()
-    script.run()
-```
+---
 
 ## 输出格式
 
@@ -1560,7 +1131,7 @@ if __name__ == "__main__":
 # Bug Debugging Report
 
 ## Bug Information
-- **ID**: BUG-XXXX
+- **ID**: DEBUG-XXXX
 - **Title**: 
 - **Severity**: P0/P1/P2/P3
 - **Category**: logical/concurrency/memory/performance/security/...
@@ -1587,12 +1158,6 @@ if __name__ == "__main__":
 ### Actual Behavior
 [实际的行为]
 
-## Evidence Collected
-- Logs: [file paths]
-- Screenshots: [paths]
-- Thread Dumps: [paths]
-- Heap Dumps: [paths]
-
 ## Root Cause Analysis
 ### Hypotheses Tested
 | Hypothesis | Evidence For | Evidence Against | Status |
@@ -1603,9 +1168,7 @@ if __name__ == "__main__":
 **Type**: 
 **Location**: 
 **Mechanism**: [详细解释问题如何发生]
-
-### Impact Analysis
-[分析问题的影响范围]
+**Confidence**: High/Medium/Low
 
 ## Solution
 ### Fix Strategy
@@ -1641,6 +1204,8 @@ if __name__ == "__main__":
 - 
 ```
 
+---
+
 ## 验证条件
 
 ### 修复验证检查清单
@@ -1665,32 +1230,6 @@ class FixVerificationChecklist:
             "all_passed": all(checks.values()),
             "failed_checks": [k for k, v in checks.items() if not v]
         }
-    
-    def _verify_code_fix(self, fix: dict) -> bool:
-        """验证代码修复"""
-        return (
-            fix.get("code") is not None and
-            len(fix.get("code", "")) > 0
-        )
-    
-    def _verify_tests(self, fix: dict) -> bool:
-        """验证测试"""
-        return (
-            len(fix.get("test_cases", [])) > 0 and
-            all(tc.get("implemented") for tc in fix.get("test_cases", []))
-        )
-    
-    def _verify_documentation(self, fix: dict) -> bool:
-        """验证文档"""
-        return fix.get("debug_report") is not None
-    
-    def _verify_monitoring(self, fix: dict) -> bool:
-        """验证监控"""
-        return len(fix.get("monitoring_rules", [])) > 0
-    
-    def _verify_rollback_plan(self, fix: dict) -> bool:
-        """验证回滚计划"""
-        return fix.get("rollback_steps") is not None
 ```
 
 ### 回归测试标准
@@ -1702,6 +1241,7 @@ class FixVerificationChecklist:
 | 系统测试 | 全功能覆盖 | 100%通过 |
 | 性能测试 | 响应时间在SLA内 | 100%通过 |
 | 安全测试 | 无高危漏洞 | 无高危 |
+
 
 ### 根因分析质量标准
 
