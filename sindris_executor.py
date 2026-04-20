@@ -110,17 +110,35 @@ class SindrisExecutor:
         """
         为所有任务添加验证步骤
         这个验证步骤是给主Agent看的，确保结果真实可用
+        
+        v3.8改进：根据subtasks生成具体的验证条件，不只是模糊的"验证完成"
         """
+        # 从subtasks中提取需要验证的文件
+        files_to_verify = []
+        for s in subtasks:
+            role_file = s.get('role_file')
+            if role_file and role_file.endswith('.md'):
+                files_to_verify.append(role_file)
+        
+        # 生成具体的验证命令
+        verify_commands = []
+        for f in files_to_verify:
+            verify_commands.append(f"ls -la {f}")
+            verify_commands.append(f"wc -l {f}")
+        
+        # 生成具体的验证条件
+        verify_items = [f"文件存在: {f}" for f in files_to_verify]
+        
         verification_step = {
             "task_id": f"{task_type}_verifier",
             "role": "Verifier",
             "role_file": None,
-            "role_prompt": "你是结果验证专家。验证任务执行结果是否满足要求：\n1. 代码是否在.py文件中实现\n2. 是否只是写在MD里\n3. 是否是MOCK/placeholder\n4. 是否已集成到主流程",
+            "role_prompt": f"你是结果验证专家。验证任务执行结果是否满足要求：\n1. 代码是否在.py或.md文件中实现\n2. 是否只是MOCK/placeholder\n3. 是否已集成到主流程\n4. 文件是否真的被修改（检查mtime）\n\n需要验证的文件：\n{chr(10).join(files_to_verify)}\n\n验证命令：\n{chr(10).join(verify_commands[:6])}",
             "title": "验证任务结果",
             "tools": ["read", "exec"],
             "timeout": 60,
             "phase": "verification",
-            "verify": ["验证完成"],
+            "verify": verify_items if verify_items else ["验证完成"],
             "auto_run": True,  # 自动运行
         }
         # 添加到末尾
@@ -260,6 +278,7 @@ class SindrisExecutor:
         
         # 检查是否使用审计团队
         is_audit_team = any(r.get('team_type') == 'audit' for r in roles) if roles else False
+        is_evolution_team = any(r.get('team_type') == 'evolution' for r in roles) if roles else False
         
         # 如果是审计团队，直接使用AUDIT_TEAM角色
         if is_audit_team:
@@ -280,15 +299,33 @@ class SindrisExecutor:
                     "phase": "audit",
                     "verify": [f"{role_name}审计完成"],
                 })
+        elif is_evolution_team:
+            # 角色完善任务：每个角色一个完善子任务
+            subtasks = []
+            for r in roles:
+                role_name = r.get('name', r.get('id', 'Specialist'))
+                role_file = self._find_role_file(role_name)
+                role_prompt = self.get_role_prompt(role_name) if role_file else f"你是 {role_name}。"
+                subtasks.append({
+                    "task_id": f"evolve_{r.get('id', 'task')}",
+                    "role": role_name,
+                    "role_file": role_file,
+                    "role_prompt": role_prompt,
+                    "title": f"完善角色: {role_name}",
+                    "tools": ["read", "exec", "write"],
+                    "timeout": 300,
+                    "phase": "round2",
+                    "verify": [f"{role_name}完善完成"],
+                })
             # 添加验证步骤
-            subtasks = self._add_verification_step(subtasks, "audit")
+            subtasks = self._add_verification_step(subtasks, "evolution")
             # 自动运行验证
-            verification_result = self._run_auto_verification("audit")
+            verification_result = self._run_auto_verification("evolution")
             result = {
                 "success": True,
                 "task_id": self.session_id,
                 "subtasks": subtasks,
-                "plan_summary": f"审计任务分解为{len(subtasks)}个子任务（包含验证步骤）",
+                "plan_summary": f"角色完善任务分解为{len(subtasks)}个子任务（包含验证步骤）",
                 "phase": "planned",
                 "roles": roles,
                 "verification": verification_result,
@@ -297,7 +334,7 @@ class SindrisExecutor:
             self._save_fastpath_cache(task, result)
             return result
         
-        # 检查是否使用角色改进分配器
+        # 检查是否使用角色改进分配器（原始evolution_distributor路径）
         is_evolution = any(r.get('team_type') == 'evolution' for r in roles) if roles else False
         if is_evolution:
             # 角色改进任务：直接使用改进角色

@@ -51,10 +51,12 @@ AUDIT_TEAM = [
 ]
 
 AUDIT_TEAM_TRIGGERS = [
-    # 审计/评估类
-    "审计", "评估", "审查", "review", "audit", "assess",
-    "质量检查", "代码检查", "安全检查", "检查", "核查",
+    # 审计/评估类（使用精确词，避免误匹配角色名）
+    "审计", "评估", "审查", 
+    "代码审计", "安全审计", "系统审计",
+    "质量检查", "代码检查", "安全检查", "核查",
     "评分", "评级", "打分", "评价", "评审",
+    "代码review", "安全review",
 ]
 
 # 角色改进分配器（Role Evolution Distributor）
@@ -92,6 +94,10 @@ EVOLUTION_TEAM_TRIGGERS = [
     "改进角色", "优化角色", "升级角色", "完善角色", "修复角色",
     "改进", "改善", "提升", "优化", "upgrade", "improve",
     "角色进化", "角色完善", "角色升级",
+    # 完善/优化 + 角色名（需要同时出现"完善/优化"和"角色/role"）
+    "完善角色md", "优化角色md", "改进角色md",
+    # 完善（单独使用，配合角色名时触发）
+    "完善",
 ]
 
 
@@ -198,20 +204,32 @@ class RoleMatcher:
         # 0. 分层域判断（优先）
         task_domain = classify_domain(task)
         
-        # 1. 审计团队优先（审计任务使用审计团队）
+        # 1. 角色改进分配器优先（改进角色任务使用分配器）
+        # 注意：必须在审计团队之前检查，因为"完善角色"等关键词可能被AUDIT_TEAM错误匹配
+        if self.should_use_evolution_team(task):
+            improver = self.get_evolution_improver(task)
+            if improver:
+                print(f"[RoleMatcher] 检测到角色改进任务，使用改进角色: {improver['name']}")
+                return [RoleMatch(role=improver, similarity=1.0, source="evolution_distributor")]
+            
+            # Fallback: 如果evolution触发但找不到improver，检查是否是AUDIT_TEAM角色改进自身
+            # 例如："完善Code Reviewer Security Engineer角色md" → 使用AUDIT_TEAM改进自身
+            audit_names = [r['name'].lower() for r in AUDIT_TEAM]
+            task_lower = task.lower()
+            if any(name in task_lower for name in audit_names):
+                print(f"[RoleMatcher] 检测到AUDIT_TEAM角色改进任务，使用AUDIT_TEAM")
+                return [
+                    RoleMatch(role={**r, 'team_type': 'evolution'}, similarity=1.0, source="audit_evolution")
+                    for r in AUDIT_TEAM
+                ][:top_k]
+        
+        # 1.5. 审计团队（只有明确是审计任务时才触发）
         if self.should_use_audit_team(task):
             print(f"[RoleMatcher] 检测到审计任务，使用审计专业团队")
             return [
                 RoleMatch(role=r, similarity=1.0, source="audit_team")
                 for r in AUDIT_TEAM
             ][:top_k]
-        
-        # 1.5. 角色改进分配器（改进角色任务使用分配器）
-        if self.should_use_evolution_team(task):
-            improver = self.get_evolution_improver(task)
-            if improver:
-                print(f"[RoleMatcher] 检测到角色改进任务，使用改进角色: {improver['name']}")
-                return [RoleMatch(role=improver, similarity=1.0, source="evolution_distributor")]
         
         # 2. 任务类型识别 + 固定小组（creative/specialized域不用固定团队）
         if task_domain not in ["creative", "data", "research"] and self.should_use_fixed_team(task):

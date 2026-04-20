@@ -82,15 +82,16 @@ class TaskDecomposer:
                 logger.info(f"[TaskDecomposer] RoleMatcher匹配到{len(matches)}个角色")
                 # 检查是否是审计团队
                 is_audit = any(getattr(m, 'source', None) == 'audit_team' for m in matches)
-                # 检查是否是角色改进分配器
-                is_evolution = any(getattr(m, 'source', None) == 'evolution_distributor' for m in matches)
+                # 检查是否是角色改进分配器（包括audit_evolution的fallback情况）
+                is_evolution = any(getattr(m, 'source', None) in ('evolution_distributor', 'audit_evolution') for m in matches)
                 roles = [m.role for m in matches]
-                if is_audit:
-                    for r in roles:
-                        r['team_type'] = 'audit'
+                # 注意：evolution优先检查，因为role_matcher的fallback可能返回source=audit_team但team_type=evolution
                 if is_evolution:
                     for r in roles:
                         r['team_type'] = 'evolution'
+                elif is_audit:
+                    for r in roles:
+                        r['team_type'] = 'audit'
                 return roles
         except Exception as e:
             logger.warning(f"[TaskDecomposer] RoleMatcher错误: {e}，使用fallback")

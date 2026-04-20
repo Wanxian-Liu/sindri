@@ -1,13 +1,20 @@
 ---
 name: sindris
-version: "3.7"
+version: "3.8"
 license: MIT
 copyright: "2026 琬弦 (Wanxian)"
 description: |
-  织界统一协调系统 v3.7 - 多Agent协作执行引擎
+  织界统一协调系统 v3.8 - 多Agent协作执行引擎
   
   基于sindris Round1-4流程，参考oh-my-codex v2设计，
   整合织界中枢模块（熔断/投票/worktree）和OMX持久化。
+  
+  v3.8更新（角色完善任务暴露的问题）：
+  - ⚠️ 强制验证检查点：sessions_yield()后必须检查文件是否真的被修改
+  - ⚠️ 验证条件具体化：不只是"验证完成"，而是列出具体文件
+  - P0: 修复evolution流程验证无效问题（子代理报告完成但文件未修改）
+  - P0: 添加文件存在性检查（ls -la, stat mtime）
+  - P0: 添加行数/大小变化检查
   
   v3.7更新（自我审计后迭代）：
   - P0: 修复verify_with_ralph空转问题 - 添加DEFAULT_CHECK_FUNCTIONS
@@ -434,6 +441,40 @@ def execute_with_worker(task, config):
 - 输出最终成果
 - 更新MEMORY.md
 - 清理临时文件
+
+### ⚠️ 强制验证检查点（v3.8新增）
+
+**每次sessions_yield()后必须执行检查清单**：
+
+```
+yield()后 → 强制检查清单：
+    1. 子代理真的完成了吗？→ 检查completion事件
+    2. 任务目标达到了吗？→ 验证文件/代码确实存在
+    3. 验证条件满足了吗？→ 对照trust_gate检查
+    4. 有遗留问题吗？→ 决定重试或上报
+```
+
+**验证方法**：
+
+| 验证类型 | 验证命令 |
+|----------|----------|
+| 文件存在 | `ls -la path` |
+| 文件被修改 | `stat file` 检查mtime |
+| 内容正确 | `grep` 或 `read` 抽查 |
+| 代码可运行 | `python3 -c "import module"` |
+| 功能正常 | `python3 -c "test_function()"` |
+
+**不符合验证条件的处理**：
+
+```
+验证失败 → 自动重试（1次）→ 还失败则上报刘哥
+```
+
+**禁止行为**：
+- ❌ yield后直接说"完成了"
+- ❌ 不验证文件是否真的被修改
+- ❌ 子代理报告完成就认为完成了
+- ❌ 跳过trust_gate检查
 
 ---
 
