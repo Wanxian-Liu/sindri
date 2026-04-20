@@ -1,0 +1,2 @@
+{"event": "task_start", "timestamp": "2026-04-21T01:43:01.893110", "task_id": "test_task_001", "worker_id": null, "role": "developer", "duration_ms": null, "success": null, "error": null, "details": {}}
+{"event": "task_complete", "timestamp": "2026-04-21T01:43:01.893235", "task_id": "test_task_001", "worker_id": null, "role": "developer", "duration_ms": null, "success": true, "error": null, "details": {}}

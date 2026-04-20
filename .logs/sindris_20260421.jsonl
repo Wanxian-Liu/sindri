@@ -68,3 +68,7 @@
 2026-04-21 01:25:48,799 - INFO - {"timestamp": "2026-04-21T01:25:48.799225", "session_id": "sindris_6573a81beb4e", "event_type": "plan_start", "task": "完善Code Reviewer角色"}
 2026-04-21 01:25:48,800 - INFO - [TaskDecomposer] RoleMatcher匹配到4个角色
 2026-04-21 01:25:48,803 - INFO - {"timestamp": "2026-04-21T01:25:48.803686", "session_id": "sindris_6573a81beb4e", "event_type": "fastpath_save", "cache_key": "09779f1dbbde"}
+2026-04-21 01:42:57,363 - INFO - {"timestamp": "2026-04-21T01:42:57.363168", "session_id": "sindris_73e230d24c4a", "event_type": "safety_policy_loaded", "status": "loaded"}
+2026-04-21 01:42:57,364 - INFO - {"timestamp": "2026-04-21T01:42:57.364021", "session_id": "sindris_73e230d24c4a", "event_type": "telemetry_loaded", "status": "loaded"}
+2026-04-21 01:43:01,892 - INFO - {"timestamp": "2026-04-21T01:43:01.892183", "session_id": "sindris_102f9573475a", "event_type": "safety_policy_loaded", "status": "loaded"}
+2026-04-21 01:43:01,893 - INFO - {"timestamp": "2026-04-21T01:43:01.893056", "session_id": "sindris_102f9573475a", "event_type": "telemetry_loaded", "status": "loaded"}

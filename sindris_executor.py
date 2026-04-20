@@ -45,6 +45,7 @@ class SindrisExecutor:
         self._setup_fastpath_cache()
         self._setup_subagent_state_machine()
         self._setup_safety_policy()  # v3.7: 集成SafetyPolicy
+        self._setup_telemetry()  # v3.8: 集成TelemetryCollector
     
     def _setup_jsonl_logger(self):
         """初始化JSONL日志记录器"""
@@ -192,6 +193,15 @@ class SindrisExecutor:
             self.safety_policy = None
             self._log_jsonl("safety_policy_loaded", {"status": "not_found"})
     
+    def _setup_telemetry(self):
+        """v3.8: 初始化TelemetryCollector遥测收集"""
+        try:
+            from scripts.telemetry_collector import TelemetryCollector, get_default_collector
+            self.telemetry = get_default_collector()
+            self._log_jsonl("telemetry_loaded", {"status": "loaded"})
+        except ImportError:
+            self.telemetry = None
+            self._log_jsonl("telemetry_loaded", {"status": "not_found"})    
     def check_dangerous_command(self, command: str) -> Dict[str, Any]:
         """
         v3.7: 检查命令是否危险
@@ -205,7 +215,17 @@ class SindrisExecutor:
         if not self.safety_policy:
             return {"safe": True, "level": "none", "message": "SafetyPolicy not loaded"}
         
-        return self.safety_policy.check_command(command)
+        result = self.safety_policy.check_command(command)
+        
+        # v3.8: 记录遥测 - 安全拦截
+        if self.telemetry and not result.get("safe", True):
+            self.telemetry.safety_block(
+                task_id=self.session_id,
+                command=command[:100],
+                danger_level=result.get("level", "unknown")
+            )
+        
+        return result
     
     def _setup_subagent_state_machine(self):
         """初始化子代理状态机"""
@@ -427,6 +447,12 @@ class SindrisExecutor:
         
         # 保存FastPath缓存
         self._save_fastpath_cache(task, result)
+        
+        # v3.8: 记录遥测 - 规划完成
+        if self.telemetry:
+            self.telemetry.round_change("pending", "planned", task_id=self.session_id)
+            for s in subtasks:
+                self.telemetry.task_start(s["task_id"], role=s.get("role"))
         
         return result
     
