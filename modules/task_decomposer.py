@@ -80,7 +80,13 @@ class TaskDecomposer:
             matches = self.role_matcher.match(task)
             if matches:
                 logger.info(f"[TaskDecomposer] RoleMatcher匹配到{len(matches)}个角色")
-                return [m.role for m in matches]
+                # 检查是否是审计团队
+                is_audit = any(getattr(m, 'source', None) == 'audit_team' for m in matches)
+                roles = [m.role for m in matches]
+                if is_audit:
+                    for r in roles:
+                        r['team_type'] = 'audit'
+                return roles
         except Exception as e:
             logger.warning(f"[TaskDecomposer] RoleMatcher错误: {e}，使用fallback")
         

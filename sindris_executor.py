@@ -173,6 +173,42 @@ class SindrisExecutor:
         
         # 任务分解
         roles = task_decomposer.get_roles(task, [])
+        
+        # 检查是否使用审计团队
+        is_audit_team = any(r.get('team_type') == 'audit' for r in roles) if roles else False
+        
+        # 如果是审计团队，直接使用AUDIT_TEAM角色
+        if is_audit_team:
+            # 审计任务：每个角色一个审计子任务
+            subtasks = []
+            for r in roles:
+                role_name = r.get('name', r.get('id', 'Specialist'))
+                role_file = self._find_role_file(role_name)
+                role_prompt = self.get_role_prompt(role_name) if role_file else f"你是 {role_name}。"
+                subtasks.append({
+                    "task_id": f"audit_{r.get('id', 'task')}",
+                    "role": role_name,
+                    "role_file": role_file,
+                    "role_prompt": role_prompt,
+                    "title": f"审计角色: {role_name}",
+                    "tools": ["read", "exec", "write"],
+                    "timeout": 300,
+                    "phase": "audit",
+                    "verify": [f"{role_name}审计完成"],
+                })
+            result = {
+                "success": True,
+                "task_id": self.session_id,
+                "subtasks": subtasks,
+                "plan_summary": f"审计任务分解为{len(subtasks)}个子任务",
+                "phase": "planned",
+                "roles": roles,
+            }
+            # 保存缓存并返回
+            self._save_fastpath_cache(task, result)
+            return result
+        
+        # 普通任务：使用Round分解
         decomposed = task_decomposer.decompose_by_round(task, roles)
         
         # 合并所有任务

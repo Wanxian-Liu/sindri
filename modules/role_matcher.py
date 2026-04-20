@@ -41,6 +41,24 @@ FIXED_TEAM_TRIGGERS = [
     "自动化", "流程", "设计", "开发",
 ]
 
+# 审计专业团队
+AUDIT_TEAM = [
+    {"id": "engineering_code_reviewer", "name": "Code Reviewer", "category": "engineering"},
+    {"id": "engineering_security_engineer", "name": "Security Engineer", "category": "engineering"},
+    {"id": "testing_qa_lead", "name": "QA Lead", "category": "testing"},
+    {"id": "engineering_technical_writer", "name": "Technical Writer", "category": "engineering"},
+    {"id": "testing_reality_checker", "name": "Reality Checker", "category": "testing"},
+]
+
+AUDIT_TEAM_TRIGGERS = [
+    # 审计/评估类
+    "审计", "评估", "审查", "review", "audit", "assess",
+    "质量检查", "代码检查", "安全检查", "检查", "核查",
+    "评分", "评级", "打分", "评价", "评审",
+    # 改进/优化类
+    "改进", "改善", "提升", "优化", "upgrade", "improve",
+]
+
 
 @dataclass
 class RoleMatch:
@@ -94,6 +112,11 @@ class RoleMatcher:
         """判断是否使用固定小组（使用TaskClassifier）"""
         return self._task_classifier.should_use_fixed_team(task)
     
+    def should_use_audit_team(self, task: str) -> bool:
+        """判断是否使用审计专业团队"""
+        task_lower = task.lower()
+        return any(trigger in task_lower for trigger in AUDIT_TEAM_TRIGGERS)
+    
     def classify_task_type(self, task: str) -> TaskType:
         """获取任务类型"""
         return self._task_classifier.classify(task)
@@ -111,7 +134,15 @@ class RoleMatcher:
         # 0. 分层域判断（优先）
         task_domain = classify_domain(task)
         
-        # 1. 任务类型识别 + 固定小组（creative/specialized域不用固定团队）
+        # 1. 审计团队优先（审计任务使用审计团队）
+        if self.should_use_audit_team(task):
+            print(f"[RoleMatcher] 检测到审计任务，使用审计专业团队")
+            return [
+                RoleMatch(role=r, similarity=1.0, source="audit_team")
+                for r in AUDIT_TEAM
+            ][:top_k]
+        
+        # 2. 任务类型识别 + 固定小组（creative/specialized域不用固定团队）
         if task_domain not in ["creative", "data", "research"] and self.should_use_fixed_team(task):
             task_type = self.classify_task_type(task)
             print(f"[RoleMatcher] 任务类型: {task_type.value}, 使用固定团队")
