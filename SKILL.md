@@ -1,13 +1,18 @@
 ---
 name: sindris
-version: "3.9"
+version: "3.10"
 license: MIT
 copyright: "2026 琬弦 (Wanxian)"
 description: |
-  织界统一协调系统 v3.9 - 多Agent协作执行引擎
+  织界统一协调系统 v3.10 - 多Agent协作执行引擎
   
   基于sindris Round1-4流程，参考oh-my-codex v2设计，
   整合织界中枢模块（熔断/投票/worktree）和OMX持久化。
+  
+  v3.10更新（Technical Writer Round4审计文档更新）：
+  - ⚠️ P0: 添加FIXED_TEAM状态映射 - 规范化修复流程状态定义
+  - ⚠️ P1: Reality Checker重命名为sindri_reality_checker - sindri专用验证角色
+  - P2: 更新执行示例 - 补充sindri_reality_checker使用场景
   
   v3.9更新（AUDIT_TEAM Round4审计发现）：
   - ⚠️ P0: 修复sindris.plan()方法缺失问题 - 需import并正确调用
@@ -235,6 +240,26 @@ list_tasks_default(phase="audit_项目名")  # 查看未完成任务
 **FIXED_TEAM修复流程**:
 ```
 读取OMX问题清单 → 修复P0-1 → QA验证 → 修复P0-2 → QA验证 → ...
+```
+
+**FIXED_TEAM状态映射**:
+
+| 状态 | 说明 | 触发条件 |
+|------|------|----------|
+| `FIXED_TEAM:PENDING` | 待修复 | 问题已写入OMX，等待分配 |
+| `FIXED_TEAM:IN_PROGRESS` | 修复中 | 正在执行修复操作 |
+| `FIXED_TEAM:QA_VERIFY` | QA验证 | 修复完成，等待验证 |
+| `FIXED_TEAM:VERIFIED` | 已验证 | QA验证通过 |
+| `FIXED_TEAM:FAILED` | 验证失败 | QA验证未通过，需重修 |
+| `FIXED_TEAM:ESCALATED` | 已上报 | 问题复杂，上报刘哥 |
+
+**状态转换规则**:
+```
+PENDING → IN_PROGRESS (开始修复)
+IN_PROGRESS → QA_VERIFY (修复完成)
+QA_VERIFY → VERIFIED (验证通过)
+QA_VERIFY → FAILED (验证失败) → IN_PROGRESS (重新修复)
+FAILED → ESCALATED (重试2次后仍失败)
 ```
 
 ### 1.3 违规检查清单
@@ -1061,6 +1086,12 @@ trust_gate = {
 **Performance Benchmarker** (`testing_performance_benchmarker`) — Performance measurement
 **Tool Evaluator** (`testing_tool_evaluator`) — Technology assessment
 **Reality Checker** (`testing_reality_checker`) — Evidence-based certification
+
+> ⚠️ **sindri专用验证角色**: sindri流程使用 `sindri_reality_checker` 替代默认的Reality Checker
+> 
+> **sindri Reality Checker** (`sindri_reality_checker`) — 停止幻想审批，基于证据的认证
+> - 默认值为 `NEEDS WORK`，要求压倒性的证据才能达到生产就绪
+> - 适合 Round3 验证 специалист
 **Workflow Optimizer** (`testing_workflow_optimizer`) — Process improvement
 **Test Results Analyzer** (`testing_test_results_analyzer`) — Quality metrics
 **Accessibility Auditor** (`testing_accessibility_auditor`) — WCAG, screen reader testing
@@ -1090,6 +1121,7 @@ trust_gate = {
 | 协调管理 | Agents Orchestrator | `agents_orchestrator` |
 | 接口验证 | API Tester | `testing_api_tester` |
 | 质量审计 | Reality Checker | `testing_reality_checker` |
+| sindri验证 | **sindri Reality Checker** | `sindri_reality_checker` |
 | 测试分析 | Test Results Analyzer | `testing_test_results_analyzer` |
 | 研究分析 | Academic Psychologist | `academic_psychologist` |
 

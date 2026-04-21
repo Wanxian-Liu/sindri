@@ -18,15 +18,64 @@ from .task_classifier import TaskClassifier, TaskType
 from .role_hierarchical_matcher import classify_domain, RoleHierarchicalMatcher
 
 
-# 固定小组配置
+# 固定小组配置（sindri原生团队）
 FIXED_TEAM = [
-    {"id": "product_product_manager", "name": "Product Manager", "category": "product"},
-    {"id": "coordination_agents_orchestrator", "name": "Agents Orchestrator", "category": "coordination"},
-    {"id": "engineering_staff_engineer", "name": "Staff Engineer", "category": "engineering"},
-    {"id": "engineering_debugger", "name": "Debugger", "category": "engineering"},
-    {"id": "engineering_frontend_developer", "name": "Frontend Developer", "category": "engineering"},
-    {"id": "testing_api_tester", "name": "API Tester", "category": "testing"},
-    {"id": "testing_reality_checker", "name": "Reality Checker", "category": "testing"},
+    {
+        "id": "product_product_manager",
+        "name": "Product Manager",
+        "category": "product",
+        "description": "sindri Round1角色。接收用户需求/业务目标，输出结构化subtasks给Architect/Developer/QA。负责问题发现、需求定义、优先级排序，不负责技术实现和测试策略。",
+        "emoji": "🧭",
+        "vibe": "Ships the right thing, not just the next thing — outcome-obsessed, user-grounded, and diplomatically ruthless about focus."
+    },
+    {
+        "id": "coordination_agents_orchestrator",
+        "name": "Agents Orchestrator",
+        "category": "coordination",
+        "description": "Sindri Round2+ execution coordinator — orchestrates parallel engineering subagents with CircuitBreaker protection and ConsensusOfficer voting gates.",
+        "emoji": "🎛️",
+        "vibe": "The conductor who runs the entire dev pipeline from spec to ship — but only after the architects have planned."
+    },
+    {
+        "id": "engineering_staff_engineer",
+        "name": "Staff Engineer",
+        "category": "engineering",
+        "description": "Principal Technical Leader — drives technical direction, architecture decisions, and cross-team engineering excellence for sindri Round2 execution.",
+        "emoji": "⚙️",
+        "vibe": "Designs systems that survive contact with reality — and fixes them when they don't."
+    },
+    {
+        "id": "engineering_debugger",
+        "name": "Debugger",
+        "category": "engineering",
+        "description": "Bug Diagnosis & Resolution Specialist — executes Round 2.5 bug fix verification with root cause analysis and systemic solution identification.",
+        "emoji": "🔧",
+        "vibe": "Finds what others miss, fixes what others fear to touch."
+    },
+    {
+        "id": "engineering_frontend_developer",
+        "name": "Frontend Developer",
+        "category": "engineering",
+        "description": "Expert frontend developer specializing in modern web technologies, React/Vue/Angular frameworks, UI implementation, and performance optimization.",
+        "emoji": "🖥️",
+        "vibe": "Builds responsive, accessible web apps with pixel-perfect precision."
+    },
+    {
+        "id": "testing_api_tester",
+        "name": "API Tester",
+        "category": "testing",
+        "description": "Expert API testing specialist focused on comprehensive API validation, performance testing, and quality assurance across all systems and third-party integrations.",
+        "emoji": "🔌",
+        "vibe": "Breaks your API before your users do."
+    },
+    {
+        "id": "sindri_reality_checker",
+        "name": "sindri Reality Checker",
+        "category": "testing",
+        "description": "Stops fantasy approvals, evidence-based certification — Default to 'NEEDS WORK', requires overwhelming proof for production readiness. Round 3 verification specialist.",
+        "emoji": "🧐",
+        "vibe": "Defaults to 'NEEDS WORK' — requires overwhelming proof for production readiness."
+    },
 ]
 
 FIXED_TEAM_TRIGGERS = [

@@ -140,10 +140,10 @@ class TaskDecomposer:
         round1_tasks = self._create_round1_tasks(task, roles, slices)
         
         # Round2: 执行任务
-        round2_tasks = self._create_round2_tasks(slices)
+        round2_tasks = self._create_round2_tasks(slices, roles)
         
         # Round3: 审查任务
-        round3_tasks = self._create_round3_tasks(slices)
+        round3_tasks = self._create_round3_tasks(slices, roles)
         
         return {
             "round1": round1_tasks,
@@ -278,10 +278,10 @@ class TaskDecomposer:
         
         return tasks
     
-    def _create_round2_tasks(self, slices: List[Dict]) -> List[Task]:
+    def _create_round2_tasks(self, slices: List[Dict], roles: List[Dict]) -> List[Task]:
         """创建Round2任务（执行）"""
         tasks = []
-        developer_role = FIXED_TEAM[3]  # Senior Developer
+        developer_role = self._get_role_from_team(roles, 'developer', 3)  # Senior Developer
         
         # 如果有slices且数量合理（<=5），按slice创建任务
         # 数量>5说明SliceGenerator无法精确匹配，使用fallback避免污染
@@ -331,11 +331,11 @@ class TaskDecomposer:
         
         return tasks
     
-    def _create_round3_tasks(self, slices: List[Dict]) -> List[Task]:
+    def _create_round3_tasks(self, slices: List[Dict], roles: List[Dict]) -> List[Task]:
         """创建Round3任务（审查）"""
         tasks = []
-        tester_role = FIXED_TEAM[5]  # API Tester
-        checker_role = FIXED_TEAM[6]  # Reality Checker
+        tester_role = self._get_role_from_team(roles, 'tester', 5)  # API Tester
+        checker_role = self._get_role_from_team(roles, 'checker', 6)  # Reality Checker
         
         # 功能验证任务
         tasks.append(Task(
