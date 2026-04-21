@@ -188,6 +188,65 @@ sindri框架 v3.9 已解决所有P0和P1问题，框架整体运行正常。
 
 ---
 
+## 一、强制规则（⚠️ 必须遵守）
+
+> **2026-04-21新增** — 为解决"忘记/混乱"问题，审计结果必须写入OMX
+
+### 1.1 AUDIT_TEAM审计结果写入OMX
+
+**规则**: AUDIT_TEAM审计完成后，必须将问题清单写入OMX tasks
+
+```python
+# 审计完成后写入OMX
+from omx_tasks import create_task_default
+
+issues = [
+    {"id": "P0-1", "title": "问题描述", "priority": "high", "kind": "bug"},
+    ...
+]
+
+for issue in issues:
+    create_task_default(
+        title=f"[{issue['id']}] {issue['title']}",
+        kind=issue['kind'],
+        phase="audit_项目名",
+        priority=issue['priority'],
+        metadata={"issue_id": issue['id']}
+    )
+
+# 记录到ledger
+from omx_ledger import append_ledger_default
+append_ledger_default("task", "audit_completed", f"发现{len(issues)}个问题")
+```
+
+**禁止**:
+- ❌ 将审计结果写入workspace tmp文件
+- ❌ 将审计结果塞入上下文（context）
+- ❌ 仅在内存中保存
+
+**OMX任务查询**:
+```python
+from omx_tasks import list_tasks_default
+list_tasks_default(phase="audit_项目名")  # 查看未完成任务
+```
+
+### 1.2 修复必须按清单逐个完成
+
+**FIXED_TEAM修复流程**:
+```
+读取OMX问题清单 → 修复P0-1 → QA验证 → 修复P0-2 → QA验证 → ...
+```
+
+### 1.3 违规检查清单
+
+每次启动子代理前必须检查：
+- [ ] 这是审计任务还是修复任务？
+- [ ] AUDIT_TEAM只审计、不修复
+- [ ] 修复需要用FIXED_TEAM
+- [ ] 审计结果是否已写入OMX？
+
+---
+
 ## 二、架构说明
 
 ### 核心原则
