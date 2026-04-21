@@ -148,6 +148,51 @@ class CircuitBreaker:
 
         return False
 
+    def call(self, func: Callable, *args, **kwargs) -> Any:
+        """
+        使用熔断器执行函数的同步包装器
+        
+        测试兼容方法 - 封装can_execute/execute逻辑
+        """
+        if not self.can_execute():
+            raise CircuitOpenError(f"Circuit is {self.state.value}")
+        try:
+            result = func(*args, **kwargs)
+            self.record_success()
+            return result
+        except Exception as e:
+            self.record_failure()
+            raise
+
+    def __enter__(self):
+        """上下文管理器入口"""
+        return self
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """上下文管理器出口"""
+        if exc_type:
+            self.record_failure()
+        else:
+            self.record_success()
+        return False
+
+
+def with_circuit_breaker(role_type: str):
+    """
+    熔断器装饰器（测试兼容）
+    
+    用法：
+        @with_circuit_breaker("developer")
+        def my_func():
+            ...
+    """
+    def decorator(func: Callable) -> Callable:
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            cb = get_circuit_breaker(role_type)
+            return cb.call(func, *args, **kwargs)
+        return wrapper
+    return decorator
+
 
 class CircuitOpenError(Exception):
     """熔断器打开异常"""
