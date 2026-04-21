@@ -11,8 +11,8 @@ description: |
   
   v3.10更新（Technical Writer Round4审计文档更新）：
   - ⚠️ P0: 添加FIXED_TEAM状态映射 - 规范化修复流程状态定义
-  - ⚠️ P1: Reality Checker重命名为sindri_reality_checker - sindri专用验证角色
-  - P2: 更新执行示例 - 补充sindri_reality_checker使用场景
+  - ⚠️ P1: Reality Checker保持原名testing_reality_checker - sindri使用testing_reality_checker
+  - P2: 更新执行示例 - 补充testing_reality_checker使用场景
   
   v3.9更新（AUDIT_TEAM Round4审计发现）：
   - ⚠️ P0: 修复sindris.plan()方法缺失问题 - 需import并正确调用
@@ -1087,9 +1087,8 @@ trust_gate = {
 **Tool Evaluator** (`testing_tool_evaluator`) — Technology assessment
 **Reality Checker** (`testing_reality_checker`) — Evidence-based certification
 
-> ⚠️ **sindri专用验证角色**: sindri流程使用 `sindri_reality_checker` 替代默认的Reality Checker
-> 
-> **sindri Reality Checker** (`sindri_reality_checker`) — 停止幻想审批，基于证据的认证
+> ⚠️ **sindri专用验证角色**: sindri流程使用 `testing_reality_checker`
+> - 该角色为testingRealityChecker的重命名版本
 > - 默认值为 `NEEDS WORK`，要求压倒性的证据才能达到生产就绪
 > - 适合 Round3 验证 специалист
 **Workflow Optimizer** (`testing_workflow_optimizer`) — Process improvement
@@ -1121,7 +1120,7 @@ trust_gate = {
 | 协调管理 | Agents Orchestrator | `agents_orchestrator` |
 | 接口验证 | API Tester | `testing_api_tester` |
 | 质量审计 | Reality Checker | `testing_reality_checker` |
-| sindri验证 | **sindri Reality Checker** | `sindri_reality_checker` |
+| sindri验证 | **Reality Checker** | `testing_reality_checker` |
 | 测试分析 | Test Results Analyzer | `testing_test_results_analyzer` |
 | 研究分析 | Academic Psychologist | `academic_psychologist` |
 
