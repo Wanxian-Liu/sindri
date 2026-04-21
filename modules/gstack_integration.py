@@ -14,6 +14,15 @@ import os
 import re
 from pathlib import Path
 from typing import Dict, Any, Optional
+import html
+
+def _escape_prompt_value(value: str) -> str:
+    """P1-1 Fix: Prompt注入防护 - 转义特殊字符"""
+    if not value:
+        return value
+    # 转义 { } 防止prompt注入
+    escaped = value.replace("{", "{{}").replace("}", "{}}")
+    return escaped
 
 logger = logging.getLogger(__name__)
 
@@ -23,13 +32,13 @@ API_PROVIDER = "moonshot"  # 可选: deepseek, moonshot
 
 API_CONFIGS = {
     "deepseek": {
-        "api_key": "sk-c3df000c2ffe43f0a6202a0b4d715345",
+        "api_key": os.environ.get("DEEPSEEK_API_KEY", ""),
         "base_url": "https://api.deepseek.com/v1",
         "model": "deepseek-chat"
     },
     "moonshot": {
         # 刘哥的Moonshot API Key + Kimi K2.5
-        "api_key": "sk-ZCLxegsPZpBIxPSyNjEIyGrsriiOycEHa4cBdgxguHSybXPM",
+        "api_key": os.environ.get("MOONSHOT_API_KEY", ""),
         "base_url": "https://api.moonshot.cn/v1",
         "model": "kimi-k2.5"
     }
@@ -200,7 +209,7 @@ async def _ceo_judgment(task: str) -> Dict[str, Any]:
     if not prompt_template:
         prompt_template = _BUILTIN_PROMPTS["ceo_judge.md"]
     
-    prompt = prompt_template.format(task=task)
+    prompt = prompt_template.format(task=_escape_prompt_value(task))
     
     try:
         temp = 1.0 if USE_TEMPERATURE_1 else 0.3
@@ -232,7 +241,7 @@ async def _paranoid_review(code: str) -> Dict[str, Any]:
     if not prompt_template:
         prompt_template = _BUILTIN_PROMPTS["paranoid_review.md"]
     
-    prompt = prompt_template.format(code=code)
+    prompt = prompt_template.format(code=_escape_prompt_value(code))
     
     try:
         temp = 1.0 if USE_TEMPERATURE_1 else 0.1
@@ -252,7 +261,7 @@ async def _health_score(task: str) -> Dict[str, Any]:
     # Health Score需要实际测试数据，这里基于任务描述分析
     prompt = f"""分析以下任务，评估其健康分:
 
-任务: {task}
+任务: {_escape_prompt_value(task)}
 
 请分析:
 1. 功能完整性 (权重30%)
@@ -289,7 +298,7 @@ async def _retro(task: str) -> Dict[str, Any]:
     """复盘 - 真实LLM调用"""
     prompt = f"""对这个Sprint进行复盘:
 
-任务: {task}
+任务: {_escape_prompt_value(task)}
 
 请分析:
 1. 做得好的地方
