@@ -151,3 +151,4 @@
 {"timestamp": "2026-04-21T11:16:25.780979", "session_id": "sindris_2369b05c0c62", "event_type": "subtask_fail", "task_id": "task_fail_2", "error": "error2"}
 {"timestamp": "2026-04-21T11:16:25.781018", "session_id": "sindris_2369b05c0c62", "event_type": "subtask_fail", "task_id": "task_fail_3", "error": "error3"}
 {"timestamp": "2026-04-21T11:40:47.961667", "session_id": "sindris_9a6c1b0557bc", "event_type": "test_event", "notes": "Test with newline\nand quote\" and backslash\\"}
+{"timestamp": "2026-04-21T13:02:22.133310", "session_id": "sindris_f0e022e79165", "event_type": "plan_start", "task": "测试任务"}
