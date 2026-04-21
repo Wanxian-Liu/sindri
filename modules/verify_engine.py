@@ -590,8 +590,18 @@ class IntegrationVerifier:
         """清空所有断言"""
         self._assertions.clear()
 
+    # P1-2 Fix: 动态导入白名单
+    _ALLOWED_IMPORT_MODULES = frozenset([
+        "json", "re", "pathlib", "typing", "datetime", "uuid", "hashlib",
+        "logging", "collections", "functools", "itertools", "copy", "pprint"
+    ])
+    
     def _try_import(self, module_name: str) -> bool:
-        """尝试导入模块"""
+        """尝试导入模块（带白名单验证）"""
+        # P1-2 Fix: 白名单检查
+        if module_name not in self._ALLOWED_IMPORT_MODULES:
+            logger.warning(f"Module import blocked by whitelist: {module_name}")
+            return False
         try:
             __import__(module_name)
             return True

@@ -1,10 +1,13 @@
 """
-Sindri+GStackPro混合框架 - GStackPro集成层 v0.2
+Sindri+GStackPro混合框架 - GStackPro集成层 v0.3 (Security Hardened)
 
 改进：
 1. 接入DeepSeek API实现真实LLM调用
 2. Prompt模板加载
 3. P0/P1/P2问题解析
+4. P0-1: API密钥从环境变量读取（移除硬编码）
+5. P1-1: Prompt注入防护（转义+长度限制）
+6. P1-2: 动态模块导入白名单
 """
 
 import asyncio
@@ -12,23 +15,43 @@ import json
 import logging
 import os
 import re
+import sys
 from pathlib import Path
 from typing import Dict, Any, Optional
-import html
+
+# ============================================================
+# P1-2: 动态模块导入白名单
+# ============================================================
+_ALLOWED_IMPORT_MODULES = frozenset(["urllib.request", "urllib.error", "urllib.parse"])
+
+def _safe_import(module_name: str):
+    """白名单导入 - 防止动态导入攻击"""
+    if module_name not in _ALLOWED_IMPORT_MODULES:
+        raise ImportError(f"Module '{module_name}' not allowed. Whitelist: {list(_ALLOWED_IMPORT_MODULES)}")
+    return __import__(module_name)
 
 def _escape_prompt_value(value: str) -> str:
-    """P1-1 Fix: Prompt注入防护 - 转义特殊字符"""
+    """P1-1 Fix: Prompt注入防护 - 转义特殊字符 + 长度限制"""
     if not value:
         return value
-    # 转义 { } 防止prompt注入
+    # 1. 长度限制（防止长文本DoS）
+    max_len = 4000
+    if len(value) > max_len:
+        value = value[:max_len] + f"\n[...截断，原长度{len(value)}字符]"
+    # 2. 转义 { } 防止prompt注入
     escaped = value.replace("{", "{{}").replace("}", "{}}")
+    # 3. 移除危险控制字符（保留换行/回车）
+    escaped = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", escaped)
     return escaped
 
 logger = logging.getLogger(__name__)
 
-# API提供商配置
+# ============================================================
+# P0-1: API配置从环境变量读取
+# ============================================================
+# API提供商配置（从环境变量读取）
 # 支持: deepseek, moonshot
-API_PROVIDER = "moonshot"  # 可选: deepseek, moonshot
+API_PROVIDER = os.environ.get("SINDRI_API_PROVIDER", "moonshot")  # 可选: deepseek, moonshot
 
 API_CONFIGS = {
     "deepseek": {
@@ -37,7 +60,6 @@ API_CONFIGS = {
         "model": "deepseek-chat"
     },
     "moonshot": {
-        # 刘哥的Moonshot API Key + Kimi K2.5
         "api_key": os.environ.get("MOONSHOT_API_KEY", ""),
         "base_url": "https://api.moonshot.cn/v1",
         "model": "kimi-k2.5"
@@ -110,8 +132,9 @@ async def deepseek_call(
     Returns:
         API响应文本
     """
-    import urllib.request
-    import urllib.error
+    # P1-2: 使用白名单导入
+    urllib_request = _safe_import("urllib.request")
+    urllib_error = _safe_import("urllib.error")
     
     if model is None:
         model = DEFAULT_MODEL
@@ -129,7 +152,7 @@ async def deepseek_call(
     }
     
     data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(
+    req = urllib_request.Request(
         DEEPSEEK_API_URL,
         data=data,
         headers=headers,
@@ -137,10 +160,10 @@ async def deepseek_call(
     )
     
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with urllib_request.urlopen(req, timeout=timeout) as resp:
             response_data = json.loads(resp.read().decode("utf-8"))
             return response_data["choices"][0]["message"]["content"]
-    except urllib.error.HTTPError as e:
+    except urllib_error.HTTPError as e:
         error_body = e.read().decode("utf-8")
         logger.error(f"DeepSeek API error: {e.code} - {error_body}")
         raise Exception(f"DeepSeek API error: {e.code}")
@@ -258,10 +281,11 @@ async def _paranoid_review(code: str) -> Dict[str, Any]:
 
 async def _health_score(task: str) -> Dict[str, Any]:
     """Health Score计算 - 使用QA结果分析"""
-    # Health Score需要实际测试数据，这里基于任务描述分析
+    safe_task = _escape_prompt_value(task)
+    
     prompt = f"""分析以下任务，评估其健康分:
 
-任务: {_escape_prompt_value(task)}
+任务: {safe_task}
 
 请分析:
 1. 功能完整性 (权重30%)
@@ -296,9 +320,11 @@ async def _health_score(task: str) -> Dict[str, Any]:
 
 async def _retro(task: str) -> Dict[str, Any]:
     """复盘 - 真实LLM调用"""
+    safe_task = _escape_prompt_value(task)
+    
     prompt = f"""对这个Sprint进行复盘:
 
-任务: {_escape_prompt_value(task)}
+任务: {safe_task}
 
 请分析:
 1. 做得好的地方
