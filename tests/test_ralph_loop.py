@@ -26,7 +26,76 @@ from ralph_loop import (
 
 
 # ============================================================================
-# Fixtures
+# P0 Security Fix Test Helpers
+# 为了通过ralph_loop的check_fn白名单安全检查，测试使用模拟SindrisExecutor类
+# ============================================================================
+
+class MockSindrisExecutor:
+    """模拟SindrisExecutor（用于测试安全白名单）"""
+
+    # 每个测试实例独立的call计数器（用于test_run_fails_then_passes）
+    _state_counters = {}
+
+    def __init__(self):
+        # 为每个实例创建独立计数器
+        self._call_counter = 0
+
+    # 同步方法 - True
+    def _default_file_modified_check(self): return True
+    def _default_role_consistency_check(self): return True
+    def _default_audit_check(self): return True
+    def _default_omx_check(self): return True
+    def _default_impl_check(self): return True
+    def _default_test_check(self): return True
+    def _check_file_modified(self): return True
+    def _check_role_consistency(self): return True
+    def _check_audit(self): return True
+    def _check_omx(self): return True
+    def _check_impl(self): return True
+    def _check_test(self): return True
+    def _default_test_check_p1(self): return True   # p1用
+    def _default_test_check_p2(self): return True   # p2用
+    def _check_pass_item(self): return True         # pass项用
+
+    # 同步方法 - False
+    def _check_impl_false(self): return False
+    def _check_test_false(self): return False
+    def _check_audit_false(self): return False
+    def _check_fail_item(self): return False        # fail项用
+
+    # 同步方法 - 第N次调用返回True（第1次False，第2次+ True）
+    def _check_stateful(self):
+        self._call_counter += 1
+        return self._call_counter >= 2
+
+    # 同步方法 - 总是抛出异常
+    def _check_impl_error(self):
+        raise ValueError("test error")
+    def _check_impl_error_custom(self):
+        raise ValueError("err")
+    def _check_error_stateful(self):
+        raise ValueError("fail1")
+
+    # 异步方法 - True
+    async def _default_file_modified_check_async(self): return True
+    async def _default_impl_check_async(self): return True
+    async def _check_pass_async(self): return True
+
+    # 异步方法 - False
+    async def _default_impl_check_false_async(self): return False
+    async def _check_fail_async(self): return False
+
+    # 异步方法 - 抛出异常
+    async def _check_impl_error_async(self):
+        raise ValueError("test error")
+
+
+# 全局mock实例（用于bind）
+_mock_executor = MockSindrisExecutor()
+
+
+# ============================================================================
+# Fixtures（使用MockSindrisExecutor bound methods以通过安全白名单）
 # ============================================================================
 
 @pytest.fixture
@@ -36,17 +105,17 @@ def base_items():
         {
             "name": "文件存在",
             "description": "检查文件是否存在",
-            "check_fn": lambda: True,
+            "check_fn": _mock_executor._default_file_modified_check,
         },
         {
             "name": "代码可执行",
             "description": "检查代码能否执行",
-            "check_fn": lambda: True,
+            "check_fn": _mock_executor._default_impl_check,
         },
         {
             "name": "输出正确",
             "description": "检查输出是否符合预期",
-            "check_fn": lambda: False,
+            "check_fn": _mock_executor._check_impl_false,
         },
     ]
 
@@ -58,12 +127,12 @@ def async_items():
         {
             "name": "异步检查",
             "description": "异步验证函数",
-            "check_fn": AsyncMock(return_value=True),
+            "check_fn": _mock_executor._default_file_modified_check_async,
         },
         {
             "name": "异步失败",
             "description": "异步验证失败",
-            "check_fn": AsyncMock(return_value=False),
+            "check_fn": _mock_executor._default_impl_check_false_async,
         },
     ]
 
@@ -75,7 +144,7 @@ def items_with_exceptions():
         {
             "name": "异常项",
             "description": "会抛出异常",
-            "check_fn": lambda: (_ for _ in ()).throw(ValueError("test error")),
+            "check_fn": _mock_executor._check_impl_error,
         },
     ]
 
@@ -136,7 +205,7 @@ class TestVerifyItemParsing:
                 "id": "custom_id",
                 "name": "test_name",
                 "description": "test_desc",
-                "check_fn": lambda: True,
+                "check_fn": _mock_executor._default_impl_check,
             }
         ]
         r = RalphLoop(task_name="测试")
@@ -188,12 +257,22 @@ class TestAddVerifyItem:
         assert r.verify_items[0].description == "描述"
 
     def test_add_item_with_check_fn(self):
-        """添加带验证函数的验证项"""
+        """添加带验证函数的验证项（使用合规的bound method）"""
         r = RalphLoop(task_name="测试")
-        check_fn = lambda: True
+        check_fn = _mock_executor._default_impl_check
 
         r.add_verify_item(name="带函数", check_fn=check_fn)
+        assert len(r.verify_items) == 1
         assert r.verify_items[0].check_fn is check_fn
+
+    def test_add_item_rejects_untrusted_lambda(self):
+        """add_verify_item应拒绝未授权的lambda（安全白名单保护）"""
+        r = RalphLoop(task_name="测试")
+        check_fn = lambda: True  # 未授权的lambda
+
+        r.add_verify_item(name="恶意函数", check_fn=check_fn)
+        # 安全检查应拒绝lambda，verify_items保持为空
+        assert len(r.verify_items) == 0
 
 
 # ============================================================================
@@ -223,8 +302,8 @@ class TestRun:
     async def test_run_single_round_all_pass(self):
         """单轮全部通过 - 需要3轮连续通过才能完成"""
         items = [
-            {"name": "p1", "check_fn": lambda: True},
-            {"name": "p2", "check_fn": lambda: True},
+            {"name": "p1", "check_fn": _mock_executor._default_test_check_p1},
+            {"name": "p2", "check_fn": _mock_executor._default_test_check_p2},
         ]
         r = RalphLoop(task_name="全通过", verify_items=items)
 
@@ -258,7 +337,7 @@ class TestRun:
     async def test_run_max_rounds_exceeded(self):
         """超过最大轮数"""
         items = [
-            {"name": "always_fail", "check_fn": lambda: False},
+            {"name": "always_fail", "check_fn": _mock_executor._check_impl_false},
         ]
         r = RalphLoop(task_name="永不通过", verify_items=items)
         # 覆盖MAX_ROUNDS进行测试
@@ -280,7 +359,7 @@ class TestRun:
         async def exec_fn(error_feedback):
             exec_called[0] = True
 
-        items = [{"name": "check", "check_fn": lambda: True}]
+        items = [{"name": "check", "check_fn": _mock_executor._default_impl_check}]
         r = RalphLoop(task_name="带执行", verify_items=items, execute_fn=exec_fn)
 
         result = await r.run()
@@ -294,7 +373,7 @@ class TestRun:
         async def exec_fn(error_feedback):
             raise RuntimeError("执行失败")
 
-        items = [{"name": "check", "check_fn": lambda: True}]
+        items = [{"name": "check", "check_fn": _mock_executor._default_impl_check}]
         r = RalphLoop(task_name="执行异常", verify_items=items, execute_fn=exec_fn)
 
         result = await r.run()
@@ -306,7 +385,7 @@ class TestRun:
     async def test_run_callback_called(self):
         """回调被调用"""
         callback = MagicMock()
-        items = [{"name": "check", "check_fn": lambda: True}]
+        items = [{"name": "check", "check_fn": _mock_executor._default_impl_check}]
         r = RalphLoop(
             task_name="回调测试",
             verify_items=items,
@@ -322,7 +401,7 @@ class TestRun:
         """错误反馈被收集 - 异常项的problems会被加入error_feedback"""
         # 使用抛出异常的check_fn才会加入problems
         items = [
-            {"name": "error1", "check_fn": lambda: (_ for _ in ()).throw(ValueError("fail1"))},
+            {"name": "error1", "check_fn": _mock_executor._check_error_stateful},
         ]
         r = RalphLoop(task_name="错误反馈", verify_items=items)
         RalphLoop.MAX_ROUNDS = 2
@@ -348,7 +427,7 @@ class TestRunRound:
     @pytest.mark.anyio
     async def test_round_resets_sandbox(self):
         """轮次重置沙盒"""
-        items = [{"name": "check", "check_fn": lambda: True}]
+        items = [{"name": "check", "check_fn": _mock_executor._default_impl_check}]
         r = RalphLoop(task_name="沙盒测试", verify_items=items)
 
         with patch.object(r, '_reset_sandbox', new_callable=AsyncMock) as mock_reset:
@@ -359,7 +438,7 @@ class TestRunRound:
     @pytest.mark.anyio
     async def test_round_with_no_execute_fn(self):
         """无执行函数的轮次"""
-        items = [{"name": "check", "check_fn": lambda: True}]
+        items = [{"name": "check", "check_fn": _mock_executor._default_impl_check}]
         r = RalphLoop(task_name="无执行", verify_items=items)
 
         report = await r._run_round(1)
@@ -374,7 +453,7 @@ class TestRunRound:
         async def exec_fn(error_feedback):
             return "executed"
 
-        items = [{"name": "check", "check_fn": lambda: True}]
+        items = [{"name": "check", "check_fn": _mock_executor._default_impl_check}]
         r = RalphLoop(task_name="执行成功", verify_items=items, execute_fn=exec_fn)
 
         report = await r._run_round(1)
@@ -393,7 +472,7 @@ class TestRunRound:
         async def exec_fn(error_feedback):
             raise ValueError("failed")
 
-        items = [{"name": "check", "check_fn": lambda: True}]
+        items = [{"name": "check", "check_fn": _mock_executor._default_impl_check}]
         r = RalphLoop(task_name="执行失败", verify_items=items, execute_fn=exec_fn)
 
         report = await r._run_round(1)
@@ -409,8 +488,8 @@ class TestRunRound:
     async def test_round_verification(self):
         """轮次验证"""
         items = [
-            {"name": "pass", "check_fn": lambda: True},
-            {"name": "fail", "check_fn": lambda: False},
+            {"name": "pass", "check_fn": _mock_executor._check_pass_item},
+            {"name": "fail", "check_fn": _mock_executor._check_fail_item},
         ]
         r = RalphLoop(task_name="验证测试", verify_items=items)
 
@@ -424,8 +503,8 @@ class TestRunRound:
     async def test_round_all_pass_conclusion(self):
         """全部通过时结论为通过"""
         items = [
-            {"name": "p1", "check_fn": lambda: True},
-            {"name": "p2", "check_fn": lambda: True},
+            {"name": "p1", "check_fn": _mock_executor._default_test_check_p1},
+            {"name": "p2", "check_fn": _mock_executor._default_test_check_p2},
         ]
         r = RalphLoop(task_name="全通过", verify_items=items)
 
@@ -446,7 +525,7 @@ class TestVerifyItems:
     @pytest.mark.anyio
     async def test_verify_items_sync_pass(self):
         """同步验证函数通过"""
-        items = [{"name": "sync_pass", "check_fn": lambda: True}]
+        items = [{"name": "sync_pass", "check_fn": _mock_executor._default_impl_check}]
         r = RalphLoop(task_name="同步通过", verify_items=items)
         report = RoundReport(round_num=1, state=RoundState.VERIFYING, start_time="")
 
@@ -459,7 +538,7 @@ class TestVerifyItems:
     @pytest.mark.anyio
     async def test_verify_items_sync_fail(self):
         """同步验证函数失败"""
-        items = [{"name": "sync_fail", "check_fn": lambda: False}]
+        items = [{"name": "sync_fail", "check_fn": _mock_executor._check_impl_false}]
         r = RalphLoop(task_name="同步失败", verify_items=items)
         report = RoundReport(round_num=1, state=RoundState.VERIFYING, start_time="")
 
@@ -472,7 +551,7 @@ class TestVerifyItems:
     @pytest.mark.anyio
     async def test_verify_items_async_pass(self):
         """异步验证函数通过"""
-        items = [{"name": "async_pass", "check_fn": AsyncMock(return_value=True)}]
+        items = [{"name": "async_pass", "check_fn": _mock_executor._default_file_modified_check_async}]
         r = RalphLoop(task_name="异步通过", verify_items=items)
         report = RoundReport(round_num=1, state=RoundState.VERIFYING, start_time="")
 
@@ -484,7 +563,7 @@ class TestVerifyItems:
     @pytest.mark.anyio
     async def test_verify_items_async_fail(self):
         """异步验证函数失败"""
-        items = [{"name": "async_fail", "check_fn": AsyncMock(return_value=False)}]
+        items = [{"name": "async_fail", "check_fn": _mock_executor._default_impl_check_false_async}]
         r = RalphLoop(task_name="异步失败", verify_items=items)
         report = RoundReport(round_num=1, state=RoundState.VERIFYING, start_time="")
 
@@ -509,7 +588,7 @@ class TestVerifyItems:
     @pytest.mark.anyio
     async def test_verify_items_exception(self):
         """验证函数抛出异常"""
-        items = [{"name": "exception", "check_fn": lambda: (_ for _ in ()).throw(ValueError("err"))}]
+        items = [{"name": "exception", "check_fn": _mock_executor._check_impl_error}]
         r = RalphLoop(task_name="异常", verify_items=items)
         report = RoundReport(round_num=1, state=RoundState.VERIFYING, start_time="")
 
@@ -532,7 +611,7 @@ class TestRunCheck:
     async def test_run_check_sync(self):
         """运行同步检查"""
         r = RalphLoop(task_name="同步检查")
-        item = VerificationItem(id="1", name="sync", description="", check_fn=lambda: True)
+        item = VerificationItem(id="1", name="sync", description="", check_fn=_mock_executor._default_impl_check)
 
         result = await r._run_check(item)
 
@@ -542,7 +621,7 @@ class TestRunCheck:
     async def test_run_check_async(self):
         """运行异步检查"""
         r = RalphLoop(task_name="异步检查")
-        async_fn = AsyncMock(return_value=False)
+        async_fn = _mock_executor._default_impl_check_false_async
         item = VerificationItem(id="2", name="async", description="", check_fn=async_fn)
 
         result = await r._run_check(item)
@@ -688,7 +767,7 @@ class TestVerifySkill:
     @pytest.mark.anyio
     async def test_verify_skill_basic(self):
         """基本验证"""
-        items = [{"name": "check", "check_fn": lambda: True}]
+        items = [{"name": "check", "check_fn": _mock_executor._default_impl_check}]
         result = await verify_skill("test_skill", items)
 
         assert isinstance(result, RalphResult)
@@ -700,7 +779,7 @@ class TestVerifySkill:
         async def exec_fn(error_feedback):
             return "done"
 
-        items = [{"name": "check", "check_fn": lambda: True}]
+        items = [{"name": "check", "check_fn": _mock_executor._default_impl_check}]
         result = await verify_skill("exec_skill", items, execute_fn=exec_fn)
 
         assert isinstance(result, RalphResult)
@@ -722,7 +801,7 @@ class TestErrorFeedback:
             received_feedback.extend(error_feedback)
 
         # 第一轮失败，收集反馈
-        items = [{"name": "fail", "check_fn": lambda: False}]
+        items = [{"name": "fail", "check_fn": _mock_executor._check_fail_item}]
         r = RalphLoop(task_name="反馈测试", verify_items=items, execute_fn=exec_fn)
         RalphLoop.MAX_ROUNDS = 2
 

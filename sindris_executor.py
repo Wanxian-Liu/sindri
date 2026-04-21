@@ -187,9 +187,68 @@ class SindrisExecutor:
             "metadata": plan.metadata,
         }
 
+    # ========== sindri制度检查 ==========
+
+    def _identify_task_type(self, task: str) -> str:
+        """
+        识别任务类型：audit/fix/role_improvement/other
+        
+        检测优先级: role_improvement > audit > fix > other
+        注意：role_improvement优先级最高，避免"完善"被误判为fix
+        """
+        task_lower = task.lower()
+        
+        # 角色改进类关键词（最高优先级）
+        role_keywords = ["改进角色", "优化角色", "完善角色", "完善团队", "改进团队", "改进fixed", "角色进化", "role evolution", "角色改进", "完善修复"]
+        if any(kw in task_lower for kw in role_keywords):
+            return "role_improvement"
+        
+        # 审计类关键词
+        audit_keywords = ["审计", "audit", "审查", "检查问题", "检查", "audit team"]
+        if any(kw in task_lower for kw in audit_keywords):
+            return "audit"
+        
+        # 修复类关键词
+        fix_keywords = ["修复", "fix", "修补", "解决", "bug", "缺陷", "fixed team"]
+        if any(kw in task_lower for kw in fix_keywords):
+            return "fix"
+        
+        return "other"
+
+    def _validate_team_selection(self, task_type: str, team: str) -> bool:
+        """
+        验证团队选择是否正确
+        
+        Args:
+            task_type: 识别的任务类型
+            team: 实际使用的团队
+            
+        Returns:
+            True if valid
+            
+        Raises:
+            ValueError: 团队选择不正确
+        """
+        valid_teams = {
+            "audit": "AUDIT_TEAM",
+            "fix": "FIXED_TEAM",
+            "role_improvement": "ROLE_EVOLUTION_DISTRIBUTOR",
+        }
+        
+        expected = valid_teams.get(task_type)
+        if expected is None:
+            # other类型不限制团队
+            return True
+        
+        if team != expected:
+            raise ValueError(
+                f"【sindri制度检查失败】任务类型「{task_type}」应使用团队「{expected}」，当前使用「{team}」"
+            )
+        return True
+
     # ========== 核心接口 ==========
 
-    async def plan(self, task: str) -> Dict[str, Any]:
+    async def plan(self, task: str, team: str = None) -> Dict[str, Any]:
         """
         规划阶段:返回子任务列表
 
@@ -207,6 +266,20 @@ class SindrisExecutor:
         self._log_jsonl("plan_start", {"task": task[:100]})
 
         try:
+            # sindri制度检查：识别任务类型
+            task_type = self._identify_task_type(task)
+            
+            # 如果指定了team，进行制度检查
+            if team is not None:
+                self._validate_team_selection(task_type, team)
+                self._log_jsonl("team_check_pass", {
+                    "task_type": task_type,
+                    "team": team,
+                })
+            else:
+                # 记录未指定团队的情况（warning级别）
+                self.logger.warning(f"plan()未指定team参数，sindri制度检查跳过")
+            
             # 使用PlanEngine规划
             plan = self.plan_engine.plan(task)
 

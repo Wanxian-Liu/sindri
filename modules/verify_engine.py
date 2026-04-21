@@ -36,6 +36,10 @@ logger = logging.getLogger(__name__)
 # 数据结构
 # ============================================================
 
+class SecurityError(Exception):
+    """安全异常：路径遍历、非法访问等安全违规"""
+    pass
+
 class VerifyPhase(str, Enum):
     """验证阶段"""
     PRE = "pre"       # 执行前
@@ -144,16 +148,21 @@ class MtimeTracker:
                     "existed": False,
                 }
 
-    def check(self, paths: List[str]) -> List[MtimeCheckResult]:
+    def check(self, paths: List[str], pre_snapshot: Optional[Dict[str, Dict[str, Any]]] = None) -> List[MtimeCheckResult]:
         """
         检查文件变化
         
         Args:
             paths: 文件路径列表
+            pre_snapshot: 可选的预先快照，用于与当前文件系统状态对比。
+                         如果为None，则使用self._snapshots（兼容性行为）。
         
         Returns:
             MtimeCheckResult列表
         """
+        # 如果传入了pre_snapshot，用它；否则用self._snapshots（兼容性）
+        snapshots_to_compare = pre_snapshot if pre_snapshot is not None else self._snapshots
+        
         results = []
         for p in paths:
             full_path = self._resolve_path(p)
@@ -167,7 +176,7 @@ class MtimeTracker:
                 new_size=None,
             )
             
-            old = self._snapshots.get(str(full_path))
+            old = snapshots_to_compare.get(str(full_path))
             if old:
                 result.old_mtime = old.get("mtime")
                 result.old_size = old.get("size")
@@ -193,9 +202,14 @@ class MtimeTracker:
             results.append(result)
         return results
 
-    def check_and_report(self, paths: List[str]) -> Dict[str, Any]:
+    def check_and_report(self, paths: List[str], pre_snapshot: Optional[Dict[str, Dict[str, Any]]] = None) -> Dict[str, Any]:
         """
         检查并生成报告
+        
+        Args:
+            paths: 文件路径列表
+            pre_snapshot: 可选的预先快照，用于与当前文件系统状态对比。
+                         如果为None，则使用self._snapshots（兼容性行为）。
         
         Returns:
             {
@@ -206,7 +220,10 @@ class MtimeTracker:
                 "details": {path: MtimeCheckResult}
             }
         """
-        results = self.check(paths)
+        results = self.check(paths, pre_snapshot=pre_snapshot)
+        # 使用与check()相同的快照来源来确定哪些是"新文件"和"删除文件"
+        snapshots_to_compare = pre_snapshot if pre_snapshot is not None else self._snapshots
+        
         report = {
             "changed": [],
             "unchanged": [],
@@ -216,7 +233,7 @@ class MtimeTracker:
         }
         for r in results:
             report["details"][r.path] = r
-            if not self._snapshots.get(r.path):
+            if not snapshots_to_compare.get(r.path):
                 # 没有旧快照
                 if r.exists:
                     report["created"].append(r.path)
@@ -247,9 +264,77 @@ class MockInjector:
     在测试时替换文件内容，测试后可选恢复
     """
 
-    def __init__(self):
+    # 禁止写入的敏感路径模式（绝对路径前缀）
+    # 注意：不要把 /tmp/ 放进来 — workspace 可能在 /tmp/ 下，是合法的
+    SENSITIVE_PATTERNS: List[str] = [
+        "/etc/",       # 系统配置，影响所有用户
+        "/root/",      # root 家目录
+        "/usr/bin/",   # 系统二进制
+        "/usr/sbin/",  # 系统管理二进制
+        "/bin/",       # 核心二进制
+        "/sbin/",      # 核心管理二进制
+        "/boot/",      # 启动文件
+        "/sys/",       # 内核接口
+        "/proc/",      # 进程信息
+        "/dev/",       # 设备文件
+        "/var/",       # 系统可变数据（日志、pid文件等）
+    ]
+
+    def __init__(self, workspace_root: str):
+        self.workspace_root = Path(workspace_root).resolve()
         self._injections: List[MockInjection] = []
         self._active = False
+
+    def _validate_path(self, target_path: str) -> Path:
+        """
+        验证目标路径安全：
+        1. 禁止写入敏感系统路径
+        2. 解析后必须位于 workspace_root 内（防止 ../ 遍历）
+
+        Raises:
+            SecurityError: 路径违反安全策略
+        """
+        # 解析用户提供的路径（处理 ../ 等）
+        if Path(target_path).is_absolute():
+            resolved = Path(target_path).resolve()
+        else:
+            resolved = (self.workspace_root / target_path).resolve()
+
+        # 检查敏感路径
+        resolved_str = str(resolved)
+        for pattern in self.SENSITIVE_PATTERNS:
+            if resolved_str.startswith(pattern):
+                raise SecurityError(
+                    f"路径遍历攻击拦截: 禁止写入敏感路径 {pattern}, "
+                    f"请求路径: {target_path}, 解析路径: {resolved}"
+                )
+
+        # 检查家目录敏感子目录
+        home = Path.home()
+        home_str = str(home)
+        sensitive_subdirs = [
+            ".ssh",
+            ".gnupg",
+            ".aws",
+            ".config",  # 包含浏览器、密码等敏感配置
+        ]
+        for subdir in sensitive_subdirs:
+            if resolved_str.startswith(home_str + "/" + subdir):
+                raise SecurityError(
+                    f"路径遍历攻击拦截: 禁止写入家目录敏感路径 ~/{subdir}, "
+                    f"请求路径: {target_path}, 解析路径: {resolved}"
+                )
+
+        # 必须位于 workspace_root 内
+        try:
+            resolved.relative_to(self.workspace_root)
+        except ValueError:
+            raise SecurityError(
+                f"路径遍历攻击拦截: 解析路径 {resolved} 不在允许的 workspace_root {self.workspace_root} 内, "
+                f"请求路径: {target_path}"
+            )
+
+        return resolved
 
     def inject(self, target_path: str, mock_content: str,
                mode: str = "replace", restore_on_exit: bool = True) -> None:
@@ -262,21 +347,22 @@ class MockInjector:
             mode: replace/append/prepend
             restore_on_exit: 退出时恢复
         """
-        path = Path(target_path)
-        
+        # 安全验证优先（返回解析后的安全路径）
+        safe_path = self._validate_path(target_path)
+
         # 备份原始内容
         original_backup = None
-        if path.exists():
-            original_backup = path.read_text(encoding="utf-8")
-        
+        if safe_path.exists():
+            original_backup = safe_path.read_text(encoding="utf-8")
+
         injection = MockInjection(
-            target_path=str(path),
+            target_path=str(safe_path),  # 存储解析后的安全路径
             mock_content=mock_content,
             original_backup=original_backup,
             inject_mode=mode,
             restore_on_exit=restore_on_exit,
         )
-        
+
         # 执行注入
         self._do_inject(injection)
         self._injections.append(injection)
@@ -509,7 +595,7 @@ class VerifyEngine:
         
         # 初始化子组件
         self.mtime_tracker = MtimeTracker(str(self.workspace_root))
-        self.mock_injector = MockInjector()
+        self.mock_injector = MockInjector(str(self.workspace_root))
         self.integration_verifier = IntegrationVerifier(str(self.workspace_root))
         
         # 内部状态
@@ -610,7 +696,9 @@ class VerifyEngine:
 
         # Phase 1: Pre-flight
         self._current_phase = VerifyPhase.PRE
+        # 保存当前快照作为pre_snapshot（用于后续对比）
         pre_snapshot = dict(self.mtime_tracker._snapshots)
+        # 拍摄执行前的快照
         self.mtime_tracker.snapshot(files)
         
         pre_result = {"snapshot_taken": True, "files": files}
@@ -637,7 +725,8 @@ class VerifyEngine:
 
         # Phase 3: Post-flight
         self._current_phase = VerifyPhase.POST
-        mtime_report = self.mtime_tracker.check_and_report(files)
+        # 对比pre_snapshot与当前文件系统状态（而非对比执行后的快照）
+        mtime_report = self.mtime_tracker.check_and_report(files, pre_snapshot=pre_snapshot)
         report["phases"]["post"] = {
             "mtime_changes": mtime_report,
         }

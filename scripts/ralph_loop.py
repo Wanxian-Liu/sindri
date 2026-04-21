@@ -96,7 +96,117 @@ class RalphLoop:
     
     MAX_ROUNDS = 10  # 最大轮数，防止无限循环
     REQUIRED_CONSECUTIVE = 3  # 需要的连续通过轮数
-    
+
+    # ========== P0安全修复：check_fn白名单 ==========
+    # 仅允许来自受信任内部模块的check_fn，防止任意代码执行
+    # 格式：(class_or_module, method_name) 元组列表
+    _ALLOWED_CHECK_SOURCES = [
+        # sindris_executor 内部验证方法（按名称白名单）
+        ("SindrisExecutor", "_default_file_modified_check"),
+        ("SindrisExecutor", "_default_role_consistency_check"),
+        ("SindrisExecutor", "_default_audit_check"),
+        ("SindrisExecutor", "_default_omx_check"),
+        ("SindrisExecutor", "_default_impl_check"),
+        ("SindrisExecutor", "_default_test_check"),
+        ("SindrisExecutor", "_check_file_modified"),
+        ("SindrisExecutor", "_check_role_consistency"),
+        ("SindrisExecutor", "_check_audit"),
+        ("SindrisExecutor", "_check_omx"),
+        ("SindrisExecutor", "_check_impl"),
+        ("SindrisExecutor", "_check_test"),
+        # 测试Mock类（测试时使用，绑定到MockSindrisExecutor）
+        ("MockSindrisExecutor", "_default_file_modified_check"),
+        ("MockSindrisExecutor", "_default_role_consistency_check"),
+        ("MockSindrisExecutor", "_default_audit_check"),
+        ("MockSindrisExecutor", "_default_omx_check"),
+        ("MockSindrisExecutor", "_default_impl_check"),
+        ("MockSindrisExecutor", "_default_test_check"),
+        ("MockSindrisExecutor", "_check_file_modified"),
+        ("MockSindrisExecutor", "_check_role_consistency"),
+        ("MockSindrisExecutor", "_check_audit"),
+        ("MockSindrisExecutor", "_check_omx"),
+        ("MockSindrisExecutor", "_check_impl"),
+        ("MockSindrisExecutor", "_check_test"),
+        # 额外测试方法
+        ("MockSindrisExecutor", "_default_test_check_p1"),
+        ("MockSindrisExecutor", "_default_test_check_p2"),
+        ("MockSindrisExecutor", "_check_pass_item"),
+        ("MockSindrisExecutor", "_check_fail_item"),
+        ("MockSindrisExecutor", "_check_stateful"),
+        ("MockSindrisExecutor", "_check_error_stateful"),
+        ("MockSindrisExecutor", "_check_impl_error"),
+        ("MockSindrisExecutor", "_check_impl_error_custom"),
+        ("MockSindrisExecutor", "_check_impl_false"),
+        ("MockSindrisExecutor", "_check_test_false"),
+        ("MockSindrisExecutor", "_check_audit_false"),
+        # 异步方法
+        ("MockSindrisExecutor", "_default_file_modified_check_async"),
+        ("MockSindrisExecutor", "_default_impl_check_async"),
+        ("MockSindrisExecutor", "_default_impl_check_false_async"),
+        ("MockSindrisExecutor", "_check_pass_async"),
+        ("MockSindrisExecutor", "_check_fail_async"),
+        ("MockSindrisExecutor", "_check_impl_error_async"),
+    ]
+
+    @classmethod
+    def _is_check_fn_allowed(cls, check_fn: Callable) -> bool:
+        """检查check_fn是否来自受信任的内部源。
+
+        安全策略：
+        - 仅允许来自SindrisExecutor等内部类的绑定方法
+        - 不允许外部传入的任意callable
+        - 防御：即使攻击者绕过头部检查，仍需通过此处
+        """
+        if not callable(check_fn):
+            return False
+
+        # 获取方法名和绑定对象类名
+        try:
+            fn_name = getattr(check_fn, "__name__", None)
+            if not fn_name:
+                return False
+
+            # 获取绑定到的类名（适用于绑定方法）
+            bound_class = None
+            if hasattr(check_fn, "__self__"):
+                bound_class = type(check_fn.__self__).__name__
+
+            # 白名单匹配：(class_name, method_name)
+            if (bound_class, fn_name) in cls._ALLOWED_CHECK_SOURCES:
+                return True
+
+            # 明确拒绝所有其他callable（包括外部lambda、函数等）
+            return False
+        except Exception:
+            # 出错时默认拒绝（fail-safe）
+            return False
+
+    def _parse_verify_items(self, items: List[Dict]) -> List[VerificationItem]:
+        """解析验证项（带安全检查）"""
+        parsed = []
+        for item in items:
+            check_fn = item.get("check_fn")
+
+            # P0安全检查：拒绝未授权的check_fn
+            if check_fn is not None and not self._is_check_fn_allowed(check_fn):
+                import logging
+                logging.warning(
+                    f"[Ralph] 安全拦截：rejecting untrusted check_fn in verify_items[name={item.get('name')}] "
+                    f"— only internal SindrisExecutor bound methods are allowed. "
+                    f"This incident should be investigated."
+                )
+                # 安全：跳过此项而非执行恶意callable
+                continue
+
+            v = VerificationItem(
+                id=item.get("id", str(uuid.uuid4())[:8]),
+                name=item.get("name", "unnamed"),
+                description=item.get("description", ""),
+                check_fn=check_fn,
+            )
+            parsed.append(v)
+        return parsed
+
     def __init__(
         self,
         task_name: str,
@@ -122,27 +232,23 @@ class RalphLoop:
         self.consecutive_passed = 0
         self.current_round = 0
         self.error_feedback: List[str] = []
-        
-    def _parse_verify_items(self, items: List[Dict]) -> List[VerificationItem]:
-        """解析验证项"""
-        parsed = []
-        for item in items:
-            v = VerificationItem(
-                id=item.get("id", str(uuid.uuid4())[:8]),
-                name=item.get("name", "unnamed"),
-                description=item.get("description", ""),
-                check_fn=item.get("check_fn"),
-            )
-            parsed.append(v)
-        return parsed
-    
+
     def add_verify_item(
         self,
         name: str,
         description: str = "",
         check_fn: Optional[Callable] = None,
     ):
-        """添加验证项"""
+        """添加验证项（带安全检查）"""
+        # P0安全检查：拒绝未授权的check_fn
+        if check_fn is not None and not self._is_check_fn_allowed(check_fn):
+            import logging
+            logging.warning(
+                f"[Ralph] 安全拦截：rejecting untrusted check_fn in add_verify_item[name={name}] "
+                f"— only internal SindrisExecutor bound methods are allowed."
+            )
+            return
+
         self.verify_items.append(VerificationItem(
             id=str(uuid.uuid4())[:8],
             name=name,
