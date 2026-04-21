@@ -315,6 +315,92 @@ class OMXIntegrator:
 
         return task
 
+    # --------------------- Fallback: 降级规划 ---------------------
+
+    def on_fallback_start(
+        self,
+        task_description: str,
+        task_id: Optional[str] = None,
+        reason: str = "circuit_breaker_open",
+    ) -> str:
+        """
+        Fallback 降级规划开始
+
+        Args:
+            task_description: 任务描述
+            task_id: 可选的关联任务ID
+            reason: 触发fallback的原因
+
+        Returns:
+            session_id 用于追踪
+        """
+        session_id = self._session_id or str(uuid.uuid4())
+
+        # 记录phase
+        phase = RoundPhase(
+            round=0,
+            phase="fallback",
+            status="start",
+            task_description=task_description,
+            output={"reason": reason, "task_id": task_id},
+            started_at=_now(),
+        )
+        self._phases.append(phase)
+        self._save_phases()
+
+        # Ledger记录
+        self._ledger(
+            "session", "fallback_start",
+            f"Sindri's fallback started: {task_description[:80]}",
+            metadata={
+                "session_id": session_id,
+                "reason": reason,
+                "task_id": task_id,
+            }
+        )
+
+        return session_id
+
+    def on_fallback_complete(
+        self,
+        plan_summary: str,
+        task_id: Optional[str] = None,
+        reason: str = "circuit_breaker_open",
+        subtask_count: int = 1,
+    ) -> None:
+        """
+        Fallback 降级规划完成
+
+        Args:
+            plan_summary: 规划摘要
+            task_id: 可选的关联任务ID
+            reason: 触发fallback的原因
+            subtask_count: fallback生成的子任务数量
+        """
+        # 找到对应的fallback phase
+        for phase in reversed(self._phases):
+            if phase.phase == "fallback" and phase.status == "start":
+                phase.status = "complete"
+                phase.completed_at = _now()
+                phase.output = phase.output or {}
+                phase.output["plan_summary"] = plan_summary
+                phase.output["subtask_count"] = subtask_count
+                self._save_phases()
+                break
+
+        # Ledger记录
+        self._ledger(
+            "session", "fallback_complete",
+            f"Sindri's fallback completed: {plan_summary[:80]}",
+            task_id=task_id,
+            metadata={
+                "session_id": self._session_id,
+                "reason": reason,
+                "plan_summary": plan_summary[:200],
+                "subtask_count": subtask_count,
+            }
+        )
+
     # --------------------- Round2: 执行轮 ---------------------
 
     def on_round2_start(

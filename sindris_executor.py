@@ -33,15 +33,16 @@ import sys
 import os
 
 # P0-2 Fix: 使用绝对路径确保模块外导入也能正常工作
+# P2-7 Fix: 使用append而非insert(0)，避免破坏全局模块搜索顺序
 # 在外部目录运行时，__file__仍然指向sindris_executor.py的安装位置
 _SINDRI_DIR = os.path.dirname(os.path.abspath(__file__))
 _MODULES_DIR = os.path.join(_SINDRI_DIR, "modules")
 _SCRIPTS_DIR = os.path.join(_SINDRI_DIR, "scripts")
 
-# 使用set确保不重复，且放在最前
+# P2-7 Fix: 使用append添加到末尾，避免优先级冲突
 for _p in [_MODULES_DIR, _SCRIPTS_DIR, _SINDRI_DIR]:
     if _p not in sys.path:
-        sys.path.insert(0, _p)
+        sys.path.append(_p)
 
 # 供后续使用的常量（保持向后兼容）
 SCRIPT_DIR = _SINDRI_DIR
@@ -54,7 +55,7 @@ from modules.plan_engine import (
     Plan,
     Subtask,
     FastPathCache,
-    CircuitBreaker,
+    CircuitBreaker as PlanEngineCircuitBreaker,
     CircuitState,
     CircuitBreakerOpenError,
     create_plan_engine as _create_plan_engine,
@@ -104,6 +105,14 @@ class SindrisExecutor:
         # 初始化两大引擎
         self._init_engines()
 
+        # 初始化执行器级别的熔断器（独立于FusionPlanner的规划熔断器）
+        # P1-4 Fix: complete_subtask/fail_subtask联动的是"执行器熔断器"，不是"规划熔断器"
+        self._executor_circuit_breaker = PlanEngineCircuitBreaker(
+            failure_threshold=0.5,
+            window_seconds=60,
+            open_duration=30,
+        )
+
         # 内部状态
         self._subagent_states: Dict[str, str] = {}
         self._subagent_sessions: Dict[str, str] = {}
@@ -151,7 +160,12 @@ class SindrisExecutor:
         self.logger.addHandler(file_handler)
 
     def _log_jsonl(self, event_type: str, data: Dict[str, Any]):
-        """写入JSONL日志（直接写文件，避免Python logging格式冗余）"""
+        """
+        P2-6 Fix: 写入JSONL日志时进行注入防护
+        
+        使用json.dumps确保所有特殊字符被正确转义，防止JSONL注入。
+        json.dumps默认会转义newlines、quotes等特殊字符，确保每行是一个独立的JSON对象。
+        """
         log_entry = {
             "timestamp": datetime.now().isoformat(),
             "session_id": self.session_id,
@@ -159,8 +173,11 @@ class SindrisExecutor:
             **data
         }
         try:
+            json_line = json.dumps(log_entry, ensure_ascii=False)
+            # P2-6 Fix: 验证JSON行可解析（双重防护）
+            json.loads(json_line)  # 这会验证JSON格式正确
             with open(self.jsonl_file, "a", encoding="utf-8") as f:
-                f.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
+                f.write(json_line + "\n")
         except Exception as e:
             # JSONL写入失败不影响主流程，只记录警告
             self.logger.warning(f"JSONL write failed: {e}")
@@ -331,9 +348,12 @@ class SindrisExecutor:
                 "phase": "error",
             }
 
-    def execute_subtask(self, subtask: Dict[str, Any], session_key: str):
+    def mark_subtask_started(self, subtask: Dict[str, Any], session_key: str):
         """
-        标记子任务开始执行
+        P2-5 Fix: 重命名execute_subtask为mark_subtask_started
+        
+        原名execute_subtask名不副实 - 此方法只标记子任务开始执行，
+        不实际执行任何操作。真正的执行由sessions_spawn启动的子代理完成。
 
         Args:
             subtask: 子任务配置
@@ -350,12 +370,15 @@ class SindrisExecutor:
             "role": subtask.get("role"),
         })
 
+    # P2-5 Fix: 向后兼容别名
+    execute_subtask = mark_subtask_started
+
     def complete_subtask(self, task_id: str, result: Any = None):
         """标记子任务完成"""
         self._subagent_states[task_id] = SubagentState.COMPLETE
         
-        # 联动熔断器：记录执行结果
-        self.plan_engine.record_execution_result(task_id, success=True)
+        # P1-4 Fix: 联动执行器级别的熔断器（不是FusionPlanner的规划熔断器）
+        self._executor_circuit_breaker.record_success()
         
         self._log_jsonl("subtask_complete", {
             "task_id": task_id,
@@ -365,8 +388,8 @@ class SindrisExecutor:
         """标记子任务失败"""
         self._subagent_states[task_id] = SubagentState.FAILED
         
-        # 联动熔断器：记录执行结果
-        self.plan_engine.record_execution_result(task_id, success=False)
+        # P1-4 Fix: 联动执行器级别的熔断器（不是FusionPlanner的规划熔断器）
+        self._executor_circuit_breaker.record_failure()
         
         self._log_jsonl("subtask_fail", {
             "task_id": task_id,
@@ -643,11 +666,24 @@ class SindrisExecutor:
         """
         记录执行结果到熔断器
         
+        P1-4 Fix: 现在记录到执行器级别的熔断器，而不是FusionPlanner的规划熔断器
+        
         Args:
             task_id: 任务ID
             success: 是否成功
         """
-        self.plan_engine.record_execution_result(task_id, success)
+        if success:
+            self._executor_circuit_breaker.record_success()
+        else:
+            self._executor_circuit_breaker.record_failure()
+
+    def get_executor_circuit_state(self) -> CircuitState:
+        """获取执行器熔断器状态"""
+        return self._executor_circuit_breaker.state
+
+    def is_executor_circuit_open(self) -> bool:
+        """检查执行器熔断器是否打开"""
+        return self._executor_circuit_breaker.state == CircuitState.OPEN
 
 
 # 兼容性别名

@@ -112,7 +112,7 @@ class MtimeTracker:
     """
 
     def __init__(self, workspace_root: str):
-        self.workspace_root = Path(workspace_root)
+        self.workspace_root = Path(workspace_root).resolve()
         self._snapshots: Dict[str, Dict[str, Any]] = {}
 
     def snapshot(self, paths: List[str]) -> None:
@@ -247,10 +247,27 @@ class MtimeTracker:
         return report
 
     def _resolve_path(self, p: str) -> Path:
-        """解析路径"""
+        """
+        解析路径（带安全验证）
+        
+        Raises:
+            SecurityError: 路径违反安全策略（路径遍历攻击）
+        """
         if os.path.isabs(p):
-            return Path(p)
-        return self.workspace_root / p
+            resolved = Path(p).resolve()
+        else:
+            resolved = (self.workspace_root / p).resolve()
+
+        # 必须位于 workspace_root 内
+        try:
+            resolved.relative_to(self.workspace_root)
+        except ValueError:
+            raise SecurityError(
+                f"路径遍历攻击拦截: 解析路径 {resolved} 不在允许的 workspace_root {self.workspace_root} 内, "
+                f"请求路径: {p}"
+            )
+
+        return resolved
 
 
 # ============================================================
@@ -541,7 +558,10 @@ class IntegrationVerifier:
                         timeout=assertion.timeout
                     )
                 else:
-                    loop = asyncio.get_running_loop()
+                    try:
+                        loop = asyncio.get_running_loop()
+                    except RuntimeError:
+                        loop = asyncio.get_event_loop()
                     passed = await asyncio.wait_for(
                         loop.run_in_executor(None, assertion.check_fn),
                         timeout=assertion.timeout
@@ -672,15 +692,18 @@ class VerifyEngine:
         
         流程：
         1. Pre-phase: mtime快照 + 前置断言
-        2. Execute: 执行任务（含Mock注入）
-        3. Post-phase: mtime对比 + 后置断言
-        4. Ralph: 3轮验证
+        2. Post-phase: mtime对比 + 后置断言
+        3. Ralph: 3轮验证
+        
+        注意: execute_fn 参数已废弃。在 sindris 架构中，执行和验证是分离的。
+              任务由子代理通过 sessions_spawn 执行，验证由 full_verify 负责。
+              execute_fn 保留仅为兼容性，实际永远不会传递。
         
         Args:
             task_name: 任务名称
             files: 监控的文件列表
             verify_items: Ralph验证项
-            execute_fn: 执行函数
+            execute_fn: 已废弃参数，保留但不会被使用
             pre_assertions: 前置断言 [{"name": ..., "fn": ...}]
             post_assertions: 后置断言
         
@@ -694,11 +717,11 @@ class VerifyEngine:
             "overall_passed": False,
         }
 
-        # Phase 1: Pre-flight
+        # Phase 1: Pre-flight - 记录执行前的文件状态作为基准
         self._current_phase = VerifyPhase.PRE
-        # 保存当前快照作为pre_snapshot（用于后续对比）
+        # 保存当前快照作为pre_snapshot（用于后续与"执行后"状态对比）
         pre_snapshot = dict(self.mtime_tracker._snapshots)
-        # 拍摄执行前的快照
+        # 拍摄"执行前"的快照（更新self.mtime_tracker._snapshots）
         self.mtime_tracker.snapshot(files)
         
         pre_result = {"snapshot_taken": True, "files": files}
@@ -713,19 +736,22 @@ class VerifyEngine:
         
         report["phases"]["pre"] = pre_result
 
-        # Phase 2: Execute
-        if execute_fn:
-            try:
-                await execute_fn()
-                report["phases"]["execute"] = {"status": "done"}
-            except Exception as e:
-                report["phases"]["execute"] = {"status": "error", "error": str(e)}
-                report["overall_passed"] = False
-                return report
+        # Phase 2: Execute (已废弃)
+        # 
+        # P1-1 Fix: 移除 execute_fn 调用逻辑。
+        # 在 sindris 架构中，执行(execution)和验证(verification)是分离的：
+        #   - 执行: 由主Agent通过 sessions_spawn 启动子代理完成
+        #   - 验证: 由 full_verify / verify_with_ralph 事后检查结果
+        # 因此 execute_fn 永远不会传递进来，Phase 2 是死代码。
+        # 
+        # 如果未来需要 "执行+验证" 一体化流程（例如 Ralph 重试执行），
+        # 应该修改 sindris_executor.py 传递 execute_fn，而不是在这里添加代码。
+        report["phases"]["execute"] = {"status": "skipped", "reason": "执行与验证分离，执行由子代理完成"}
 
         # Phase 3: Post-flight
         self._current_phase = VerifyPhase.POST
-        # 对比pre_snapshot与当前文件系统状态（而非对比执行后的快照）
+        # 对比pre_snapshot（执行前状态）与当前文件系统状态（执行后状态）
+        # 注意：pre_snapshot在Phase 1中于snapshot()之前保存，因此记录的是"执行前"状态
         mtime_report = self.mtime_tracker.check_and_report(files, pre_snapshot=pre_snapshot)
         report["phases"]["post"] = {
             "mtime_changes": mtime_report,

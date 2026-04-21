@@ -39,10 +39,11 @@ def _get_omx_integrator(workspace_root: str):
         try:
             import os
             import sys
+            # P2-7 Fix: 使用append而非insert(0)，避免破坏全局模块搜索顺序
             # 确保父目录(sindris/)在sys.path，使 from scripts.omx_integrator 可用
             _sindris_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             if _sindris_root not in sys.path:
-                sys.path.insert(0, _sindris_root)
+                sys.path.append(_sindris_root)
             from scripts.omx_integrator import OMXIntegrator
             _OMXIntegrator = OMXIntegrator(workspace_root)
         except ImportError:
@@ -179,11 +180,18 @@ class FusionPlanner:
             with self._stats_lock:
                 self._stats["circuit_breaks"] += 1
             logger.warning("[FusionPlanner] Circuit breaker OPEN, using fallback")
-            self._omx_track("round1_start", task=task, task_id=None, role_matches=None)
-            self._omx_track("round1_complete", task=task, task_id=None, verified=False, plan_summary="Circuit breaker open")
+            # P2-3 Fix: 传递实际task_id而非None，使OMX事件可正确追踪
+            circuit_omx_task_id = self._omx_track("round1_start", task=task, task_id=task_id, role_matches=None)
+            self._omx_track("round1_complete", task=task, task_id=circuit_omx_task_id, verified=False, plan_summary="Circuit breaker open")
 
             if allow_fallback:
-                return self._fallback_plan(task_id, task)
+                # P2-1/P2-3 Fix: 在fallback路径中使用捕获的omx_task_id
+                self._omx_track("fallback_start", task=task, task_id=circuit_omx_task_id, reason="circuit_breaker_open")
+                fallback_plan = self._fallback_plan(task_id, task)
+                self._omx_track("fallback_complete", task=task, task_id=circuit_omx_task_id, verified=False,
+                                 plan_summary=f"Fallback plan: {len(fallback_plan.subtasks)} subtask(s)",
+                                 reason="circuit_breaker_open", subtask_count=len(fallback_plan.subtasks))
+                return fallback_plan
             else:
                 from .plan_engine import CircuitBreakerOpenError
                 raise CircuitBreakerOpenError("Circuit breaker is open")
@@ -195,7 +203,8 @@ class FusionPlanner:
             # _decompose_and_match内部会调用role_matcher.match，所以先触发OMX再调用
             _pre_role_matches = self.role_matcher.match(task)
             logger.info(f"[FusionPlanner] Pre-check: {len(_pre_role_matches)} roles matched")
-            omx_task_id = self._omx_track("round1_start", task=task, task_id=None, role_matches=_pre_role_matches)
+            # P2-1 Fix: 传递实际task_id而非None，使OMX事件可正确追踪
+            omx_task_id = self._omx_track("round1_start", task=task, task_id=task_id, role_matches=_pre_role_matches)
 
             result = self._decompose_and_match(task, precomputed_role_matches=_pre_role_matches)
             subtasks, tasks, role_matches = result
@@ -225,18 +234,27 @@ class FusionPlanner:
         except Exception as e:
             self.circuit_breaker.record_failure()
 
-            with self._stats_lock:
-                self._stats["planning_errors"] += 1
-
             logger.error(f"[FusionPlanner] Planning failed: {e}")
-            self._omx_track("round1_start", task=task, task_id=None, role_matches=None)
-            self._omx_track("round1_complete", task=task, task_id=None, verified=False, plan_summary=f"Planning error: {e}")
+            # P2-3 Fix: 传递实际task_id而非None，使OMX事件可正确追踪
+            error_omx_task_id = self._omx_track("round1_start", task=task, task_id=task_id, role_matches=None)
+            self._omx_track("round1_complete", task=task, task_id=error_omx_task_id, verified=False, plan_summary=f"Planning error: {e}")
 
             if allow_fallback:
                 with self._stats_lock:
+                    # P2-4 Fix: fallback_uses只在fallback路径计数，不与planning_errors重叠
                     self._stats["fallback_uses"] += 1
-                return self._fallback_plan(task_id, task)
+                # P2-3 Fix: 在fallback路径中使用捕获的omx_task_id
+                error_reason = f"planning_error: {e}"
+                self._omx_track("fallback_start", task=task, task_id=error_omx_task_id, reason=error_reason)
+                fallback_plan = self._fallback_plan(task_id, task)
+                self._omx_track("fallback_complete", task=task, task_id=error_omx_task_id, verified=False,
+                                 plan_summary=f"Fallback plan: {len(fallback_plan.subtasks)} subtask(s)",
+                                 reason=error_reason, subtask_count=len(fallback_plan.subtasks))
+                return fallback_plan
             else:
+                with self._stats_lock:
+                    # P2-4 Fix: 只有在不允许fallback时才算真正的planning_errors
+                    self._stats["planning_errors"] += 1
                 raise
 
     def _decompose_and_match(self, task: str,
@@ -304,8 +322,9 @@ class FusionPlanner:
             role_name = role_from_meta.get("name", task.metadata.get("role", {}).get("name", "Developer"))
             role_id = role_from_meta.get("id", "")
 
-            # 优先级+阶段映射：按phase分配合理timeout
-            # round1=规划(300s), round2=执行(600s), round3=验证(180s)
+            # 优先级+阶段映射：按phase(round)分配合理timeout
+            # round1=规划(300s), round2=执行(600s), round3=审查(180s)
+            # 注意：phase实际存储的是round标识符(round1/round2/round3)，不是语义化的阶段名
             phase_timeout_map = {
                 "round1": 300,
                 "round2": 600,
@@ -359,7 +378,7 @@ class FusionPlanner:
             ],
             tasks=[],
             matched_roles=[],
-            role_matches=[],
+            role_matches=List[RoleMatch]([]),
             cache_hit=False,
             circuit_broken=True,
         )
@@ -377,7 +396,7 @@ class FusionPlanner:
             subtasks=[self._dict_to_subtask(s) for s in cached.get("subtasks", [])],
             tasks=[self._dict_to_task(t) for t in cached.get("tasks", [])],
             matched_roles=cached.get("matched_roles", []),
-            role_matches=[],  # 缓存不保留RoleMatch对象
+            role_matches=List[RoleMatch]([]),  # 缓存不保留RoleMatch对象
             cache_hit=True,
         )
 
@@ -492,6 +511,19 @@ class FusionPlanner:
                     plan_summary=plan_summary,
                     task_id=task_id,
                     verified=verified,
+                )
+            elif event == "fallback_start":
+                return self._omx_integrator.on_fallback_start(
+                    task_description=task,
+                    task_id=task_id,
+                    reason=kwargs.get("reason", "unknown"),
+                )
+            elif event == "fallback_complete":
+                return self._omx_integrator.on_fallback_complete(
+                    plan_summary=plan_summary,
+                    task_id=task_id,
+                    reason=kwargs.get("reason", "unknown"),
+                    subtask_count=kwargs.get("subtask_count", 1),
                 )
         except Exception as e:
             logger.warning(f"[FusionPlanner] OMX track failed for {event}: {e}")
