@@ -884,294 +884,102 @@ trust_gate = {
 
 ## 九、角色库集成
 
-### 5.1 角色库完整详情
+> 共37个有MD文档的核心角色（完整列表在 roles/ 目录）
+> 来源：~/.openclaw/skills/sindris/roles/
 
-> 来源：~/.openclaw/skills/sindris/scripts/roles_registry.json
-> 共178个角色，按category分类
+### 常用角色
 
-#### ACADEMIC
+| 角色 | ID | 说明 |
+|------|-----|------|
+| Software Architect | engineering_software_architect | 系统设计、DDD |
+| Senior Developer | engineering_senior_developer | Laravel/FluxUI, Three.js |
+| Code Reviewer | engineering_code_reviewer | 代码审查 |
+| Frontend Developer | engineering_frontend_developer | React/Vue/Angular |
+| DevOps Automator | engineering_devops_automator | CI/CD、基础设施自动化 |
+| SRE | engineering_sre | SLO、错误预算、可观测性 |
+| Technical Writer | engineering_technical_writer | 开发文档 |
+| Staff Engineer | engineering_staff_engineer | 技术战略 |
+| Release Engineer | engineering_release_engineer | 发布管理 |
+| Incident Response Commander | engineering_incident_response_commander | 事故管理 |
+| Security Engineer | engineering_security_engineer | 威胁建模、漏洞评估 |
+| AI Engineer | engineering_ai_engineer | ML模型开发、部署 |
+| AI/ML Engineer | engineering_ai_ml_engineer | 机器学习系统 |
+| QA Lead | testing_qa_lead | 测试策略、质量把控 |
+| QA Engineer | testing_qa_engineer | 测试用例、自动化 |
+| API Tester | testing_api_tester | API验证 |
+| Performance Benchmarker | testing_performance_benchmarker | 性能测量 |
+| Performance Engineer | testing_performance_engineer | 性能优化 |
+| Reality Checker | testing_reality_checker | 证据基验证（sindri Round3默认） |
+| QA Reporter | testing_qa_reporter | 测试报告 |
+| QA Automator | testing_autoplan | 测试规划 |
+| SRE | testing_sre | 测试SRE |
+| Product Manager | product_manager | 产品生命周期 |
+| Experiment Tracker | project_management_experiment_tracker | A/B测试管理 |
+| Agents Orchestrator | agents_orchestrator | 管道协调 |
+| GStack Auto Plan | gstack_autoplan | GStack自动规划 |
+| GStack CSO | gstack_cso | GStack首席战略官 |
+| GStack Debugger | gstack_debugger | GStack调试 |
+| GStack Second Opinion | gstack_second_opinion | GStack第二意见 |
+| Strategy CEO/Founder | strategy_ceo_founder | 战略CEO/Founder |
+| Strategy CSO | strategy_cso | 首席战略官 |
+| Strategy Second Opinion | strategy_second_opinion | 第二意见 |
+| Strategy Technical Writer | strategy_technical_writer | 技术写作 |
+| Strategy YC Office Hours | strategy_yc_office_hours | YC Office Hours |
+| Sindri QA Lead | sindri_qa_lead | sindri QA Lead |
+| Sindri Canary Monitor | sindri_canary_monitor | 金丝雀监控 |
 
-**Psychologist** (`academic_psychologist`) — Expert in human behavior, personality theory, motivation, and cognitive patterns
-**Historian** (`academic_historian`) — Expert in historical analysis, periodization, material culture
-**Narratologist** (`academic_narratologist`) — Expert in narrative theory, story structure, character arcs
-**Geographer** (`academic_geographer`) — Expert in physical and human geography, climate systems
-**Anthropologist** (`academic_anthropologist`) — Expert in cultural systems, rituals, kinship, belief systems
+### 完整角色索引
 
-#### BLENDER
+**ENGINEERING（15个）**
+Agents Orchestrator (`agents_orchestrator`) — Pipeline manager, development orchestration
+AI Engineer (`engineering_ai_engineer`) — ML model development, deployment
+AI/ML Engineer (`engineering_ai_ml_engineer`) — ML systems
+Code Reviewer (`engineering_code_reviewer`) — Constructive feedback on correctness
+Debugger (`engineering_debugger`) — Debugging
+DevOps Automator (`engineering_devops_automator`) — Infrastructure automation, CI/CD
+Frontend Developer (`engineering_frontend_developer`) — React/Vue/Angular, UI implementation
+Incident Response Commander (`engineering_incident_response_commander`) — Production incident management
+Release Engineer (`engineering_release_engineer`) — Release流程、版本管理
+Security Engineer (`engineering_security_engineer`) — Threat modeling, vulnerability assessment
+Senior Developer (`engineering_senior_developer`) — Laravel/Livewire/FluxUI, Three.js
+Software Architect (`engineering_software_architect`) — System design, domain-driven design
+SRE (`engineering_sre`) — SLOs, error budgets, observability
+Staff Engineer (`engineering_staff_engineer`) — Technical leadership, cross-team alignment
+Technical Writer (`engineering_technical_writer`) — Developer documentation, API references
 
-**Blender Add-on Engineer** (`blender_addon_engineer`) — Builds Python add-ons, asset validators, exporters
+**PRODUCT（1个）**
+Product Manager (`product_manager`) — Full product lifecycle ownership
 
-#### COORDINATION
+**PROJECT-MANAGEMENT（1个）**
+Experiment Tracker (`project_management_experiment_tracker`) — A/B test management
 
-**Handoff Templates** (`handoff_templates`) — Coordination templates
-**Agent Activation Prompts** (`agent_activation_prompts`) — Agent coordination prompts
+**SINDRI（2个）**
+Canary Monitor (`sindri_canary_monitor`) — 金丝雀监控
+Sindri QA Lead (`sindri_qa_lead`) — sindri QA Lead
 
-#### DESIGN
+**STRATEGY（5个）**
+CEO/Founder (`strategy_ceo_founder`) — 战略CEO/Founder
+CSO (`strategy_cso`) — 首席战略官
+Second Opinion (`strategy_second_opinion`) — 战略第二意见
+Technical Writer (`strategy_technical_writer`) — 战略技术写作
+YC Office Hours (`strategy_yc_office_hours`) — YC Office Hours
 
-**UI Designer** (`design_ui_designer`) — Visual design systems, component libraries
-**Brand Guardian** (`design_brand_guardian`) — Brand identity development, consistency maintenance
-**Inclusive Visuals Specialist** (`design_inclusive_visuals_specialist`) — Defeats systemic AI biases
-**UX Architect** (`design_ux_architect`) — CSS systems, implementation guidance
-**Whimsy Injector** (`design_whimsy_injector`) — Adding personality, delight, playful elements
-**Visual Storyteller** (`design_visual_storyteller`) — Visual narratives, multimedia content
-**Image Prompt Engineer** (`design_image_prompt_engineer`) — AI image generation prompts
-**UX Researcher** (`design_ux_researcher`) — User behavior analysis, usability testing
+**TESTING（9个）**
+API Tester (`testing_api_tester`) — API validation, performance testing
+Automator (`testing_autoplan`) — 测试规划自动化
+Performance Benchmarker (`testing_performance_benchmarker`) — Performance measurement
+Performance Engineer (`testing_performance_engineer`) — 性能优化
+QA Engineer (`testing_qa_engineer`) — 测试用例、自动化
+QA Lead (`testing_qa_lead`) — 测试策略、质量把控
+QA Reporter (`testing_qa_reporter`) — 测试报告生成
+Reality Checker (`testing_reality_checker`) — Evidence-based certification（sindri Round3默认）
+SRE (`testing_sre`) — 测试SRE
 
-#### ENGINEERING
-
-**Mobile App Builder** (`engineering_mobile_app_builder`) — iOS/Android, cross-platform frameworks
-**Threat Detection Engineer** (`engineering_threat_detection_engineer`) — SIEM, MITRE ATT&CK, threat hunting
-**Software Architect** (`engineering_software_architect`) — System design, domain-driven design
-**Frontend Developer** (`engineering_frontend_developer`) — React/Vue/Angular, UI implementation
-**Data Engineer** (`engineering_data_engineer`) — Data pipelines, lakehouse, ETL/ELT
-**AI Engineer** (`engineering_ai_engineer`) — ML model development, deployment
-**Incident Response Commander** (`engineering_incident_response_commander`) — Production incident management
-**WeChat Mini Program Developer** (`engineering_wechat_mini_program_developer`) — WXML/WXSS/WXS, WeChat API
-**Code Reviewer** (`engineering_code_reviewer`) — Constructive feedback on correctness
-**Backend Architect** (`engineering_backend_architect`) — Scalable system design, database architecture
-**Security Engineer** (`engineering_security_engineer`) — Threat modeling, vulnerability assessment
-**Filament Optimization Specialist** (`engineering_filament_optimization_specialist`) — PHP admin interfaces
-**Technical Writer** (`engineering_technical_writer`) — Developer documentation, API references
-**Git Workflow Master** (`engineering_git_workflow_master`) — Git workflows, branching strategies
-**Email Intelligence Engineer** (`engineering_email_intelligence_engineer`) — Email data extraction
-**AI Data Remediation Engineer** (`engineering_ai_data_remediation_engineer`) — Self-healing data pipelines
-**Embedded Firmware Engineer** (`engineering_embedded_firmware_engineer`) — ESP32, ARM Cortex-M, FreeRTOS
-**Feishu Integration Developer** (`engineering_feishu_integration_developer`) — Feishu bots, Bitable, Webhooks
-**DevOps Automator** (`engineering_devops_automator`) — Infrastructure automation, CI/CD
-**CMS Developer** (`engineering_cms_developer`) — Drupal, WordPress, custom plugins
-**Autonomous Optimization Architect** (`engineering_autonomous_optimization_architect`) — API shadow-testing
-**Senior Developer** (`engineering_senior_developer`) — Laravel/Livewire/FluxUI, Three.js
-**Solidity Smart Contract Engineer** (`engineering_solidity_smart_contract_engineer`) — EVM, gas optimization
-**SRE** (`engineering_sre`) — SLOs, error budgets, observability
-**Database Optimizer** (`engineering_database_optimizer`) — PostgreSQL, MySQL, query optimization
-**Rapid Prototyper** (`engineering_rapid_prototyper`) — Proof-of-concept, MVP creation
-
-#### GAME-DEVELOPMENT
-
-**Game Designer** (`game_designer`) — GDD authorship, player psychology, economy balancing
-**Level Designer** (`level_designer`) — Layout theory, pacing, encounter design
-**Game Audio Engineer** (`game_audio_engineer`) — FMOD/Wwise, adaptive music systems
-**Technical Artist** (`technical_artist`) — Shaders, VFX, LOD pipelines
-**Narrative Designer** (`narrative_designer`) — Branching dialogue, lore architecture
-
-#### GODOT
-
-**Godot Shader Developer** (`godot_shader_developer`) — Godot Shading Language, VisualShader
-**Godot Gameplay Scripter** (`godot_gameplay_scripter`) — GDScript 2.0, node-based architecture
-**Godot Multiplayer Engineer** (`godot_multiplayer_engineer`) — MultiplayerAPI, ENet/WebRTC
-
-#### MARKETING
-
-**Content Creator** (`marketing_content_creator`) — Multi-platform campaigns, brand storytelling
-**Douyin Strategist** (`marketing_douyin_strategist`) — Douyin algorithm, viral video planning
-**AI Citation Strategist** (`marketing_ai_citation_strategist`) — AEO/GEO, AI recommendation optimization
-**LinkedIn Content Creator** (`marketing_linkedin_content_creator`) — Thought leadership, personal brand
-**Reddit Community Builder** (`marketing_reddit_community_builder`) — Reddit culture navigation
-**Livestream Commerce Coach** (`marketing_livestream_commerce_coach`) — Douyin, Kuaishou, Taobao Live
-**Growth Hacker** (`marketing_growth_hacker`) — Viral loops, conversion funnels
-**SEO Specialist** (`marketing_seo_specialist`) — Technical SEO, content optimization
-**Instagram Curator** (`marketing_instagram_curator`) — Visual storytelling, community building
-**Weibo Strategist** (`marketing_weibo_strategist`) — Trending topics, Super Topic
-**Baidu SEO Specialist** (`marketing_baidu_seo_specialist`) — Chinese search engine ranking
-**Xiaohongshu Specialist** (`marketing_xiaohongshu_specialist`) — Lifestyle content, trend strategies
-**Podcast Strategist** (`marketing_podcast_strategist`) — Xiaoyuzhou, Ximalaya
-**Bilibili Content Strategist** (`marketing_bilibili_content_strategist`) — UP主 growth, danmaku culture
-**WeChat Official Account Manager** (`marketing_wechat_official_account`) — Subscriber engagement
-**Kuaishou Strategist** (`marketing_kuaishou_strategist`) — Lower-tier city markets, grassroots growth
-**Twitter Engager** (`marketing_twitter_engager`) — Real-time engagement, thought leadership
-**Carousel Growth Engine** (`marketing_carousel_growth_engine`) — TikTok/Instagram carousel generation
-**Video Optimization Specialist** (`marketing_video_optimization_specialist`) — YouTube optimization
-**Private Domain Operator** (`marketing_private_domain_operator`) — WeCom private domain ecosystems
-**TikTok Strategist** (`marketing_tiktok_strategist`) — Viral content, algorithm optimization
-**China Market Localization Strategist** (`marketing_china_market_localization_strategist`) — Full-stack China localization
-**Cross-Border E-Commerce Specialist** (`marketing_cross_border_ecommerce`) — Amazon, Shopee, Lazada
-**Zhihu Strategist** (`marketing_zhihu_strategist`) — Question-answering strategy
-**Short-Video Editing Coach** (`marketing_short_video_editing_coach`) — CapCut Pro, Premiere Pro
-**App Store Optimizer** (`marketing_app_store_optimizer`) — ASO, conversion optimization
-**China E-Commerce Operator** (`marketing_china_ecommerce_operator`) — Taobao, Tmall, JD
-**Book Co-Author** (`marketing_book_co_author`) — Thought-leadership books
-**Social Media Strategist** (`marketing_social_media_strategist`) — LinkedIn, Twitter campaigns
-
-#### PAID-MEDIA
-
-**Ad Creative Strategist** (`paid_media_creative_strategist`) — Ad copywriting, RSA optimization
-**Paid Social Strategist** (`paid_media_paid_social_strategist`) — Meta, LinkedIn, TikTok
-**Search Query Analyst** (`paid_media_search_query_analyst`) — Negative keyword architecture
-**Paid Media Auditor** (`paid_media_auditor`) — Google Ads, Microsoft Ads audit
-**Programmatic & Display Buyer** (`paid_media_programmatic_buyer`) — DV360, trade desk
-**Tracking & Measurement Specialist** (`paid_media_tracking_specialist`) — GTM, GA4, attribution
-**PPC Campaign Strategist** (`paid_media_ppc_strategist`) — Large-scale search, shopping
-
-#### PLAYBOOKS
-
-**Phase 0-6** — Discovery, Strategy, Foundation, Build, Hardening, Launch, Operate
-
-#### PRODUCT
-
-**Behavioral Nudge Engine** (`product_behavioral_nudge_engine`) — User motivation maximization
-**Trend Researcher** (`product_trend_researcher`) — Emerging trends, competitive analysis
-**Product Manager** (`product_manager`) — Full product lifecycle ownership
-**Sprint Prioritizer** (`product_sprint_prioritizer`) — Agile sprint planning
-**Feedback Synthesizer** (`product_feedback_synthesizer`) — User feedback extraction
-
-#### PROJECT-MANAGEMENT
-
-**Studio Producer** (`project_management_studio_producer`) — Multi-project portfolio management
-**Studio Operations** (`project_management_studio_operations`) — Day-to-day efficiency
-**Project Shepherd** (`project_management_project_shepherd`) — Cross-functional coordination
-**Senior Project Manager** (`project_manager_senior`) — Specs to tasks conversion
-**Experiment Tracker** (`project_management_experiment_tracker`) — A/B test management
-**Jira Workflow Steward** (`project_management_jira_workflow_steward`) — Jira-linked Git workflows
-
-#### ROBLOX-STUDIO
-
-**Roblox Avatar Creator** (`roblox_avatar_creator`) — UGC item creation, accessory rigging
-**Roblox Experience Designer** (`roblox_experience_designer`) — Engagement loop, monetization
-**Roblox Systems Scripter** (`roblox_systems_scripter`) — Luau, RemoteEvents, DataStore
-
-#### RUNBOOKS
-
-**Scenario Incident Response** (`scenario_incident_response`) — Incident response playbooks
-**Scenario Enterprise Feature** (`scenario_enterprise_feature`) — Enterprise feature scenarios
-**Scenario Marketing Campaign** (`scenario_marketing_campaign`) — Marketing campaign scenarios
-**Scenario Startup Mvp** (`scenario_startup_mvp`) — Startup MVP scenarios
-
-#### SALES
-
-**Discovery Coach** (`sales_discovery_coach`) — Elite discovery methodology
-**Deal Strategist** (`sales_deal_strategist`) — MEDDPICC qualification, win planning
-**Sales Coach** (`sales_coach`) — Rep development, pipeline review
-**Account Strategist** (`sales_account_strategist`) — Land-and-expand execution
-**Pipeline Analyst** (`sales_pipeline_analyst`) — Pipeline health diagnostics
-**Sales Engineer** (`sales_engineer`) — Technical discovery, demo engineering
-**Proposal Strategist** (`sales_proposal_strategist`) — RFP transformation
-**Outbound Strategist** (`sales_outbound_strategist`) — Multi-channel prospecting
-
-#### SPATIAL-COMPUTING
-
-**Terminal Integration Specialist** (`terminal_integration_specialist`) — SwiftTerm integration
-**XR Cockpit Interaction Specialist** (`xr_cockpit_interaction_specialist`) — Cockpit-based XR controls
-**macOS Spatial/Metal Engineer** (`macos_spatial_metal_engineer`) — Swift, Metal, visionOS
-**XR Interface Architect** (`xr_interface_architect`) — AR/VR/XR interface design
-**XR Immersive Developer** (`xr_immersive_developer`) — WebXR development
-**visionOS Spatial Engineer** (`visionos_spatial_engineer`) — SwiftUI volumetric interfaces
-
-#### SPECIALIZED
-
-**Blockchain Security Auditor** (`blockchain_security_auditor`) — Smart contract auditing
-**Agentic Identity & Trust Architect** (`agentic_identity_trust`) — Identity for AI agents
-**Civil Engineer** (`specialized_civil_engineer`) — Eurocode, ACI, structural analysis
-**Recruitment Specialist** (`recruitment_specialist`) — Hiring platforms, talent assessment
-**Identity Graph Operator** (`identity_graph_operator`) — Shared identity graph
-**Sales Data Extraction Agent** (`sales_data_extraction_agent`) — Excel monitoring, sales metrics
-**Corporate Training Designer** (`corporate_training_designer`) — Training needs analysis
-**Salesforce Architect** (`specialized_salesforce_architect`) — Multi-cloud design
-**Accounts Payable Agent** (`accounts_payable_agent`) — Payment processing
-**LSP/Index Engineer** (`lsp_index_engineer`) — Language Server Protocol
-**Automation Governance Architect** (`automation_governance_architect`) — n8n automation audits
-**Agents Orchestrator** (`agents_orchestrator`) — Pipeline manager, development orchestration
-**Supply Chain Strategist** (`supply_chain_strategist`) — Supplier development
-**ZK Steward** (`zk_steward`) — Zettelkasten knowledge-base
-**Cultural Intelligence Strategist** (`specialized_cultural_intelligence_strategist`) — CQ for exclusion detection
-**Developer Advocate** (`specialized_developer_advocate`) — Community building, DX
-**Healthcare Marketing Compliance Specialist** (`healthcare_marketing_compliance`) — China healthcare compliance
-**Korean Business Navigator** (`specialized_korean_business_navigator`) — Korean business culture
-**Document Generator** (`specialized_document_generator`) — PDF, PPTX, DOCX generation
-**Report Distribution Agent** (`report_distribution_agent`) — Sales report distribution
-**Compliance Auditor** (`compliance_auditor`) — SOC 2, ISO 27001, HIPAA
-**Government Digital Presales Consultant** (`government_digital_presales_consultant`) — China ToG market
-**Workflow Architect** (`specialized_workflow_architect`) — Complete workflow trees
-**Model QA Specialist** (`specialized_model_qa`) — ML model auditing
-**MCP Builder** (`specialized_mcp_builder`) — Model Context Protocol servers
-**French Consulting Market Navigator** (`specialized_french_consulting_market`) — French ESN/SI ecosystem
-**Study Abroad Advisor** (`study_abroad_advisor`) — US, UK, Canada applications
-**Data Consolidation Agent** (`data_consolidation_agent`) — Live reporting dashboards
-
-#### STRATEGY
-
-**Nexus Strategy** (`nexus_strategy`) — Strategy coordination
-**Quickstart** (`QUICKSTART`) — Quick start guides
-**Executive Brief** (`EXECUTIVE_BRIEF`) — Executive briefing
-
-#### SUPPORT
-
-**Infrastructure Maintainer** (`support_infrastructure_maintainer`) — System reliability
-**Analytics Reporter** (`support_analytics_reporter`) — Dashboards, KPIs
-**Executive Summary Generator** (`support_executive_summary_generator`) — McKinsey SCQA frameworks
-**Legal Compliance Checker** (`support_legal_compliance_checker`) — Multi-jurisdiction compliance
-**Finance Tracker** (`support_finance_tracker`) — Financial planning, budget management
-**Support Responder** (`support_support_responder`) — Multi-channel support
-
-#### TESTING
-
-**Performance Benchmarker** (`testing_performance_benchmarker`) — Performance measurement
-**Tool Evaluator** (`testing_tool_evaluator`) — Technology assessment
-**Reality Checker** (`testing_reality_checker`) — Evidence-based certification
-
-> ⚠️ **sindri专用验证角色**: sindri流程使用 `testing_reality_checker`
-> - 该角色为testingRealityChecker的重命名版本
-> - 默认值为 `NEEDS WORK`，要求压倒性的证据才能达到生产就绪
-> - 适合 Round3 验证 специалист
-**Workflow Optimizer** (`testing_workflow_optimizer`) — Process improvement
-**Test Results Analyzer** (`testing_test_results_analyzer`) — Quality metrics
-**Accessibility Auditor** (`testing_accessibility_auditor`) — WCAG, screen reader testing
-**Evidence Collector** (`testing_evidence_collector`) — Screenshot-based QA
-**API Tester** (`testing_api_tester`) — API validation, performance testing
-
-#### UNITY
-
-**Unity Shader Graph Artist** (`unity_shader_graph_artist`) — Shader Graph, HLSL
-**Unity Multiplayer Engineer** (`unity_multiplayer_engineer`) — Netcode, Unity Gaming Services
-**Unity Editor Tool Developer** (`unity_editor_tool_developer`) — Custom EditorWindows
-**Unity Architect** (`unity_architect`) — ScriptableObjects, decoupled systems
-
-#### UNREAL-ENGINE
-
-**Unreal Multiplayer Architect** (`unreal_multiplayer_architect`) — Actor replication, GameMode
-**Unreal Systems Engineer** (`unreal_systems_engineer`) — Nanite, Lumen, GAS
-**Unreal World Builder** (`unreal_world_builder`) — World Partition, Landscape
-**Unreal Technical Artist** (`unreal_technical_artist`) — Material Editor, Niagara
-
-### 5.2 常用角色映射
-
-| 任务类型 | 推荐角色 | ID |
-|---------|---------|-----|
-| 架构设计 | Software Architect | `engineering_software_architect` |
-| 工作流设计 | Workflow Architect | `specialized_workflow_architect` |
-| 协调管理 | Agents Orchestrator | `agents_orchestrator` |
-| 接口验证 | API Tester | `testing_api_tester` |
-| 质量审计 | Reality Checker | `testing_reality_checker` |
-| sindri验证 | **Reality Checker** | `testing_reality_checker` |
-| 测试分析 | Test Results Analyzer | `testing_test_results_analyzer` |
-| 研究分析 | Academic Psychologist | `academic_psychologist` |
-
-### 5.3 角色+工具约束示例
-
-```python
-# 架构分析角色（只读工具）
-architect_config = RoleConfig(
-    name="engineering_software_architect",
-    subagent_type="Explore",
-    allowed_tools=["read", "glob", "grep", "exec"],
-    max_retries=1
-)
-
-# 开发执行角色（全工具）
-developer_config = RoleConfig(
-    name="engineering_senior_developer",
-    subagent_type="General",
-    allowed_tools=["read", "write", "edit", "exec", "glob"],
-    max_retries=2
-)
-
-# 验证角色（测试工具）
-verifier_config = RoleConfig(
-    name="testing_api_tester",
-    subagent_type="Verification",
-    allowed_tools=["read", "exec", "bash"],
-    max_retries=1
-)
-```
+**GSTACK（4个）**
+Auto Plan (`gstack_autoplan`) — GStack自动规划
+CSO (`gstack_cso`) — GStack首席战略官
+Debugger (`gstack_debugger`) — GStack调试
+Second Opinion (`gstack_second_opinion`) — GStack第二意见
 
 ---
 
