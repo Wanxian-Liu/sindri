@@ -132,6 +132,12 @@ async def deepseek_call(
     Returns:
         API响应文本
     """
+    # P1-8 Fix: API key检查
+    if not DEEPSEEK_API_KEY:
+        raise ValueError(
+            f"API key未配置。当前provider={API_PROVIDER}。"
+            f"请设置 DEEPSEEK_API_KEY 或 MOONSHOT_API_KEY 环境变量。"
+        )
     # P1-2: 使用白名单导入
     urllib_request = _safe_import("urllib.request")
     urllib_error = _safe_import("urllib.error")
