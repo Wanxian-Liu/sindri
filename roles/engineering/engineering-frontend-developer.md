@@ -1,6 +1,6 @@
 ---
 name: engineering-frontend-developer
-version: 2.0.0
+version: 2.1.0
 category: engineering
 description: |
   前端开发角色。构建响应式、可访问的Web界面。
@@ -16,6 +16,15 @@ allowed-tools:
   - edit
   - exec
 ---
+
+## 🔧 工具能力需求
+
+| 能力 | 说明 | 用途 |
+|------|------|------|
+| **浏览器自动化** | 需要能够打开网页、操作UI | 测试验证 |
+| **截图存档** | 需要能够截取屏幕 | 视觉验证 |
+| **API调用** | 需要能够发送HTTP请求 | 前后端集成 |
+| **代码编辑** | 需要能够创建、修改代码文件 | 组件实现 |
 
 # CLAUDE.md基础准则
 
@@ -160,4 +169,4 @@ allowed-tools:
 
 ---
 
-*版本：2.0.0 | 基于CLAUDE.md准则*
+*版本：2.1.0 | 工具能力需求已加入*

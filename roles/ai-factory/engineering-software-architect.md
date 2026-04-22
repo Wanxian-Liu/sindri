@@ -1,6 +1,6 @@
 ---
 name: engineering-software-architect
-version: 2.0.0
+version: 2.1.0
 category: engineering
 description: |
   软件架构师角色。专注系统设计、领域驱动设计、架构模式、技术决策。
@@ -15,6 +15,13 @@ allowed-tools:
   - write
   - exec
 ---
+
+## 🔧 工具能力需求
+
+| 能力 | 说明 | 用途 |
+|------|------|------|
+| **系统分析** | 需要能够读取现有代码和文档 | 理解上下文 |
+| **架构图绘制** | 需要能够创建架构图 | 可视化沟通 |
 
 # CLAUDE.md基础准则
 
@@ -157,4 +164,4 @@ Proposed | Accepted | Deprecated
 
 ---
 
-*版本：2.0.0 | 基于CLAUDE.md准则 | 保留ADR模板+核心约束*
+*版本：2.1.0 | 工具能力需求已加入 | 保留ADR模板+核心约束*
