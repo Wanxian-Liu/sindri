@@ -90,12 +90,12 @@ FIXED_TEAM_TRIGGERS = [
     "自动化", "流程", "设计", "开发",
 ]
 
-# 审计专业团队
+# 审计专业团队 v2.0（方案B：完整团队）
 AUDIT_TEAM = [
     {"id": "engineering_code_reviewer", "name": "Code Reviewer", "category": "engineering"},
     {"id": "engineering_security_engineer", "name": "Security Engineer", "category": "engineering"},
+    {"id": "engineering_software_architect", "name": "Software Architect", "category": "engineering"},
     {"id": "testing_qa_lead", "name": "QA Lead", "category": "testing"},
-    {"id": "engineering_technical_writer", "name": "Technical Writer", "category": "engineering"},
     {"id": "testing_reality_checker", "name": "Reality Checker", "category": "testing"},
 ]
 
