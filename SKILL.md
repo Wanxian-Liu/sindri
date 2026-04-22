@@ -373,18 +373,39 @@ result = await sindris.execute("任务描述")
 #   - _execution_mode: "manual_spawn"
 
 # Step 2: 执行subtasks（自动OMX记录）
+
+# 方式A: 串行执行（适合有依赖关系的subtask）
 for subtask in result['subtasks']:
     action_id = subtask['_action_id']
     
     spawn(
         task=f"你是{subtask['role']}。请完成：{subtask['title']}",
         runtime="subagent",
-        timeoutSeconds=subtask.get('timeout', 300)
+        timeoutSeconds=subtask.get('timeout', DEFAULT_SPAWN_TIMEOUT)
     )
     sessions_yield()  # ← 必须调用！等待子代理完成
     
     # 标记action完成（自动记录到OMX）
     sindris.mark_action_complete(action_id=action_id, verified=True)
+
+# 方式B: 并行执行（适合独立的subtask）
+# 1. 先并行启动所有subtask
+spawned = []
+for subtask in result['subtasks']:
+    action_id = subtask['_action_id']
+    spawned.append({
+        'action_id': action_id,
+        'spawn_result': spawn(
+            task=f"你是{subtask['role']}。请完成：{subtask['title']}",
+            runtime="subagent",
+            timeoutSeconds=subtask.get('timeout', DEFAULT_SPAWN_TIMEOUT)
+        )
+    })
+
+# 2. 统一sessions_yield等待所有完成
+for s in spawned:
+    sessions_yield()
+    sindris.mark_action_complete(action_id=s['action_id'], verified=True)
 
 # Step 3: 强制验证
 verify_items = [{"name": v, "description": v, "check_fn": sindris._default_impl_check}

@@ -1,7 +1,13 @@
 """
-sindris_executor.py - 织界统一协调系统执行引擎 (v4.1)
+sindris_executor.py - 织界统一协调系统执行引擎 (v4.2)
 
-版本:v4.1
+版本:v4.2
+
+全局常量:
+- DEFAULT_SPAWN_TIMEOUT: 默认subagent超时(秒)
+"""
+
+DEFAULT_SPAWN_TIMEOUT = 30  # 默认subagent超时30秒
 
 架构原则:
 - 执行框架 ≠ 文档系统
@@ -552,6 +558,33 @@ class SindrisExecutor:
                     "description": f"验证改进遵循{target_role}角色约束",
                     "check_fn": self._default_role_consistency_check,
                 })
+        elif task_type in ("role_improvement", "role_iteration"):
+            # 角色迭代任务验证项
+            items.append({
+                "name": "MD文件存在",
+                "description": "存在",
+                "check_fn": self._default_impl_check,
+            })
+            items.append({
+                "name": "frontmatter完整",
+                "description": "完整",
+                "check_fn": self._default_impl_check,
+            })
+            items.append({
+                "name": "CLAUDE.md准则",
+                "description": "包含",
+                "check_fn": self._default_impl_check,
+            })
+            items.append({
+                "name": "workflow步骤",
+                "description": "完整",
+                "check_fn": self._default_impl_check,
+            })
+            items.append({
+                "name": "验证标准",
+                "description": "可执行",
+                "check_fn": self._default_impl_check,
+            })
         elif task_type in ("audit", "review"):
             # Audit验证项
             items.append({
