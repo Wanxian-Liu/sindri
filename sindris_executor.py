@@ -51,14 +51,12 @@ SCRIPTS_DIR = _SCRIPTS_DIR
 
 # 导入新架构引擎 (from modules)
 from modules.plan_engine import (
-    PlanEngine,
     Plan,
     Subtask,
     FastPathCache,
     CircuitBreaker as PlanEngineCircuitBreaker,
     CircuitState,
     CircuitBreakerOpenError,
-    create_plan_engine as _create_plan_engine,
 )
 from modules.fusion_planner import (
     FusionPlanner,
@@ -280,6 +278,21 @@ class SindrisExecutor:
             "phase": "planned|audit|evolution",
         }
         """
+        # SafetyPolicy检查：拒绝危险任务
+        from scripts.safety_policy import can_execute
+        ok, safety_result = can_execute(task)
+        if not ok:
+            self._log_jsonl("plan_rejected", {
+                "task": task[:100],
+                "reason": safety_result.reason,
+                "danger_level": safety_result.danger_level.value,
+            })
+            return {
+                "success": False,
+                "error": f"危险任务被拦截: {safety_result.reason}",
+                "phase": "rejected",
+            }
+
         self._log_jsonl("plan_start", {"task": task[:100]})
 
         try:
@@ -372,6 +385,22 @@ class SindrisExecutor:
 
     # P2-5 Fix: 向后兼容别名
     execute_subtask = mark_subtask_started
+
+    def check_command(self, command: str) -> tuple[bool, str]:
+        """
+        检查命令是否安全（供子代理调用）
+        
+        用法:
+            ok, reason = executor.check_command("rm -rf /tmp")
+            if not ok:
+                raise PermissionError(f"危险命令被拦截: {reason}")
+        
+        Returns:
+            (can_execute: bool, reason: str)
+        """
+        from scripts.safety_policy import can_execute
+        ok, result = can_execute(command)
+        return ok, result.reason if not ok else ""
 
     def complete_subtask(self, task_id: str, result: Any = None):
         """标记子任务完成"""

@@ -37,14 +37,12 @@ from .role_hierarchical_matcher import (
 )
 from .task_decomposer import TaskDecomposer
 from .plan_engine import (
-    PlanEngine,
     Plan,
     Subtask,
     FastPathCache,
     CircuitBreaker,
     CircuitState,
     CircuitBreakerOpenError,
-    create_plan_engine,
 )
 from .fusion_planner import (
     FusionPlanner,
@@ -58,17 +56,6 @@ from .verify_engine import (
     MockInjector,
     IntegrationVerifier,
     create_verify_engine,
-)
-
-# 进化任务
-from .evolution_task import (
-    EVOLUTION_TASK_CONFIG,
-    HERMES_SOURCE_ROOT,
-    MIMIR_AETHER_SOURCE_ROOT,
-    HERMES_CORE_COMPONENTS,
-    MIMIR_AETHER_COMPONENTS,
-    EVOLUTION_REPORT_TEMPLATE,
-    EVOLUTION_TASK_PROMPT,
 )
 
 # OMX集成器
@@ -97,14 +84,12 @@ __all__ = [
     "classify_skills",
     "match_roles",
     # 任务规划引擎
-    "PlanEngine",
     "Plan",
     "Subtask",
     "FastPathCache",
     "CircuitBreaker",
     "CircuitState",
     "CircuitBreakerOpenError",
-    "create_plan_engine",
     # 融合规划引擎（新架构）
     "FusionPlanner",
     "FusionPlan",

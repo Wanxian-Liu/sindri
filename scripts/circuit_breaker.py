@@ -175,6 +175,18 @@ class CircuitBreaker:
             self.record_success()
         return False
 
+    def is_allowed(self) -> bool:
+        """是否允许执行（兼容旧版接口）"""
+        return self.can_execute()
+
+    def get_stats(self) -> Dict[str, Any]:
+        """获取熔断器统计（兼容旧版接口）"""
+        return {
+            "state": self.state.value if hasattr(self.state, 'value') else str(self.state),
+            "successes": self.successes,
+            "failures": self.failures,
+        }
+
 
 def with_circuit_breaker(role_type: str):
     """

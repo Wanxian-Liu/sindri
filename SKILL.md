@@ -262,7 +262,28 @@ QA_VERIFY → FAILED (验证失败) → IN_PROGRESS (重新修复)
 FAILED → ESCALATED (重试2次后仍失败)
 ```
 
-### 1.3 违规检查清单
+### 1.3 危险命令检查（SafetyPolicy）
+
+**每次执行命令前必须检查**：
+
+```python
+# 在子代理任务执行前检查命令安全性
+ok, reason = executor.check_command("rm -rf /tmp")
+if not ok:
+    raise PermissionError(f"危险命令被拦截: {reason}")
+```
+
+**危险命令示例**：
+- `rm -rf /` - 删除根目录
+- `rm -rf .` - 删除当前目录
+- `:(){ :|:& };:` - Fork炸弹
+- `dd if=/dev/zero of=/dev/sda` - 直接写入磁盘
+
+**注意**：SafetyPolicy在plan()入口也会检查任务描述，但子代理执行实际命令时仍需再次检查。
+
+---
+
+### 1.4 违规检查清单
 
 每次启动子代理前必须检查：
 - [ ] 这是审计任务还是修复任务？

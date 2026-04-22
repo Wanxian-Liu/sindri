@@ -1,0 +1,21 @@
+{"timestamp": "2026-04-22T02:13:30.827447", "session_id": "sindris_1a593323bdc7", "event_type": "plan_rejected", "task": "rm -rf /", "reason": "递归删除根目录或当前目录", "danger_level": "critical"}
+{"timestamp": "2026-04-22T02:13:30.827628", "session_id": "sindris_1a593323bdc7", "event_type": "plan_start", "task": "修复代码bug"}
+{"timestamp": "2026-04-22T02:13:30.828058", "session_id": "sindris_1a593323bdc7", "event_type": "plan_error", "error": "'CircuitBreaker' object has no attribute 'is_allowed'"}
+{"timestamp": "2026-04-22T02:13:38.227796", "session_id": "sindris_307482fbafbd", "event_type": "plan_start", "task": "修复代码bug"}
+{"timestamp": "2026-04-22T02:13:38.228138", "session_id": "sindris_307482fbafbd", "event_type": "plan_error", "error": "'CircuitBreaker' object has no attribute 'is_allowed'"}
+{"timestamp": "2026-04-22T02:14:19.231425", "session_id": "sindris_83fafdfbcb12", "event_type": "plan_rejected", "task": "rm -rf /", "reason": "递归删除根目录或当前目录", "danger_level": "critical"}
+{"timestamp": "2026-04-22T02:14:19.231524", "session_id": "sindris_83fafdfbcb12", "event_type": "plan_start", "task": "修复代码bug"}
+{"timestamp": "2026-04-22T02:14:19.438191", "session_id": "sindris_83fafdfbcb12", "event_type": "plan_error", "error": "'CircuitBreaker' object has no attribute 'get_stats'"}
+{"timestamp": "2026-04-22T02:14:26.069186", "session_id": "sindris_0cb0a96245e0", "event_type": "plan_start", "task": "修复代码bug"}
+{"timestamp": "2026-04-22T02:14:26.101270", "session_id": "sindris_0cb0a96245e0", "event_type": "plan_error", "error": "'CircuitBreaker' object has no attribute 'get_stats'"}
+{"timestamp": "2026-04-22T02:15:17.375336", "session_id": "sindris_11dfd1552daa", "event_type": "plan_rejected", "task": "rm -rf /", "reason": "递归删除根目录或当前目录", "danger_level": "critical"}
+{"timestamp": "2026-04-22T02:15:17.375483", "session_id": "sindris_11dfd1552daa", "event_type": "plan_start", "task": "修复代码bug"}
+{"timestamp": "2026-04-22T02:15:17.376703", "session_id": "sindris_11dfd1552daa", "event_type": "plan_error", "error": "'CircuitBreaker' object has no attribute 'total_calls'"}
+{"timestamp": "2026-04-22T02:15:24.318187", "session_id": "sindris_7961061bbd25", "event_type": "plan_start", "task": "修复代码bug"}
+{"timestamp": "2026-04-22T02:15:24.319329", "session_id": "sindris_7961061bbd25", "event_type": "plan_error", "error": "'CircuitBreaker' object has no attribute 'total_calls'"}
+{"timestamp": "2026-04-22T02:15:48.893243", "session_id": "sindris_fb0280198464", "event_type": "plan_rejected", "task": "rm -rf /", "reason": "递归删除根目录或当前目录", "danger_level": "critical"}
+{"timestamp": "2026-04-22T02:15:48.893377", "session_id": "sindris_fb0280198464", "event_type": "plan_start", "task": "修复代码bug"}
+{"timestamp": "2026-04-22T02:15:48.894587", "session_id": "sindris_fb0280198464", "event_type": "plan_complete", "task_id": "95c7c4f09be3", "subtasks_count": 4, "phase": "planned", "from_cache": true}
+{"timestamp": "2026-04-22T02:19:35.446161", "session_id": "sindris_596fd06f60a7", "event_type": "plan_start", "task": "格式化磁盘"}
+{"timestamp": "2026-04-22T02:19:35.488325", "session_id": "sindris_596fd06f60a7", "event_type": "plan_complete", "task_id": "3a2069830312", "subtasks_count": 4, "phase": "planned", "from_cache": false}
+{"timestamp": "2026-04-22T02:19:55.476615", "session_id": "sindris_44ad5a125be2", "event_type": "plan_rejected", "task": "执行 mkfs.ext4 /dev/sda1", "reason": "格式化磁盘", "danger_level": "critical"}

@@ -381,6 +381,23 @@ def block_command(command: str) -> bool:
     result = get_default_policy().check(command)
     return result.blocked
 
+def can_execute(command: str) -> tuple[bool, Optional[SafetyResult]]:
+    """
+    检查命令是否可以执行
+    
+    返回: (can_execute: bool, result: SafetyResult)
+    - can_execute=True 表示可以安全执行
+    - can_execute=False 表示危险，result包含详情
+    
+    用法:
+        ok, result = can_execute("rm -rf /")
+        if not ok:
+            print(f"危险命令被拦截: {result.reason}")
+    """
+    policy = get_default_policy()
+    result = policy.check(command)
+    return result.is_safe, result
+
 
 # ============================================================
 # 测试

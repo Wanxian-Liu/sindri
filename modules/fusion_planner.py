@@ -28,7 +28,14 @@ from threading import Lock
 
 from .role_matcher import RoleMatcher, RoleMatch
 from .task_decomposer import TaskDecomposer, Task
-from .plan_engine import FastPathCache, CircuitBreaker, CircuitState, Plan, Subtask
+from .plan_engine import FastPathCache, CircuitState, Plan, Subtask
+# 使用scripts/circuit_breaker.py的完整CircuitBreaker（有ROLE_TIMEOUTS）
+import sys
+sys.path.insert(0, str(__file__.rsplit('/', 2)[0]))
+try:
+    from scripts.circuit_breaker import CircuitBreaker
+except ImportError:
+    from .plan_engine import CircuitBreaker  # 回退到plan_engine版本
 
 # OMX集成（延迟导入以支持可选依赖）
 _OMXIntegrator = None
@@ -116,10 +123,11 @@ class FusionPlanner:
             cache_dir=cache_dir,
             ttl_seconds=cache_ttl,
         )
+        # P2-001 Fix: 使用scripts/circuit_breaker.py的完整CircuitBreaker（含ROLE_TIMEOUTS角色超时配置）
         self.circuit_breaker = CircuitBreaker(
+            role_type="planner",  # 使用完整版CircuitBreaker，需要role_type参数
             failure_threshold=failure_threshold,
-            window_seconds=self.DEFAULT_WINDOW_SECONDS,
-            open_duration=circuit_open_duration,
+            recovery_timeout=circuit_open_duration,
         )
 
         # ── OMX集成 ───────────────────────────────────
@@ -176,7 +184,7 @@ class FusionPlanner:
                 return plan
 
         # ── 第2层：熔断检查 ──────────────────────────────
-        if not self.circuit_breaker.is_allowed():
+        if not self.circuit_breaker.can_execute():
             with self._stats_lock:
                 self._stats["circuit_breaks"] += 1
             logger.warning("[FusionPlanner] Circuit breaker OPEN, using fallback")
@@ -193,8 +201,9 @@ class FusionPlanner:
                                  reason="circuit_breaker_open", subtask_count=len(fallback_plan.subtasks))
                 return fallback_plan
             else:
-                from .plan_engine import CircuitBreakerOpenError
-                raise CircuitBreakerOpenError("Circuit breaker is open")
+                # 使用scripts/circuit_breaker.py的异常（统一使用完整版）
+                from scripts.circuit_breaker import CircuitOpenError
+                raise CircuitOpenError("Circuit breaker is open")
 
         try:
             # ── 第3层：融合分解+匹配 ────────────────────
@@ -378,7 +387,7 @@ class FusionPlanner:
             ],
             tasks=[],
             matched_roles=[],
-            role_matches=List[RoleMatch]([]),
+            role_matches=[],  # FP-001 Fix: 空列表替代无效语法
             cache_hit=False,
             circuit_broken=True,
         )
@@ -396,7 +405,7 @@ class FusionPlanner:
             subtasks=[self._dict_to_subtask(s) for s in cached.get("subtasks", [])],
             tasks=[self._dict_to_task(t) for t in cached.get("tasks", [])],
             matched_roles=cached.get("matched_roles", []),
-            role_matches=List[RoleMatch]([]),  # 缓存不保留RoleMatch对象
+            role_matches=[],  # FP-001 Fix: 缓存不保留RoleMatch对象
             cache_hit=True,
         )
 
