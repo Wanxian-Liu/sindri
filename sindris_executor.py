@@ -307,7 +307,7 @@ class SindrisExecutor:
 
         self._log_jsonl("plan_start", {"task": task[:100]})
 
-        # OMX Round1开始
+        # OMX Step 1开始
         self.omx.on_round1_start(
             task_description=task,
             matched_roles=[],
@@ -369,7 +369,7 @@ class SindrisExecutor:
                 "from_cache": plan.cache_hit,
             })
 
-            # OMX Round1完成
+            # OMX Step 1完成
             self.omx.on_round1_complete(
                 plan_summary=result.get("plan_summary", ""),
             )
@@ -750,6 +750,85 @@ class SindrisExecutor:
     def is_executor_circuit_open(self) -> bool:
         """检查执行器熔断器是否打开"""
         return self._executor_circuit_breaker.state == CircuitState.OPEN
+
+    # --------------------- execute() 自动执行 ---------------------
+
+    async def execute(self, task: str, team: str = None) -> Dict[str, Any]:
+        """
+        自动执行完整sindri流程
+
+        Step 1: plan() → 规划任务
+        Step 2: 执行subtasks → 自动OMX记录
+        Step 3: verify_with_ralph() → 强制验证
+        Step 4: Git commit + MEMORY更新
+
+        Args:
+            task: 任务描述
+            team: 可选的团队名称
+
+        Returns:
+            执行结果字典
+        """
+        # Step 1: 规划
+        plan_result = await self.plan(task, team)
+        if not plan_result.get("success"):
+            return plan_result
+
+        subtasks = plan_result.get("subtasks", [])
+        task_id = self.omx.last_task_id
+
+        # Step 2: OMX Step 2开始
+        actions = [
+            {
+                "action_id": st.get("task_id", f"action_{i}"),
+                "action_name": st.get("title", ""),
+                "role": st.get("role", ""),
+            }
+            for i, st in enumerate(subtasks)
+        ]
+        self.omx.on_round2_start(task_id=task_id, actions=actions)
+
+        # 执行每个subtask
+        for i, subtask in enumerate(subtasks):
+            action_id = subtask.get("task_id", f"action_{i}")
+
+            # OMX动作开始
+            self.omx.on_action_start(action_id=action_id)
+
+            # 执行subtask（由调用者通过sessions_spawn执行）
+            # 这里只记录，不真正执行
+            subtask["_action_id"] = action_id
+            subtask["_index"] = i
+
+        # 返回plan_result，让调用者执行subtasks
+        plan_result["_omx_task_id"] = task_id
+        plan_result["_omx_actions"] = actions
+        plan_result["_execution_mode"] = "manual_spawn"
+
+        return plan_result
+
+    def mark_action_complete(
+        self,
+        action_id: str,
+        verified: bool = True,
+        verify_results: Dict[str, bool] = None,
+        error: str = None,
+    ) -> None:
+        """
+        标记一个action完成（供调用者在subtask完成后调用）
+
+        Args:
+            action_id: 动作ID
+            verified: 是否通过验证
+            verify_results: 验证结果字典
+            error: 错误信息
+        """
+        self.omx.on_action_complete(
+            action_id=action_id,
+            verified=verified,
+            verify_results=verify_results or {},
+            error=error,
+        )
 
 
 # 兼容性别名

@@ -1,11 +1,11 @@
 """
-omx_integrator.py - OMX × sindris Round1-4 深度集成器
+omx_integrator.py - OMX × sindris Step 1-5 深度集成器
 
 集成方案:
-  Round1 (规划轮): omx_tasks 记录任务分解
-  Round2 (执行轮): omx_ledger 记录执行日志
-  Round3 (审查轮): omx_reviews 记录审查队列
-  Round4 (完成):   omx_tasks 更新任务状态 + omx_ledger 记录完成
+  Step 1 (规划轮): omx_tasks 记录任务分解
+  Step 2 (执行轮): omx_ledger 记录执行日志
+  Step 3 (审查轮): omx_reviews 记录审查队列
+  Step 4 (完成):   omx_tasks 更新任务状态 + omx_ledger 记录完成
 
 设计原则:
   1. 非侵入式: 不修改现有OMX模块，只调用其API
@@ -117,7 +117,7 @@ def _workspace_actions_file(root: str) -> str:
 
 class OMXIntegrator:
     """
-    OMX × sindris Round1-4 深度集成器
+    OMX × sindris Step 1-5 深度集成器
 
     使用方法:
         integrator = OMXIntegrator(workspace_root="/path/to/root")
@@ -174,7 +174,7 @@ class OMXIntegrator:
         """快捷ledger写入"""
         return append_ledger(self.root, kind, action, detail, **kwargs)
 
-    # --------------------- Round1: 规划轮 ---------------------
+    # --------------------- Step 1: 规划轮 ---------------------
 
     def on_round1_start(
         self,
@@ -183,7 +183,7 @@ class OMXIntegrator:
         matched_roles: Optional[List[str]] = None,
     ) -> str:
         """
-        Round1 开始
+        Step 1 开始
 
         Args:
             task_description: 任务描述
@@ -228,7 +228,7 @@ class OMXIntegrator:
         # Ledger记录
         self._ledger(
             "session", "round1_start",
-            f"Sindri's Round1 started: {task_description[:80]}",
+            f"Sindri's Step 1 started: {task_description[:80]}",
             task_id=task_id,
             metadata={
                 "session_id": self._session_id,
@@ -247,7 +247,7 @@ class OMXIntegrator:
         verification_notes: Optional[List[str]] = None,
     ) -> Optional[Task]:
         """
-        Round1 完成
+        Step 1 完成
 
         Args:
             plan_summary: 规划摘要
@@ -279,7 +279,7 @@ class OMXIntegrator:
             if task:
                 update_task(self.root, phase_task_id, {
                     "status": "completed" if verified else "failed",
-                    "notes": task.notes + [f"Round1: {plan_summary}"],
+                    "notes": task.notes + [f"Step 1: {plan_summary}"],
                     "metadata": {
                         **task.metadata,
                         "round1_verified": verified,
@@ -292,7 +292,7 @@ class OMXIntegrator:
         elif plan_summary:
             # 无task_id时创建一个（仅作为后备）
             task_input = CreateTaskInput(
-                title=f"Round1 Plan: {plan_summary[:80]}",
+                title=f"Step 1 Plan: {plan_summary[:80]}",
                 kind="sindris_plan",
                 phase="round1",
                 priority="high",
@@ -304,7 +304,7 @@ class OMXIntegrator:
         # Ledger记录
         self._ledger(
             "session", "round1_complete",
-            f"Sindri's Round1 completed: {plan_summary[:80]}",
+            f"Sindri's Step 1 completed: {plan_summary[:80]}",
             task_id=phase_task_id or (task.id if task else None),
             metadata={
                 "session_id": self._session_id,
@@ -401,7 +401,7 @@ class OMXIntegrator:
             }
         )
 
-    # --------------------- Round2: 执行轮 ---------------------
+    # --------------------- Step 2: 执行轮 ---------------------
 
     def on_round2_start(
         self,
@@ -409,7 +409,7 @@ class OMXIntegrator:
         actions: Optional[List[Dict]] = None,
     ) -> str:
         """
-        Round2 开始
+        Step 2 开始
 
         Args:
             task_id: 关联的OMX任务ID
@@ -445,7 +445,7 @@ class OMXIntegrator:
         # Ledger记录
         self._ledger(
             "session", "round2_start",
-            f"Sindri's Round2 started with {len(actions or [])} actions",
+            f"Sindri's Step 2 started with {len(actions or [])} actions",
             task_id=task_id,
             metadata={
                 "session_id": self._session_id,
@@ -553,7 +553,7 @@ class OMXIntegrator:
         failed_actions: Optional[List[str]] = None,
     ) -> None:
         """
-        Round2 完成
+        Step 2 完成
 
         Args:
             task_id: 关联的OMX任务ID
@@ -574,7 +574,7 @@ class OMXIntegrator:
         # Ledger记录
         self._ledger(
             "session", "round2_complete",
-            f"Sindri's Round2 {'completed' if all_verified else 'failed'}",
+            f"Sindri's Step 2 {'completed' if all_verified else 'failed'}",
             task_id=task_id,
             metadata={
                 "session_id": self._session_id,
@@ -588,7 +588,7 @@ class OMXIntegrator:
         if task_id and all_verified:
             transition_task(self.root, task_id, "completed")
 
-    # --------------------- Round3: 审查轮 ---------------------
+    # --------------------- Step 3: 审查轮 ---------------------
 
     def on_round3_start(
         self,
@@ -596,7 +596,7 @@ class OMXIntegrator:
         review_items: Optional[List[Dict]] = None,
     ) -> List[ReviewItem]:
         """
-        Round3 开始，创建审查队列
+        Step 3 开始，创建审查队列
 
         Args:
             task_id: 关联的OMX任务ID
@@ -629,7 +629,7 @@ class OMXIntegrator:
         # Ledger记录
         self._ledger(
             "review", "round3_start",
-            f"Sindri's Round3 started with {len(reviews)} reviews",
+            f"Sindri's Step 3 started with {len(reviews)} reviews",
             task_id=task_id,
             metadata={
                 "session_id": self._session_id,
@@ -686,7 +686,7 @@ class OMXIntegrator:
         all_approved: bool = True,
     ) -> None:
         """
-        Round3 完成
+        Step 3 完成
 
         Args:
             task_id: 关联的OMX任务ID
@@ -705,7 +705,7 @@ class OMXIntegrator:
         # Ledger记录
         self._ledger(
             "review", "round3_complete",
-            f"Sindri's Round3 {'completed' if all_approved else 'failed'}",
+            f"Sindri's Step 3 {'completed' if all_approved else 'failed'}",
             task_id=task_id,
             metadata={
                 "session_id": self._session_id,
@@ -713,7 +713,7 @@ class OMXIntegrator:
             }
         )
 
-    # --------------------- Round4: 完成 ---------------------
+    # --------------------- Step 4: 完成 ---------------------
 
     def on_round4_complete(
         self,
@@ -722,7 +722,7 @@ class OMXIntegrator:
         success: bool = True,
     ) -> None:
         """
-        Round4 完成，最终交付
+        Step 4 完成，最终交付
 
         Args:
             task_id: 关联的OMX任务ID

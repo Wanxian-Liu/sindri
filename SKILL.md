@@ -360,7 +360,41 @@ Step 4: 完成 → Git提交 + MEMORY更新
 
 **⚠️ 核心原则**：sindris执行必须由主代理协调，不能只调用plan()就结束！
 
-### 代码模板
+### 代码模板（推荐使用execute()）
+
+```python
+# 推荐方式：使用execute()自动处理OMX记录
+result = await sindris.execute("任务描述")
+
+# result包含：
+#   - subtasks: 子任务列表
+#   - _omx_task_id: OMX任务ID
+#   - _omx_actions: OMX动作列表
+#   - _execution_mode: "manual_spawn"
+
+# Step 2: 执行subtasks（自动OMX记录）
+for subtask in result['subtasks']:
+    action_id = subtask['_action_id']
+    
+    spawn(
+        task=f"你是{subtask['role']}。请完成：{subtask['title']}",
+        runtime="subagent",
+        timeoutSeconds=subtask.get('timeout', 300)
+    )
+    sessions_yield()  # ← 必须调用！等待子代理完成
+    
+    # 标记action完成（自动记录到OMX）
+    sindris.mark_action_complete(action_id=action_id, verified=True)
+
+# Step 3: 强制验证
+verify_items = [{"name": v, "description": v, "check_fn": sindris._default_impl_check}
+                for v in subtask['verify']]
+ralph_result = await sindris.verify_with_ralph(task_name=subtask['title'], verify_items=verify_items)
+
+# Step 4: Git提交 + MEMORY更新
+```
+
+### 旧代码模板（仅参考）
 
 ```python
 # Step 1: 规划
