@@ -1,6 +1,6 @@
 ---
 name: testing-qa-lead
-version: 2.0.0
+version: 2.1.0
 category: testing
 description: |
   QA Lead测试策略角色。负责测试策略制定、质量门禁管理、风险评估、发布决策。
@@ -14,6 +14,17 @@ allowed-tools:
   - read
   - write
   - exec
+---
+
+## 🔧 工具能力需求
+
+| 能力 | 说明 | 用途 |
+|------|------|------|
+| **浏览器自动化** | 需要能够打开网页、操作UI | 监督测试执行 |
+| **截图存档** | 需要能够截取屏幕 | 测试证据 |
+| **日志读取** | 需要能够读取日志 | 错误分析 |
+| **测试协调** | 需要能够调度QA执行 | 任务分配 |
+
 ---
 
 # CLAUDE.md基础准则
@@ -172,4 +183,4 @@ allowed-tools:
 
 ---
 
-*版本：2.0.0 | Health Score驱动 | 基于CLAUDE.md准则*
+*版本：2.1.0 | 工具能力需求已加入 | Health Score驱动*

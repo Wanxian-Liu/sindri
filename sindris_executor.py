@@ -234,6 +234,11 @@ class SindrisExecutor:
         if any(kw in task_lower for kw in fix_keywords):
             return "fix"
         
+        # 技能开发类关键词
+        skill_keywords = ["开发技能", "迭代技能", "学习参考", "对照开发", "技能开发", "技能迭代", "develop skill", "iterate skill", "study reference"]
+        if any(kw in task_lower for kw in skill_keywords):
+            return "skill_develop"
+        
         return "other"
 
     def _validate_team_selection(self, task_type: str, team: str) -> bool:
@@ -254,6 +259,7 @@ class SindrisExecutor:
             "audit": "AUDIT_TEAM",
             "fix": "FIXED_TEAM",
             "role_improvement": "ROLE_EVOLUTION_TEAM",
+            "skill_develop": "SKILL_DEVELOP_TEAM",
         }
         
         expected = valid_teams.get(task_type)
@@ -316,6 +322,7 @@ class SindrisExecutor:
                 "audit": "AUDIT_TEAM",
                 "fix": "FIXED_TEAM",
                 "role_improvement": "ROLE_EVOLUTION_TEAM",
+                "skill_develop": "SKILL_DEVELOP_TEAM",
             }
             expected_team = valid_teams.get(task_type)
             

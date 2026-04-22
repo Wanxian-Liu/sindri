@@ -1,6 +1,6 @@
 ---
 name: engineering-code-reviewer
-version: 2.0.0
+version: 2.1.0
 category: engineering
 description: |
   代码审查角色。专注Bug检测、安全风险、验收核对。
@@ -14,6 +14,14 @@ allowed-tools:
   - read
   - exec
 ---
+
+## 🔧 工具能力需求
+
+| 能力 | 说明 | 用途 |
+|------|------|------|
+| **代码读取** | 需要能够读取代码文件 | 代码审查 |
+| **日志读取** | 需要能够读取日志 | 错误追踪 |
+| **命令执行** | 需要能够运行lint/测试 | 验证代码 |
 
 # CLAUDE.md基础准则
 
@@ -140,4 +148,4 @@ Health Score = 100 - (高×30) - (中×10) - (低×3)
 
 ---
 
-*版本：2.0.0 | 基于CLAUDE.md准则 | Health Score驱动*
+*版本：2.1.0 | 工具能力需求已加入 | Health Score驱动*

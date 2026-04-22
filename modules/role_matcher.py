@@ -167,6 +167,66 @@ EVOLUTION_DISTRIBUTOR = {
     },
 }
 
+# 技能开发团队（参考学习→自主开发）
+SKILL_DEVELOP_TEAM = [
+    {
+        "id": "strategy_ceo_founder",
+        "name": "CEO Founder",
+        "category": "strategy",
+        "description": "最终决策者 — 拍板技能开发方向，主持团队讨论，决定技能最终架构。",
+        "emoji": "👑",
+        "vibe": "Ships the right thing — outcome-obsessed, decisive."
+    },
+    {
+        "id": "engineering_software_architect",
+        "name": "Software Architect",
+        "category": "engineering",
+        "description": "架构设计专家 — 理解参考素材设计自己的架构，对照检查功能对齐。",
+        "emoji": "🏗️",
+        "vibe": "Designs systems that survive — and learns from references."
+    },
+    {
+        "id": "product_product_manager",
+        "name": "Product Manager",
+        "category": "product",
+        "description": "需求分析师 — 分析参考技能功能，定义自己版本的需求和优先级。",
+        "emoji": "🧭",
+        "vibe": "Ships the right skill, not just a copy."
+    },
+    {
+        "id": "engineering_senior_developer",
+        "name": "Senior Developer",
+        "category": "engineering",
+        "description": "核心开发者 — 实现技能代码，将学习到的功能转化为自己的实现。",
+        "emoji": "👨💻",
+        "vibe": "Writes code that works — learns from reference, writes own version."
+    },
+    {
+        "id": "engineering_code_reviewer",
+        "name": "Code Reviewer",
+        "category": "engineering",
+        "description": "对照审查 — 检查实现是否与参考素材功能对齐，确保完整性。",
+        "emoji": "🔍",
+        "vibe": "Finds gaps between reference and implementation."
+    },
+    {
+        "id": "testing_qa_lead",
+        "name": "QA Lead",
+        "category": "testing",
+        "description": "质量验证 — 定义如何验证技能功能，确保达到质量标准。",
+        "emoji": "🧭",
+        "vibe": "Quality is not a phase, it's a practice."
+    },
+]
+
+SKILL_DEVELOP_TEAM_TRIGGERS = [
+    "开发技能", "迭代技能", "学习参考", "对照开发",
+    "开发新技能", "技能开发", "技能迭代", "新技能",
+    "develop skill", "iterate skill", "study reference",
+    "对照hermes", "对照mimir", "对照参考", "参考开发",
+    "技能", "skill development",
+]
+
 EVOLUTION_TEAM_TRIGGERS = [
     # 改进/优化类
     "改进角色", "优化角色", "升级角色", "完善角色", "修复角色",
@@ -241,6 +301,11 @@ class RoleMatcher:
         task_lower = task.lower()
         return any(trigger in task_lower for trigger in EVOLUTION_TEAM_TRIGGERS)
     
+    def should_use_skill_develop_team(self, task: str) -> bool:
+        """判断是否使用技能开发团队"""
+        task_lower = task.lower()
+        return any(trigger in task_lower for trigger in SKILL_DEVELOP_TEAM_TRIGGERS)
+    
     def get_evolution_improver(self, task: str) -> Optional[Dict]:
         """
         根据任务中的被改进角色，返回最合适的改进角色
@@ -297,6 +362,14 @@ class RoleMatcher:
             return [
                 RoleMatch(role=r, similarity=1.0, source="audit_team")
                 for r in AUDIT_TEAM
+            ][:top_k]
+        
+        # 1.75. 技能开发团队（参考学习→自主开发）
+        if self.should_use_skill_develop_team(task):
+            print(f"[RoleMatcher] 检测到技能开发任务，使用技能开发团队")
+            return [
+                RoleMatch(role=r, similarity=1.0, source="skill_develop_team")
+                for r in SKILL_DEVELOP_TEAM
             ][:top_k]
         
         # 2. 任务类型识别 + 固定小组（creative/specialized域不用固定团队）

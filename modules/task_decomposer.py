@@ -85,10 +85,15 @@ class TaskDecomposer:
             # 检查是否是审计团队或evolution团队
             is_audit = any(r.get('team_type') == 'audit' for r in auto_matched_roles)
             is_evolution = any(r.get('team_type') == 'evolution' for r in auto_matched_roles)
+            is_skill_develop = any(r.get('team_type') == 'skill_develop' for r in auto_matched_roles)
             # 也检查source='role_evolution_team'的情况
             has_role_evolution_source = any(r.get('source') == 'role_evolution_team' for r in auto_matched_roles)
+            has_skill_develop_source = any(r.get('source') == 'skill_develop_team' for r in auto_matched_roles)
             
-            if is_evolution or has_role_evolution_source:
+            if is_skill_develop or has_skill_develop_source:
+                for r in auto_matched_roles:
+                    r['team_type'] = 'skill_develop'
+            elif is_evolution or has_role_evolution_source:
                 for r in auto_matched_roles:
                     r['team_type'] = 'evolution'
             elif is_audit:
@@ -105,9 +110,14 @@ class TaskDecomposer:
                 is_audit = any(getattr(m, 'source', None) == 'audit_team' for m in matches)
                 # 检查是否是角色改进分配器（包括audit_evolution的fallback情况）
                 is_evolution = any(getattr(m, 'source', None) in ('evolution_distributor', 'audit_evolution', 'role_evolution_team') for m in matches)
+                # 检查是否是技能开发团队
+                is_skill_develop = any(getattr(m, 'source', None) == 'skill_develop_team' for m in matches)
                 roles = [m.role for m in matches]
-                # 注意：evolution优先检查，因为role_matcher的fallback可能返回source=audit_team但team_type=evolution
-                if is_evolution:
+                # 注意：优先级 skill_develop > evolution > audit
+                if is_skill_develop:
+                    for r in roles:
+                        r['team_type'] = 'skill_develop'
+                elif is_evolution:
                     for r in roles:
                         r['team_type'] = 'evolution'
                 elif is_audit:
@@ -203,11 +213,11 @@ class TaskDecomposer:
             if key in role_id:
                 return r
         
-        # 检查是否是evolution团队（ROLE_EVOLUTION_TEAM）
-        is_evolution = any(r.get('team_type') == 'evolution' for r in roles)
+        # 检查是否是evolution或skill_develop团队
+        is_special_team = any(r.get('team_type') in ('evolution', 'skill_develop') for r in roles)
         
-        # 如果是evolution团队，fallback到roles自身（不使用FIXED_TEAM）
-        if is_evolution:
+        # 如果是特殊团队（evolution/skill_develop），fallback到roles自身（不使用FIXED_TEAM）
+        if is_special_team:
             if 0 <= fallback_index < len(roles):
                 return roles[fallback_index]
             # 最后的fallback：返回roles中的第一个

@@ -1,6 +1,6 @@
 ---
 name: engineering-senior-developer
-version: 2.0.0
+version: 2.1.0
 category: engineering
 description: |
   高级Python/后端开发角色。专注数据库、FTS5、API、并发、系统工具。
@@ -16,6 +16,14 @@ allowed-tools:
   - edit
   - exec
 ---
+
+## 🔧 工具能力需求
+
+| 能力 | 说明 | 用途 |
+|------|------|------|
+| **代码编辑** | 能够创建、修改代码文件 | 实现功能 |
+| **命令执行** | 能够运行测试、构建命令 | 验证代码 |
+| **代码分析** | 能够读取和分析现有代码 | 理解上下文 |
 
 # CLAUDE.md基础准则
 
@@ -159,4 +167,4 @@ allowed-tools:
 
 ---
 
-*版本：2.0.0 | 基于CLAUDE.md准则 | 保留核心约束规则*
+*版本：2.1.0 | 工具能力需求已加入 | 基于CLAUDE.md准则*
