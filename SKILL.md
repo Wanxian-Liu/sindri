@@ -349,309 +349,65 @@ class SubAgentState(Enum):
 
 ## 五、执行流程
 
-### 2.1 流程概览
+### 流程概览
 
 ```
-用户请求
-    ↓
-【Round1: 规划】FastPath检查
-    ↓ 缓存命中? → 直接用缓存
-    ↓ 缓存未命中
-    ↓ 角色匹配（178库）→ 选3-5个
-    ↓ 并行分析（带工具约束）
-    ↓ [主Agent验收] → 写入JSONL
-    ↓
-【Round2: 执行】动作拆分
-    ↓ 角色+精确动作（1角色=1动作）
-    ↓ 并行（只读）+ 串行（写入）
-    ↓ [子代理管理] → 失败自动Restart
-    ↓ [逐个验收] → 写入JSONL
-    ↓
-【Round3: 集成】
-    ↓ [最终验收] → 写入JSONL
-    ↓
-【Round4: 完成】
+Step 1: 规划 → sindris.plan(task) → subtasks（含role/title/verify）
+Step 2: 执行 → sessions_spawn子代理 → sessions_yield等待
+Step 3: 验证 → verify_with_ralph() → 强制（失败则重试/上报）
+Step 4: 完成 → Git提交 + MEMORY更新
 ```
 
-### 2.2 Round1：规划阶段
+**⚠️ 核心原则**：sindris执行必须由主代理协调，不能只调用plan()就结束！
 
-**步骤**：
-1. 检查FastPath缓存
-2. 匹配178角色库，选3-5个专业角色
-3. 并行分析（每个角色一个精确任务）
-4. 汇总方案
-5. **主Agent外部验收**
-6. 写入JSONL
+### 代码模板
 
-**角色匹配示例**：
-```
-任务：解决Mimir-Core两套并行路径
-
-匹配角色：
-- Software Architect (engineering_software_architect) → 架构设计
-- Workflow Architect (specialized_workflow_architect) → 工作流规范
-- Agents Orchestrator (agents_orchestrator) → 协调评审
-```
-
-### 2.3 Round2：执行阶段
-
-**核心原则**：1角色=1精确动作
-
-**动作拆分示例**：
-```
-旧方式（粒度太粗）：
-  子代理 → "创建interfaces目录和所有文件"（1个任务含5个步骤）
-
-新方式（精细化）：
-  子代理A1 → "创建interfaces目录"
-  子代理A2 → "创建imemory_vault.py"
-  子代理A3 → "创建file_system_adapter.py"
-  子代理A4 → "验证接口契约"
-```
-
-**并行策略**：
-```
-只读动作（分析、验证、检查）→ 并行执行（最多3-5个）
-写入动作（创建文件、修改代码）→ 串行执行
-```
-
-**子代理管理**：
 ```python
-def execute_with_worker(task, config):
-    worker = create_worker(config)
-    for attempt in range(config.max_retries):
-        agent.state = SubAgentState.RUNNING
-        result = worker.execute(task)
-        if verify(result):  # 信任门
-            agent.state = SubAgentState.COMPLETE
-            return result
-        else:
-            agent.state = SubAgentState.RESTART
-    agent.state = SubAgentState.FAILED
-    return result
+# Step 1: 规划
+plan = await sindris.plan("任务描述")
+
+# Step 2: 按Round执行
+for subtask in plan['subtasks']:
+    spawn(
+        task=f"你是{subtask.role}。请完成：{subtask.title}",
+        runtime="subagent",
+        timeoutSeconds=subtask.get('timeout', 300)
+    )
+    sessions_yield()  # ← 必须调用！等待子代理完成
+
+# Step 3: 强制验证
+verify_items = [{"name": v, "description": v, "check_fn": sindris._default_impl_check}
+                for v in subtask.verify]
+result = await sindris.verify_with_ralph(task_name=subtask.title, verify_items=verify_items)
+
+# Step 4: Git提交 + MEMORY更新
 ```
 
-### 2.4 Round3：集成阶段
+### sessions_yield() 关键说明
 
-- 验证模块间集成
-- 检查依赖关系
-- 执行集成测试
+**作用**：结束当前turn → 等待completion事件 → 结果返回下一条消息
 
-### 2.5 Round4：完成阶段
-
-- 输出最终成果
-- 更新MEMORY.md
-- 清理临时文件
-
-### ⚠️ 强制验证检查点（v3.8新增）
-
-**每次sessions_yield()后必须执行检查清单**：
-
-```
-yield()后 → 强制检查清单：
-    1. 子代理真的完成了吗？→ 检查completion事件
-    2. 任务目标达到了吗？→ 验证文件/代码确实存在
-    3. 验证条件满足了吗？→ 对照trust_gate检查
-    4. 有遗留问题吗？→ 决定重试或上报
-```
-
-**验证方法**：
-
-| 验证类型 | 验证命令 |
+| 错误做法 | 正确做法 |
 |----------|----------|
-| 文件存在 | `ls -la path` |
-| 文件被修改 | `stat file` 检查mtime |
-| 内容正确 | `grep` 或 `read` 抽查 |
-| 代码可运行 | `python3 -c "import module"` |
-| 功能正常 | `python3 -c "test_function()"` |
+| `plan() → spawn() → 直接返回` | `plan() → spawn() → yield() → 收集结果` |
 
-**不符合验证条件的处理**：
+**⚠️ yield后必须验证**：文件存在？内容正确？trust_gate通过？
 
-```
-验证失败 → 自动重试（1次）→ 还失败则上报刘哥
-```
+### 会话工具对照
 
-**禁止行为**：
-- ❌ yield后直接说"完成了"
-- ❌ 不验证文件是否真的被修改
-- ❌ 子代理报告完成就认为完成了
-- ❌ 跳过trust_gate检查
-
----
-
-## 六、完整执行流程（⚠️ 必须严格执行）
-
-### ⚠️ 核心原则
-
-**sindris执行必须由主代理（你）协调，不能只调用plan()就结束！**
-
-### 2.1 完整流程图
-
-```
-主代理（琬弦）
-    ↓
-① 调用 sindris.plan(task)
-    ↓ 获取subtasks列表（含role/title/verify）
-    ↓
-② Round1：sessions_spawn(Round1任务)
-    ↓ 启动Software Architect/Product Manager
-    ↓
-③ sessions_yield() ← 等待子代理完成
-    ↓ 接收completion事件
-    ↓
-④ 收集Round1结果 → 决定Round2
-    ↓
-⑤ Round2：sessions_spawn(Round2任务)
-    ↓ 启动Senior Developer（可并行多个）
-    ↓
-⑥ sessions_yield() ← 等待子代理完成
-    ↓
-⑦ OMX锤炼：自动触发GStackPro Review
-    ↓
-⑧ 收集Round2结果 → 决定Round3
-    ↓
-⑨ Round3：sessions_spawn(Round3任务)
-    ↓ 启动API Tester + Reality Checker
-    ↓
-⑩ sessions_yield() ← 等待子代理完成
-    ↓
-⑪ 收集Round3结果 → 最终报告
-    ↓
-⑫ 更新MEMORY.md + Git提交
-```
-
-### 2.2 关键点：sessions_yield()
-
-**这是我一直忘记调用的！**
-
-`sessions_yield()` 的作用：
-- 故意结束当前turn
-- 等待子代理的completion事件
-- 结果作为下一条消息返回
-
-**错误做法：**
-```
-plan() → spawn() → 直接返回 → 子代理还在跑
-```
-
-**正确做法：**
-```
-plan() → spawn() → yield() → 等待completion → 收集结果 → 继续
-```
-
-### 2.3 OMX锤炼集成
-
-每次子代理完成后自动触发：
-```python
-# gstack_hook.on_worker_complete() 自动调用
-# 触发GStackPro Paranoid Review
-# 审查代码质量和安全问题
-```
-
-### 2.4 实际代码模板
-
-```python
-# ===== sindris完整执行模板 =====
-
-# ① 规划
-plan = await sindris.plan("你的任务描述")
-print(f"生成了 {len(plan['subtasks'])} 个子任务")
-
-# ② Round1：规划阶段
-round1_tasks = [s for s in plan['subtasks'] if s['phase'] == 'round1']
-for task in round1_tasks:
-    spawn(
-        task=f"你是{task['role']}。请完成：{task['title']}",
-        runtime="subagent",
-        timeoutSeconds=task.get('timeout', 300)
-    )
-
-# ③ 必须yield！
-yield()  # 等待Round1完成
-
-# ④ Round2：执行阶段
-round2_tasks = [s for s in plan['subtasks'] if s['phase'] == 'round2']
-for task in round2_tasks:
-    spawn(
-        task=f"你是{task['role']}。请完成：{task['title']}",
-        runtime="subagent",
-        timeoutSeconds=task.get('timeout', 600)
-    )
-
-# ⑤ 必须yield！
-yield()  # 等待Round2完成 + OMX锤炼自动触发
-
-# ⑥ Round3：审查阶段
-round3_tasks = [s for s in plan['subtasks'] if s['phase'] == 'round3']
-for task in round3_tasks:
-    spawn(
-        task=f"你是{task['role']}。请验证：{task['title']}",
-        runtime="subagent",
-        timeoutSeconds=task.get('timeout', 300)
-    )
-
-# ⑦ 必须yield！
-yield()  # 等待Round3完成
-
-# ⑧ 完成！
-print("sindris执行完成")
-```
-
-### 2.5 会话工具对照表
-
-| 工具 | 作用 | 何时使用 |
-|------|------|----------|
-| `sessions_spawn` | 启动子代理 | 每个Round开始时 |
-| `sessions_yield` | 等待completion | 启动子代理后必须调用！|
-| `sessions_send` | 向子代理发消息 | 需要干预时 |
-| `sessions_list` | 查看子代理状态 | 调试时 |
-| `sessions_history` | 获取执行历史 | 审查结果时 |
-| `subagents` | 控制子代理 | steer/kill时 |
-
-### 2.6 重要约束
-
-| 约束 | 说明 |
+| 工具 | 作用 |
 |------|------|
-| sessions_yield | 启动子代理后必须调用，否则结果丢失 |
-| 会话管理 | 子Agent在独立session运行，完成后announce |
-| 工具限制 | 子Agent工具由 agentId 决定，不是 sindris 决定 |
-| 生命周期 | 主Agent监控子Agent状态，失败时决定重试或放弃 |
-| OMX锤炼 | 每次子代理完成后自动触发GStackPro Review |
+| `sessions_spawn` | 启动子代理 |
+| `sessions_yield` | 等待completion（启动后必须调用） |
+| `sessions_send` | 向子代理发消息（干预时） |
+| `sessions_list` | 查看子代理状态 |
 
----
+### 关键约束
 
-## 七、验收机制
-
-### 3.1 主Agent外部验收原则
-
-**核心**：不让子代理验证自己的成果
-
-```
-子代理执行 → 主Agent验收（不是子代理自验）
-    ↓ 通过
-    ↓ 失败 → 自动重试（1次）→ 还失败则上报
-```
-
-### 3.2 验收检查清单
-
-| 检查项 | 方法 |
-|--------|------|
-| 文件存在 | exec: `ls -la path` |
-| 内容正确 | read: 抽查关键代码 |
-| 导入成功 | exec: `python3 -c "import module"` |
-| 功能正常 | exec: `python3 -c "test_function()"` |
-
-### 3.3 信任门定义
-
-每个任务必须有明确的**信任门条件**：
-
-```python
-trust_gate = {
-    "file_created": "interfaces/imemory_vault.py",
-    "interface_complete": "IMemoryVault定义了5个方法",
-    "import_success": "from interfaces.imemory_vault import IMemoryVault"
-}
-```
+- ⚠️ Step 3验证是强制步骤，不能跳过
+- ⚠️ sessions_yield()后必须验证文件/代码真实存在
+- ⚠️ 验证失败则自动重试（1次），还失败则上报刘哥
+- ⚠️ OMX锤炼：每次子代理完成后自动触发GStackPro Review
 
 ---
 
@@ -716,76 +472,15 @@ trust_gate = {
 | Sindri QA Lead | sindri_qa_lead | sindri QA Lead |
 | Sindri Canary Monitor | sindri_canary_monitor | 金丝雀监控 |
 
-### 完整角色索引
-
-**ENGINEERING（15个）**
-Agents Orchestrator (`agents_orchestrator`) — Pipeline manager, development orchestration
-AI Engineer (`engineering_ai_engineer`) — ML model development, deployment
-AI/ML Engineer (`engineering_ai_ml_engineer`) — ML systems
-Code Reviewer (`engineering_code_reviewer`) — Constructive feedback on correctness
-Debugger (`engineering_debugger`) — Debugging
-DevOps Automator (`engineering_devops_automator`) — Infrastructure automation, CI/CD
-Frontend Developer (`engineering_frontend_developer`) — React/Vue/Angular, UI implementation
-Incident Response Commander (`engineering_incident_response_commander`) — Production incident management
-Release Engineer (`engineering_release_engineer`) — Release流程、版本管理
-Security Engineer (`engineering_security_engineer`) — Threat modeling, vulnerability assessment
-Senior Developer (`engineering_senior_developer`) — Laravel/Livewire/FluxUI, Three.js
-Software Architect (`engineering_software_architect`) — System design, domain-driven design
-SRE (`engineering_sre`) — SLOs, error budgets, observability
-Staff Engineer (`engineering_staff_engineer`) — Technical leadership, cross-team alignment
-Technical Writer (`engineering_technical_writer`) — Developer documentation, API references
-
-**PRODUCT（1个）**
-Product Manager (`product_manager`) — Full product lifecycle ownership
-
-**PROJECT-MANAGEMENT（1个）**
-Experiment Tracker (`project_management_experiment_tracker`) — A/B test management
-
-**SINDRI（2个）**
-Canary Monitor (`sindri_canary_monitor`) — 金丝雀监控
-Sindri QA Lead (`sindri_qa_lead`) — sindri QA Lead
-
-**STRATEGY（5个）**
-CEO/Founder (`strategy_ceo_founder`) — 战略CEO/Founder
-CSO (`strategy_cso`) — 首席战略官
-Second Opinion (`strategy_second_opinion`) — 战略第二意见
-Technical Writer (`strategy_technical_writer`) — 战略技术写作
-YC Office Hours (`strategy_yc_office_hours`) — YC Office Hours
-
-**TESTING（9个）**
-API Tester (`testing_api_tester`) — API validation, performance testing
-Automator (`testing_autoplan`) — 测试规划自动化
-Performance Benchmarker (`testing_performance_benchmarker`) — Performance measurement
-Performance Engineer (`testing_performance_engineer`) — 性能优化
-QA Engineer (`testing_qa_engineer`) — 测试用例、自动化
-QA Lead (`testing_qa_lead`) — 测试策略、质量把控
-QA Reporter (`testing_qa_reporter`) — 测试报告生成
-Reality Checker (`testing_reality_checker`) — Evidence-based certification（sindri Round3默认）
-SRE (`testing_sre`) — 测试SRE
-
-**GSTACK（4个）**
-Auto Plan (`gstack_autoplan`) — GStack自动规划
-CSO (`gstack_cso`) — GStack首席战略官
-Debugger (`gstack_debugger`) — GStack调试
-Second Opinion (`gstack_second_opinion`) — GStack第二意见
-
----
 
 ## 十、执行日志格式
 
 ### 6.1 JSONL格式
-
 ```jsonl
-{"type":"session_start","task_id":"xxx","timestamp":"..."}
-{"type":"round","round":1,"phase":"planning","status":"start"}
-{"type":"agent","id":"Architect","role":"engineering_software_architect","state":"create","tools":["read","glob","grep"]}
-{"type":"verification","agent":"Architect","output":"/tmp/architecture.json","result":"pass","checks":["file_exists","content_valid"]}
-{"type":"round","round":2,"phase":"execution","status":"start"}
-{"type":"agent","id":"Developer","role":"engineering_senior_developer","state":"create"}
-{"type":"retry","agent":"Developer","attempt":1,"reason":"file_not_found"}
-{"type":"verification","agent":"Developer","file":"interfaces/imemory_vault.py","result":"pass"}
-{"type":"round_complete","round":3,"status":"success"}
-{"type":"session_end","status":"success","outputs":["..."],"note":"outputs truncated for documentation"}
+{"type":"plan_complete","task_id":"xxx","subtasks":5}
+{"type":"subtask_start","role":"architect","title":"分析架构"}
+{"type":"subtask_complete","role":"architect","verified":true}
+```
 ```
 
 ### 6.2 日志位置
@@ -809,407 +504,20 @@ Second Opinion (`gstack_second_opinion`) — GStack第二意见
 
 ---
 
-## 十一、FastPath缓存
+## 十五、OMX持久化集成
 
-### 7.1 缓存检查点
+sindris与OMX深度集成，提供任务清单和执行追踪：
 
-```
-Round1开始
-    ↓
-检查缓存：~/.openclaw/sessions/{session_id}/round1_cache.json
-    ↓ 命中?
-    ↓ 是 → 直接使用缓存结果，跳过分析
-    ↓ 否 → 执行Round1
-```
+| 功能 | OMX模块 |
+|------|---------|
+| 任务清单 | omx_tasks |
+| 执行日志 | omx_ledger |
+| 审查队列 | omx_reviews |
 
-### 7.2 缓存失效条件
+详细API见 [omx_integrator.py](scripts/omx_integrator.py)
 
-- 任务目标变更
-- 角色配置变更
-- 超过24小时
+*Sindri's v1.1*
 
 ---
 
-## 十二、使用示例
 
-### 8.1 完整执行示例
-
-```
-用户：解决Mimir-Core两套并行路径问题
-
-【Round1】规划
-    ↓ 匹配角色：Software Architect, Workflow Architect, Agents Orchestrator
-    ↓ 并行分析
-    ↓ 验收方案
-    ↓
-【Round2】执行
-    ↓ 拆分动作：
-    ↓   A1: 创建interfaces目录
-    ↓   A2: 创建imemory_vault.py
-    ↓   A3: 创建file_system_adapter.py
-    ↓   A4: 验证接口（并行）
-    ↓   A5: 改造gateway.py（串行）
-    ↓   A6: 改造cli/commands.py（串行）
-    ↓ 逐个验收
-    ↓
-【Round3】集成
-    ↓ 验证整体集成
-    ↓
-【完成】
-```
-
-### 8.2 失败恢复示例
-
-```
-Developer执行：创建interfaces目录
-    ↓
-验证失败：文件不存在
-    ↓
-自动重试（attempt=1）
-    ↓
-再次失败
-    ↓
-上报主Agent：刘哥，Developer在创建interfaces目录时失败，需要手动介入
-```
-
----
-
-## 十三、与原A2流程对比
-
-| 维度 | 原A2 | Sindri's A2v3 |
-|------|------|---------------|
-| 任务粒度 | Round含多步骤 | 角色=1精确动作 |
-| 验收 | Round结束验收 | **每动作完成后立即验收** |
-| 验证者 | 子代理自验 | **主Agent外部验收** |
-| 并行 | Round内串行 | **读写分离，只读并行** |
-| 恢复 | 失败上报 | **自动重试+6种恢复策略** |
-| 角色 | 角色=整个任务 | **角色=专长+动作集合** |
-| 日志 | 无 | **JSONL执行日志** |
-| 缓存 | 无 | **FastPath缓存** |
-
----
-
-## 十四、注意事项
-
-1. **信任门必须明确**：每个任务开始前定义清楚验收条件
-2. **动作必须单一**：1角色=1动作，避免粒度太粗
-3. **只读并行，写入串行**：遵循claw-code的编排策略
-4. **保留178角色优势**：角色匹配是核心，不要为了拆分而拆分
-5. **日志用于恢复**：失败时可以从JSONL恢复上下文
-
-### 10.6 正确使用流程（重要）
-
-**sindris_executor.py 提供两个核心方法**：
-
-| 方法 | 作用 | 执行者 |
-|------|------|--------|
-| `plan()` | 返回子任务列表 | sindris内部 |
-| `execute_sindris()` | 返回完整执行计划 | sindris内部 |
-| `sessions_spawn()` | **执行子任务** | **主Agent（你）** |
-
-**重要**：sindris只返回计划，**真正执行需要主Agent调用sessions_spawn**
-
-```python
-# 正确流程：
-
-# 1. 获取执行计划
-plan = await execute_sindris("任务描述", workspace_root="/path")
-
-# 2. 主Agent按steps执行（sessions_spawn是工具调用，不是Python）
-for step in plan["plan"]["round2"]["steps"]:
-    # 在这里，主Agent调用sessions_spawn工具
-    sessions_spawn(
-        task=step["task"],
-        timeout=step["timeout"]
-    )
-
-# 3. 汇总结果，完成Round3-4
-```
-
-**为什么不直接执行**：
-- `sessions_spawn`是OpenClaw工具，不是Python API
-- sindris_executor是Python库，运行在exec环境中
-- 主Agent有sessions_spawn工具调用能力
-- 所以：sindris规划 → 主Agent执行
-
----
-
-*Sindri's v1.0 — 真诚、纯粹的多Agent协作*
-
-
----
-
-## 十五、OMX持久化集成 (v1.1)
-
-### 11.1 概述
-
-sindris Round1-4 与 OMX 持久化模块深度集成，实现：
-- **Round1**: `omx_tasks` 记录任务分解
-- **Round2**: `omx_ledger` 记录执行日志
-- **Round3**: `omx_reviews` 记录审查队列
-- **Round4**: `omx_tasks` 更新任务状态
-
-### 11.2 集成架构
-
-```
-sindris Round1-4
-     │
-     ├── Round1 (规划轮)
-     │   └── omx_integrator.on_round1_start/complete()
-     │       └── omx_tasks: 创建/更新任务记录
-     │
-     ├── Round2 (执行轮)
-     │   └── omx_integrator.on_round2_start()
-     │   └── omx_integrator.on_action_start/complete()
-     │       └── omx_ledger: 记录动作执行日志
-     │
-     ├── Round3 (审查轮)
-     │   └── omx_integrator.on_round3_start()
-     │   └── omx_integrator.on_review_submit()
-     │       └── omx_reviews: 创建/更新审查条目
-     │
-     └── Round4 (完成)
-         └── omx_integrator.on_round4_complete()
-             └── omx_tasks: 更新最终状态
-```
-
-### 11.3 使用方法
-
-```python
-from omx_integrator import OMXIntegrator, get_integrator
-
-# 初始化（可指定workspace_root）
-integrator = OMXIntegrator(workspace_root="/path/to/workspace")
-
-# Round1: 规划
-integrator.on_round1_start(
-    task_description="设计用户认证系统",
-    matched_roles=["engineering_software_architect", ...],
-)
-# ... 角色分析后 ...
-task = integrator.on_round1_complete(
-    plan_summary="采用JWT+RefreshToken方案",
-    verified=True,
-)
-
-# Round2: 执行
-integrator.on_round2_start(
-    task_id=task.id,
-    actions=[
-        {"action_id": "A1", "action_name": "创建User模型", "agent_id": "Dev1", "role": "engineering_senior_developer"},
-        ...
-    ],
-)
-# ... 每个动作执行 ...
-integrator.on_action_start(action_id="A1", agent_id="Dev1")
-integrator.on_action_complete(
-    action_id="A1",
-    verified=True,
-    verify_results={"file_created": True},
-)
-integrator.on_round2_complete(task_id=task.id, all_verified=True)
-
-# Round3: 审查
-reviews = integrator.on_round3_start(
-    task_id=task.id,
-    review_items=[{"task_id": task.id, "reviewer": "Reviewer", "summary": "检查实现"}],
-)
-integrator.on_review_submit(reviews[0].id, "approved", "代码质量良好")
-integrator.on_round3_complete(task_id=task.id, all_approved=True)
-
-# Round4: 完成
-integrator.on_round4_complete(
-    task_id=task.id,
-    final_output={"files_created": 5},
-    success=True,
-)
-```
-
-### 11.4 OMX模块对应关系
-
-| Round | OMX模块 | 功能 |
-|-------|---------|------|
-| Round1 | `omx_tasks` | 任务创建、状态转换、计划记录 |
-| Round2 | `omx_ledger` | 动作执行日志、会话事件 |
-| Round3 | `omx_reviews` | 审查队列、审查结果 |
-| Round4 | `omx_tasks` | 最终状态更新 |
-
-### 11.5 状态持久化
-
-所有状态变更立即写入磁盘（`.omx/` 目录）：
-
-```
-.omx/
-├── state/
-│   ├── sindris_phases.json   # Round阶段记录
-│   ├── sindris_actions.json  # 动作执行记录
-│   ├── tasks.json            # OMX任务图
-│   └── reviews.json          # OMX审查队列
-└── logs/
-    └── ledger.json           # OMX执行日志
-```
-
-### 11.6 向后兼容
-
-sindris流程可完全独立于OMX运行：
-- 不调用 `omx_integrator` 时，sindris原流程保持不变
-- OMX模块（`omx_ledger`, `omx_tasks`, `omx_reviews`）可独立使用
-- 集成仅在显式使用 `OMXIntegrator` 时生效
-
-### 11.7 文件清单
-
-| 文件 | 说明 |
-|------|------|
-| `scripts/sindris_tmux_manager.py` | tmux Worker运行时（Phase 2新增） |
-| `scripts/test_sindris_tmux_manager.py` | Worker运行时测试（17个测试用例） |
-| `scripts/omx_contract.py` | OMX路径定义和布局 |
-| `scripts/omx_ledger.py` | 执行日志系统 |
-| `scripts/omx_tasks.py` | 任务图系统 |
-| `scripts/omx_reviews.py` | 审查队列系统 |
-| `scripts/omx_integrator.py` | sindris Round1-4集成器 |
-| `scripts/test_omx_integrator.py` | 集成测试（9个测试用例） |
-
-### 12. tmux Worker运行时 (Phase 2)
-
-**sindris_tmux_manager.py** 提供独立的Worker进程管理，基于oh-my-codex team.ts + claw-code worker_boot.rs设计。
-
-#### 架构
-
-```
-SindrisWorkerManager
-    ├── TmuxManager          # 低层tmux操作（session/window/send-keys）
-    ├── Worker registry      # 内存worker注册表
-    └── Event sourcing       # append-only事件日志
-```
-
-#### Worker生命周期
-
-```
-SPAWNING → TRUST_REQUIRED → READY → RUNNING → COMPLETED/FAILED
-                        ↑                    │
-                        +----- restart ------+```
-
-#### 核心能力
-
-| 方法 | 说明 |
-|------|------|
-| `create_worker(role, agent_id?)` | 注册worker记录 |
-| `spawn_worker(wid, command?)` | 启动tmux窗口或mock进程 |
-| `send_command(wid, cmd)` | 向worker发送命令 |
-| `observe(wid)` | 捕获pane输出，更新状态 |
-| `resolve_trust(wid)` | 手动解决trust gate |
-| `heartbeat(wid)` | 心跳保活 |
-| `reconcile()` | 检测过期lease，标记stale |
-| `restart_worker(wid)` | 重启worker |
-| `terminate(wid)` / `shutdown()` | 终止worker或全队 |
-| `create_team(name, specs)` | 工厂方法，创建并启动全队 |
-
-#### 优雅降级
-
-无tmux时自动降级到mock模式，状态机和事件日志照常运行。
-
-#### 检测机制（claw-code风格）
-
-- Trust gate检测：Do you trust... / Allow and continue / Yes, proceed
-- Ready信号检测：Ready for input / Ready for prompt / ❯ › >
-- 运行中检测：Thinking / Working / Running tests
-
-#### 使用示例
-
-```python
-from sindris_tmux_manager import SindrisWorkerManager
-
-mgr, workers = SindrisWorkerManager.create_team(
-    team_name="dev-squad",
-    workspace_root="/path/to/workspace",
-    worker_specs=[
-        {"role": "researcher", "agent_id": "agent-1"},
-        {"role": "engineering_senior_developer"},
-        {"role": "reviewer"},
-    ],
-)
-
-# 发送命令
-mgr.send_command(workers[0].id, "research the caching issue")
-
-# 检测状态
-status = mgr.observe(workers[0].id)
-
-# 心跳
-mgr.heartbeat(workers[0].id, "work in progress")
-
-# 完成
-mgr.complete(workers[0].id, "found 3 solutions")
-
-# 关闭
-mgr.shutdown()
-```
-
-*Sindri's v1.1 — OMX持久化集成*
-
----
-
-## 十六、Sindri OpenClaw执行模式（v2.22新增）
-
-### 问题
-
-`sindris_executor.run()`在Python脚本中无法使用sessions_spawn（因为sessions_spawn是OpenClaw工具）。
-
-### 解决方案
-
-在OpenClaw会话中，主Agent调用`sindris.plan()`后，使用sessions_spawn执行subtasks。
-
-### 执行流程
-
-```
-主Agent (我)
-    ↓
-sindris.plan("任务") → 获取subtasks列表
-    ↓
-for subtask in subtasks:
-    sessions_spawn(
-        task=subtask['title'],
-        runtime="subagent",
-        timeoutSeconds=subtask.get('timeout', 300)
-    )
-    ↓
-sessions_yield() → 等待子Agent完成
-    ↓
-收集结果，继续Round3-4
-```
-
-### 触发词
-
-| 触发词 | 说明 |
-|--------|------|
-| `Sindri执行` | 执行完整Round1-4流程 |
-| `Sindri规划` | 仅执行Round1规划 |
-| `Sindri审查` | 执行Round3审查 |
-
-### 代码示例
-
-```python
-# 在OpenClaw会话中执行
-plan = await sindris.plan("分析并改进 context_compressor")
-
-# 检查规划结果
-print(f"生成了 {len(plan['subtasks'])} 个子任务")
-
-# 使用sessions_spawn执行
-for subtask in plan['subtasks']:
-    spawn_result = sessions_spawn(
-        task=subtask['title'],
-        runtime="subagent",
-        timeoutSeconds=subtask.get('timeout', 300)
-    )
-    # 记录run_id
-    print(f"启动: {subtask['role']} - {subtask['title'][:30]}...")
-```
-
-### Level降级说明
-
-| Level | 执行方式 | 状态 |
-|-------|---------|------|
-| Level 1 | sessions_spawn | ✅ OpenClaw中可用 |
-| Level 2 | DeepSeek API | ⚠️ API配置问题 |
-| Level 3 | 本地模板 | ✅ 兜底可用 |

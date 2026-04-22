@@ -72,6 +72,9 @@ from modules.verify_engine import (
     create_verify_engine as _create_verify_engine,
 )
 
+# OMX集成
+from scripts.omx_integrator import get_integrator
+
 
 class SubagentState:
     """子代理状态枚举"""
@@ -117,6 +120,9 @@ class SindrisExecutor:
 
         # 初始化日志
         self._setup_jsonl_logger()
+
+        # 初始化OMX集成器
+        self.omx = get_integrator(self.workspace_root)
 
     def _init_engines(self):
         """初始化两大引擎"""
@@ -295,6 +301,12 @@ class SindrisExecutor:
 
         self._log_jsonl("plan_start", {"task": task[:100]})
 
+        # OMX Round1开始
+        self.omx.on_round1_start(
+            task_description=task,
+            matched_roles=[],
+        )
+
         try:
             # sindri制度检查：识别任务类型
             task_type = self._identify_task_type(task)
@@ -349,6 +361,12 @@ class SindrisExecutor:
                 "phase": result["phase"],
                 "from_cache": plan.cache_hit,
             })
+
+            # OMX Round1完成
+            self.omx.on_round1_complete(
+                plan_summary=result.get("plan_summary", ""),
+                subtasks_count=len(result["subtasks"]),
+            )
 
             return result
 
