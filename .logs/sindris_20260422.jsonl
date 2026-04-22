@@ -141,3 +141,6 @@
 {"timestamp": "2026-04-22T23:11:35.910311", "session_id": "sindris_c83f6d288a70", "event_type": "plan_start", "task": "改进academic_historian角色的workflow"}
 {"timestamp": "2026-04-22T23:11:35.956578", "session_id": "sindris_c83f6d288a70", "event_type": "team_auto_inferred", "task_type": "other", "auto_team": null, "reason": "team参数为空，自动推断"}
 {"timestamp": "2026-04-22T23:11:36.083744", "session_id": "sindris_c83f6d288a70", "event_type": "plan_complete", "task_id": "ac3776e49270", "subtasks_count": 6, "phase": "planned", "from_cache": false}
+{"timestamp": "2026-04-22T23:25:09.919337", "session_id": "sindris_1c3693728e21", "event_type": "plan_start", "task": "改进academic_psychologist角色的workflow"}
+{"timestamp": "2026-04-22T23:25:09.962030", "session_id": "sindris_1c3693728e21", "event_type": "team_auto_inferred", "task_type": "other", "auto_team": null, "reason": "team参数为空，自动推断"}
+{"timestamp": "2026-04-22T23:25:10.076416", "session_id": "sindris_1c3693728e21", "event_type": "plan_complete", "task_id": "d971398e0a68", "subtasks_count": 6, "phase": "planned", "from_cache": false}
