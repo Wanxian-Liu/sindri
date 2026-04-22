@@ -365,7 +365,6 @@ class SindrisExecutor:
             # OMX Round1完成
             self.omx.on_round1_complete(
                 plan_summary=result.get("plan_summary", ""),
-                subtasks_count=len(result["subtasks"]),
             )
 
             return result

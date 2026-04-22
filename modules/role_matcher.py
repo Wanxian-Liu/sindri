@@ -101,11 +101,16 @@ AUDIT_TEAM = [
 
 AUDIT_TEAM_TRIGGERS = [
     # 审计/评估类（使用精确词，避免误匹配角色名）
+    # 中文
     "审计", "评估", "审查", 
     "代码审计", "安全审计", "系统审计",
     "质量检查", "代码检查", "安全检查", "核查",
     "评分", "评级", "打分", "评价", "评审",
     "代码review", "安全review",
+    # 英文
+    "audit", "review", "assessment",
+    "code review", "security audit", "system audit",
+    "quality check", "security check",
 ]
 
 # 角色改进分配器（Role Evolution Distributor）
