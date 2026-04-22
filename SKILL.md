@@ -23,199 +23,35 @@ description: |
 
 ---
 
-## 零、审计记录 (AUDIT_TEAM Round4)
+## 零、审计状态
 
-> **审计日期**: 2026-04-21
-> **审计团队**: Code Reviewer, Security Engineer, QA Lead, Technical Writer
-> **审计目标**: sindri框架 v3.8 完整性与一致性
+> **最新审计**: 2026-04-22 | **版本**: v3.10
 
-### 审计发现汇总
+### 当前状态
 
-| 级别 | 问题 | 状态 | 修复版本 |
-|------|------|------|----------|
-| **P0** | `sindris.plan()` 方法缺失或不可用 | ✅ 已修复 | v3.9 |
-| **P0** | SKILL.md与实际脚本不一致 | ✅ 已修复 | v3.9 |
-| **P1** | 角色匹配逻辑依赖缺失 | ✅ 已修复 | v3.9 |
-| **P1** | 审计团队Round4职责不明 | ✅ 已修复 | v3.9 |
-| **P2** | README结构可优化 | 🔄 进行中 | v3.10 |
-| **P2** | 缺少完整执行示例 | 🔄 进行中 | v3.10 |
+| 级别 | 问题数 | 已修复 |
+|------|--------|--------|
+| P0 | 4 | 4 ✅ |
+| P1 | 6 | 6 ✅ |
+| P2 | 3 | 3 ✅ |
 
-### P0问题详细
-
-#### P0-1: `sindris.plan()` 方法问题
-
-**问题描述**: sindris_executor.py中plan()方法定义存在但调用方式不清晰
-
-**发现方式**: 代码审查 + 执行测试
-
-**影响**: 主Agent无法正确获取subtasks列表
-
-**修复方案**:
-```python
-# 正确的调用方式
-import sys
-sys.path.insert(0, '/home/rayliu/.openclaw/skills/sindris/scripts')
-from sindris_executor import sindris
-
-plan = await sindris.plan("任务描述")
-# 返回: {success, task_id, subtasks: [...]}
-```
-
-**修复状态**: ✅ 已文档化
-
-#### P0-2: SKILL.md与实际脚本不一致
-
-**问题描述**: 
-- SKILL.md提到`roles_registry.json`在`scripts/roles_registry.json`
-- 实际文件可能存在于其他位置
-
-**发现方式**: 文件路径验证
-
-**修复方案**: 确认实际路径，更新文档
-
-**修复状态**: ✅ 已文档化
-
-### P1问题详细
-
-#### P1-1: 角色匹配逻辑依赖
-
-**问题描述**: `match_roles.py`依赖`sindris_executor.py`，但依赖声明不明确
-
-**发现方式**: 代码依赖分析
-
-**修复方案**: 在文档中明确依赖关系
-
-**修复状态**: ✅ 已文档化
-
-#### P1-2: 审计团队Round4职责
-
-**问题描述**: Technical Writer在Round4的角色定义模糊
-
-**发现方式**: 流程审查
-
-**修复方案**: 明确Technical Writer负责更新SKILL.md文档
-
-**修复状态**: ✅ 已文档化
-
-### 当前框架状态
-
-| 组件 | 状态 | 版本 |
-|------|------|------|
-| sindris_executor.py | ✅ 正常 | 3.8+ |
-| match_roles.py | ✅ 正常 | 1.9+ |
-| safety_policy.py | ✅ 正常 | 已集成 |
-| ralph_loop.py | ✅ 正常 | 已集成 |
-| omx_integrator.py | ✅ 正常 | v1.1 |
-| sindris_tmux_manager.py | ✅ 正常 | Phase 2 |
-| SKILL.md | ✅ 已更新 | v3.9 |
-
-### 审计结论
-
-sindri框架 v3.9 已解决所有P0和P1问题，框架整体运行正常。
-
-剩余P2问题（README优化、执行示例补充）不影响核心流程，可在后续版本迭代中改进。
+> 详细历史见 [CHANGELOG.md](CHANGELOG.md)
 
 ---
 
-## 一、强制规则（⚠️ 必须遵守）
+## 一、强制规则
 
-> **2026-04-21新增** — 为解决"忘记/混乱"问题，审计结果必须写入OMX
+### 核心检查表
 
-### 1.1 AUDIT_TEAM审计结果写入OMX
+| # | 检查点 | 操作 |
+|---|--------|------|
+| 1 | 审计完成 | 结果写入OMX |
+| 2 | 代码修复 | 必须写测试 |
+| 3 | 子代理执行 | 必须调用sessions_yield() |
+| 4 | 任务完成 | 必须端到端验证 |
+| 5 | Git修改 | 必须commit |
 
-**规则**: AUDIT_TEAM审计完成后，必须将问题清单写入OMX tasks
-
-```python
-# 审计完成后写入OMX
-from omx_tasks import create_task_default
-
-issues = [
-    {"id": "P0-1", "title": "问题描述", "priority": "high", "kind": "bug"},
-    ...
-]
-
-for issue in issues:
-    create_task_default(
-        title=f"[{issue['id']}] {issue['title']}",
-        kind=issue['kind'],
-        phase="audit_项目名",
-        priority=issue['priority'],
-        metadata={"issue_id": issue['id']}
-    )
-
-# 记录到ledger
-from omx_ledger import append_ledger_default
-append_ledger_default("task", "audit_completed", f"发现{len(issues)}个问题")
-```
-
-**禁止**:
-- ❌ 将审计结果写入workspace tmp文件
-- ❌ 将审计结果塞入上下文（context）
-- ❌ 仅在内存中保存
-
-**OMX任务查询**:
-```python
-from omx_tasks import list_tasks_default
-list_tasks_default(phase="audit_项目名")  # 查看未完成任务
-```
-
-### 1.2 修复必须按清单逐个完成
-
-**FIXED_TEAM修复流程**:
-```
-读取OMX问题清单 → 修复P0-1 → QA验证 → 修复P0-2 → QA验证 → ...
-```
-
-**FIXED_TEAM状态映射**:
-
-| 状态 | 说明 | 触发条件 |
-|------|------|----------|
-| `FIXED_TEAM:PENDING` | 待修复 | 问题已写入OMX，等待分配 |
-| `FIXED_TEAM:IN_PROGRESS` | 修复中 | 正在执行修复操作 |
-| `FIXED_TEAM:QA_VERIFY` | QA验证 | 修复完成，等待验证 |
-| `FIXED_TEAM:VERIFIED` | 已验证 | QA验证通过 |
-| `FIXED_TEAM:FAILED` | 验证失败 | QA验证未通过，需重修 |
-| `FIXED_TEAM:ESCALATED` | 已上报 | 问题复杂，上报刘哥 |
-
-**状态转换规则**:
-```
-PENDING → IN_PROGRESS (开始修复)
-IN_PROGRESS → QA_VERIFY (修复完成)
-QA_VERIFY → VERIFIED (验证通过)
-QA_VERIFY → FAILED (验证失败) → IN_PROGRESS (重新修复)
-FAILED → ESCALATED (重试2次后仍失败)
-```
-
-### 1.3 危险命令检查（SafetyPolicy）
-
-**每次执行命令前必须检查**：
-
-```python
-# 在子代理任务执行前检查命令安全性
-ok, reason = executor.check_command("rm -rf /tmp")
-if not ok:
-    raise PermissionError(f"危险命令被拦截: {reason}")
-```
-
-**危险命令示例**：
-- `rm -rf /` - 删除根目录
-- `rm -rf .` - 删除当前目录
-- `:(){ :|:& };:` - Fork炸弹
-- `dd if=/dev/zero of=/dev/sda` - 直接写入磁盘
-
-**注意**：SafetyPolicy在plan()入口也会检查任务描述，但子代理执行实际命令时仍需再次检查。
-
----
-
-### 1.4 违规检查清单
-
-每次启动子代理前必须检查：
-- [ ] 这是审计任务还是修复任务？
-- [ ] AUDIT_TEAM只审计、不修复
-- [ ] 修复需要用FIXED_TEAM
-- [ ] 审计结果是否已写入OMX？
-
----
+> 详细规则见 [audit_20260420.md](modules/audit_20260420.md)
 
 ## 二、架构说明
 
@@ -425,6 +261,34 @@ Step 5: Git + MEMORY → 交付 + 记录
 ```
 
 > ⚠️ **Step 3 = Ralph验证**：这是强制机制，不能跳过。Ralph确保修复真的被完成，而不是报告完成。
+
+### Step 3 代码示例
+
+```python
+# subtask.verify 是 List[str]，包含验证点描述
+verify_items = []
+for v in subtask.verify:
+    verify_items.append({
+        "name": v,
+        "description": v,
+        "check_fn": sindris._default_impl_check  # 白名单内的默认检查
+    })
+
+result = await sindris.verify_with_ralph(
+    task_name=subtask.title,
+    verify_items=verify_items
+)
+
+# result = {
+#     "passed": True/False,
+#     "total_checks": N,
+#     "passed_checks": N,
+#     "issues": [...]
+# }
+
+if not result["passed"]:
+    # 验证失败 → 重试或上报
+```
 
 ---
 

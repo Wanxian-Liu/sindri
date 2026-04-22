@@ -49,28 +49,10 @@ logger = logging.getLogger(__name__)
 # ============================================================
 # P0-1: API配置从环境变量读取
 # ============================================================
-# API提供商配置（从环境变量读取）
-# 支持: deepseek, moonshot
-API_PROVIDER = os.environ.get("SINDRI_API_PROVIDER", "moonshot")  # 可选: deepseek, moonshot
-
-API_CONFIGS = {
-    "deepseek": {
-        "api_key": os.environ.get("DEEPSEEK_API_KEY", ""),
-        "base_url": "https://api.deepseek.com/v1",
-        "model": "deepseek-chat"
-    },
-    "moonshot": {
-        "api_key": os.environ.get("MOONSHOT_API_KEY", ""),
-        "base_url": "https://api.moonshot.cn/v1",
-        "model": "kimi-k2.5"
-    }
-}
-
-# 当前配置
-_current_config = API_CONFIGS.get(API_PROVIDER, API_CONFIGS["deepseek"])
-DEEPSEEK_API_KEY = _current_config["api_key"]
-DEEPSEEK_API_URL = f"{_current_config['base_url']}/chat/completions"
-DEFAULT_MODEL = _current_config["model"]
+# 统一使用DeepSeek
+DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
+DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions"
+DEFAULT_MODEL = "deepseek-chat"
 
 # K2.5只支持temperature=1
 USE_TEMPERATURE_1 = "kimi-k2.5" in DEFAULT_MODEL
@@ -135,8 +117,7 @@ async def deepseek_call(
     # P1-8 Fix: API key检查
     if not DEEPSEEK_API_KEY:
         raise ValueError(
-            f"API key未配置。当前provider={API_PROVIDER}。"
-            f"请设置 DEEPSEEK_API_KEY 或 MOONSHOT_API_KEY 环境变量。"
+            f"API key未配置。请设置 DEEPSEEK_API_KEY 环境变量。"
         )
     # P1-2: 使用白名单导入
     urllib_request = _safe_import("urllib.request")
