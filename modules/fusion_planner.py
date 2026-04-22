@@ -297,7 +297,12 @@ class FusionPlanner:
         # ── Step 2: 获取角色列表 ──────────────────────────
         # TaskDecomposer.get_roles() 会再次调用RoleMatcher
         # 这里直接用已匹配的结果（避免重复调用）
-        auto_roles = [m.role for m in role_matches]
+        # 注意：保留source信息，因为RoleMatch.role会丢失它
+        auto_roles = []
+        for m in role_matches:
+            role = m.role.copy() if m.role else {}
+            role['source'] = m.source
+            auto_roles.append(role)
         roles = self.task_decomposer.get_roles(task, auto_roles)
 
         # ── Step 3: 按Round分解任务 ─────────────────────

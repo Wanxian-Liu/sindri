@@ -85,7 +85,10 @@ class TaskDecomposer:
             # 检查是否是审计团队或evolution团队
             is_audit = any(r.get('team_type') == 'audit' for r in auto_matched_roles)
             is_evolution = any(r.get('team_type') == 'evolution' for r in auto_matched_roles)
-            if is_evolution:
+            # 也检查source='role_evolution_team'的情况
+            has_role_evolution_source = any(r.get('source') == 'role_evolution_team' for r in auto_matched_roles)
+            
+            if is_evolution or has_role_evolution_source:
                 for r in auto_matched_roles:
                     r['team_type'] = 'evolution'
             elif is_audit:
@@ -101,7 +104,7 @@ class TaskDecomposer:
                 # 检查是否是审计团队
                 is_audit = any(getattr(m, 'source', None) == 'audit_team' for m in matches)
                 # 检查是否是角色改进分配器（包括audit_evolution的fallback情况）
-                is_evolution = any(getattr(m, 'source', None) in ('evolution_distributor', 'audit_evolution') for m in matches)
+                is_evolution = any(getattr(m, 'source', None) in ('evolution_distributor', 'audit_evolution', 'role_evolution_team') for m in matches)
                 roles = [m.role for m in matches]
                 # 注意：evolution优先检查，因为role_matcher的fallback可能返回source=audit_team但team_type=evolution
                 if is_evolution:
@@ -200,6 +203,16 @@ class TaskDecomposer:
             if key in role_id:
                 return r
         
+        # 检查是否是evolution团队（ROLE_EVOLUTION_TEAM）
+        is_evolution = any(r.get('team_type') == 'evolution' for r in roles)
+        
+        # 如果是evolution团队，fallback到roles自身（不使用FIXED_TEAM）
+        if is_evolution:
+            if 0 <= fallback_index < len(roles):
+                return roles[fallback_index]
+            # 最后的fallback：返回roles中的第一个
+            return roles[0] if roles else {"id": "engineering_senior_developer", "name": "Senior Developer"}
+        
         # fallback到FIXED_TEAM
         if 0 <= fallback_index < len(FIXED_TEAM):
             return FIXED_TEAM[fallback_index]
@@ -238,9 +251,10 @@ class TaskDecomposer:
         # 工程任务 → Software Architect
         engineering_keywords = [
             '编程', '开发', '代码', 'python', 'java', 'javascript', 'typescript',
-            '修改', '优化', '修复', 'bug', '重构', 'refactor', 'feature',
+            '修改', '优化', '改进', '完善', '修复', 'bug', '重构', 'refactor', 'feature',
             '模块', '组件', '系统', '架构', '接口', '实现',
             'mimir', 'sindris', '进化', '记忆殿堂',
+            '角色', 'role', 'workflow', '工作流',
         ]
         if any(kw in task_lower for kw in engineering_keywords):
             architect_role = self._get_role_from_team(roles, 'architect', 2)

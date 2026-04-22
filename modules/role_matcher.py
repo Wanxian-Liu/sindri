@@ -98,33 +98,72 @@ AUDIT_TEAM_TRIGGERS = [
     "quality check", "security check",
 ]
 
+# 角色进化团队（Role Evolution Team）— 7人完整团队
+ROLE_EVOLUTION_TEAM = [
+    {
+        "id": "strategy_ceo_founder",
+        "name": "CEO Founder",
+        "category": "strategy",
+        "description": "最终决策者 — 拍板角色开发方向，主持团队讨论，决定角色最终定义。",
+        "emoji": "👑",
+        "vibe": "Ships the right thing — outcome-obsessed, decisive."
+    },
+    {
+        "id": "engineering_software_architect",
+        "name": "Software Architect",
+        "category": "engineering",
+        "description": "角色结构专家 — 懂最完善的角色内容结构，设计模板框架，主持角色定义讨论。",
+        "emoji": "🏗️",
+        "vibe": "Designs systems that scale — and role structures that work."
+    },
+    {
+        "id": "product_product_manager",
+        "name": "Product Manager",
+        "category": "product",
+        "description": "角色需求定义 — 定义角色应该做什么，确定角色职责边界和优先级。",
+        "emoji": "🧭",
+        "vibe": "Ships the right role, not just any role."
+    },
+    {
+        "id": "engineering_senior_developer",
+        "name": "Senior Developer",
+        "category": "engineering",
+        "description": "核心开发 — 实际编写角色代码，实现角色定义中的功能。",
+        "emoji": "👨‍💻",
+        "vibe": "Writes code that works and roles that make sense."
+    },
+    {
+        "id": "engineering_code_reviewer",
+        "name": "Code Reviewer",
+        "category": "engineering",
+        "description": "代码质量把关 — 审查角色代码质量，确保符合最佳实践。",
+        "emoji": "🔍",
+        "vibe": "Finds what others miss in code and role structures."
+    },
+    {
+        "id": "engineering_technical_writer",
+        "name": "Technical Writer",
+        "category": "engineering",
+        "description": "文档撰写 — 编写角色说明文档，确保文档清晰完整。",
+        "emoji": "📝",
+        "vibe": "Documents what others think they understand."
+    },
+    {
+        "id": "testing_qa_lead",
+        "name": "QA Lead",
+        "category": "testing",
+        "description": "测试策略 — 定义如何验证角色是否工作，制定质量标准。",
+        "emoji": "🧭",
+        "vibe": "Quality is not a phase, it's a practice."
+    },
+]
+
 # 角色改进分配器（Role Evolution Distributor）
-# 分配规则：被改进角色category → 改进角色
+# 当EVOLUTION_DISTRIBUTOR中找不到具体改进目标时，使用ROLE_EVOLUTION_TEAM
 EVOLUTION_DISTRIBUTOR = {
-    "coordination": {
-        "improver": "engineering_software_architect",
-        "target": "Agents Orchestrator",
-        "reason": "架构不匹配需Software Architect重新设计"
-    },
-    "product": {
-        "improver": "engineering_technical_writer",
-        "target": "Product Manager",
-        "reason": "文档结构/工作流需Technical Writer规范化"
-    },
-    "engineering": {
-        "improver": "engineering_code_reviewer",
-        "target": "Staff Engineer/Frontend Developer",
-        "reason": "代码质量/接口契约问题"
-    },
-    "engineering_debugger": {
-        "improver": "engineering_security_engineer",
-        "target": "Debugger",
-        "reason": "安全调试/多语言问题"
-    },
-    "testing": {
-        "improver": "testing_qa_lead",
-        "target": "Reality Checker/API Tester",
-        "reason": "测试方法论/sindri集成问题"
+    "default": {
+        "team": "ROLE_EVOLUTION_TEAM",
+        "reason": "通用角色改进，使用完整ROLE_EVOLUTION团队"
     },
 }
 
@@ -243,24 +282,14 @@ class RoleMatcher:
         # 0. 分层域判断（优先）
         task_domain = classify_domain(task)
         
-        # 1. 角色改进分配器优先（改进角色任务使用分配器）
+        # 1. 角色改进团队（改进角色任务使用完整团队）
         # 注意：必须在审计团队之前检查，因为"完善角色"等关键词可能被AUDIT_TEAM错误匹配
         if self.should_use_evolution_team(task):
-            improver = self.get_evolution_improver(task)
-            if improver:
-                print(f"[RoleMatcher] 检测到角色改进任务，使用改进角色: {improver['name']}")
-                return [RoleMatch(role=improver, similarity=1.0, source="evolution_distributor")]
-            
-            # Fallback: 如果evolution触发但找不到improver，检查是否是AUDIT_TEAM角色改进自身
-            # 例如："完善Code Reviewer Security Engineer角色md" → 使用AUDIT_TEAM改进自身
-            audit_names = [r['name'].lower() for r in AUDIT_TEAM]
-            task_lower = task.lower()
-            if any(name in task_lower for name in audit_names):
-                print(f"[RoleMatcher] 检测到AUDIT_TEAM角色改进任务，使用AUDIT_TEAM")
-                return [
-                    RoleMatch(role={**r, 'team_type': 'evolution'}, similarity=1.0, source="audit_evolution")
-                    for r in AUDIT_TEAM
-                ][:top_k]
+            print(f"[RoleMatcher] 检测到角色改进任务，使用角色进化团队")
+            return [
+                RoleMatch(role=r, similarity=1.0, source="role_evolution_team")
+                for r in ROLE_EVOLUTION_TEAM
+            ][:top_k]
         
         # 1.5. 审计团队（只有明确是审计任务时才触发）
         if self.should_use_audit_team(task):

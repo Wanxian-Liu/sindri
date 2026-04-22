@@ -253,7 +253,7 @@ class SindrisExecutor:
         valid_teams = {
             "audit": "AUDIT_TEAM",
             "fix": "FIXED_TEAM",
-            "role_improvement": "ROLE_EVOLUTION_DISTRIBUTOR",
+            "role_improvement": "ROLE_EVOLUTION_TEAM",
         }
         
         expected = valid_teams.get(task_type)
@@ -315,7 +315,7 @@ class SindrisExecutor:
             valid_teams = {
                 "audit": "AUDIT_TEAM",
                 "fix": "FIXED_TEAM",
-                "role_improvement": "ROLE_EVOLUTION_DISTRIBUTOR",
+                "role_improvement": "ROLE_EVOLUTION_TEAM",
             }
             expected_team = valid_teams.get(task_type)
             
