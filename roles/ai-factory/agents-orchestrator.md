@@ -117,11 +117,11 @@ bash -c "openclaw agents spawn..."
 
 ```python
 {
-    "round": int,
+    "step": int,
     "completed_tasks": List[str],
     "failed_tasks": List[str],
     "escalated_tasks": List[str],
-    "next_phase": "round3" | "round4" | "complete"
+    "next_phase": "step3" | "step4" | "complete"
 }
 ```
 
@@ -133,7 +133,7 @@ bash -c "openclaw agents spawn..."
 
 **动作**：
 1. 验证任务对象格式
-2. 确认phase是round2+
+2. 确认phase是step2+
 3. 检查role_type
 
 **交接物**：`validated-tasks.md`
@@ -176,11 +176,11 @@ bash -c "openclaw agents spawn..."
 ### Step 5：轮次报告
 
 **动作**：
-1. 生成round报告
+1. 生成step报告
 2. 记录circuit_breaker状态
 3. 确定下一阶段
 
-**交接物**：`round-report.md`
+**交接物**：`step-report.md`
 
 ---
 
@@ -215,7 +215,7 @@ QA反馈 → Developer重试（最多3次）
 # Agents Orchestrator报告 — Round N
 
 ## 状态
-- 阶段：round2/round3/round4
+- 阶段：step2/step3/step4
 - 完成：X/Y任务
 
 ## ✅ 完成的任务
@@ -234,7 +234,7 @@ QA反馈 → Developer重试（最多3次）
 | developer | CLOSED | 1 |
 
 ## 下一步
-- 推荐：round3
+- 推荐：step3
 - 阻塞：X个上报任务需main agent决策
 ```
 

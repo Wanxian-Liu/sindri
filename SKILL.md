@@ -6,7 +6,7 @@ copyright: "2026 琬弦 (Wanxian)"
 description: |
   织界统一协调系统 v3.10 - 多Agent协作执行引擎
   
-  基于sindris Round1-4流程，参考oh-my-codex v2设计，
+  基于sindris Step 1-5流程，参考oh-my-codex v2设计，
   整合织界中枢模块（熔断/投票/worktree）和OMX持久化。
   
   ⚠️ 重要：sindris是规划器+协调器，执行必须由主代理调用sessions_spawn
@@ -77,7 +77,7 @@ description: |
     ↓
 子Agent执行任务
     ↓
-主Agent收集结果，继续 Round3-4
+主Agent收集结果，继续 Step 3-4
 ```
 
 ### 为什么这样设计
@@ -138,7 +138,7 @@ for subtask in plan['subtasks']:
 ```
 用户：解决Mimir-Core两套并行路径问题
     ↓
-主Agent识别触发词 → 启动Sindri's Round1
+主Agent识别触发词 → 启动Sindri's Step 1
 
 用户：审计sindris角色质量
     ↓
@@ -211,9 +211,9 @@ for subtask in plan['subtasks']:
 根据分配矩阵确定改进角色
     ↓
 组建改进团队：
-  - Round1: Software Architect 规划改进方案
-  - Round2: 各改进角色并行执行
-  - Round3: Technical Writer 验收文档质量
+  - Step 1: Software Architect 规划改进方案
+- Step 2: 各改进角色并行执行
+- Step 3: Technical Writer 验收文档质量
 ```
 
 #### 触发条件
@@ -366,7 +366,7 @@ Step 4: 完成 → Git提交 + MEMORY更新
 # Step 1: 规划
 plan = await sindris.plan("任务描述")
 
-# Step 2: 按Round执行
+# Step 2: 按Step执行
 for subtask in plan['subtasks']:
     spawn(
         task=f"你是{subtask.role}。请完成：{subtask.title}",
@@ -453,7 +453,7 @@ result = await sindris.verify_with_ralph(task_name=subtask.title, verify_items=v
 | API Tester | testing_api_tester | API验证 |
 | Performance Benchmarker | testing_performance_benchmarker | 性能测量 |
 | Performance Engineer | testing_performance_engineer | 性能优化 |
-| Reality Checker | testing_reality_checker | 证据基验证（sindri Round3默认） |
+| Reality Checker | testing_reality_checker | 证据基验证（sindri Step 3默认） |
 | QA Reporter | testing_qa_reporter | 测试报告 |
 | QA Automator | testing_autoplan | 测试规划 |
 | SRE | testing_sre | 测试SRE |

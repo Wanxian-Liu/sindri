@@ -150,7 +150,7 @@ allowed-tools:
 ```json
 [
   {
-    "phase": "round1",
+    "phase": "step1",
     "role": "Software Architect",
     "title": "[feature-name] 架构分析",
     "input": {
