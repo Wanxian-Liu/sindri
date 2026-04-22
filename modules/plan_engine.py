@@ -240,18 +240,33 @@ class FastPathCache:
             logger.warning(f"[FastPathCache] Failed to load cache: {e}")
 
     def _save_entry(self, key: str, entry: FastPathEntry) -> None:
-        """保存缓存条目到磁盘"""
+        """保存缓存条目到磁盘（原子写入）"""
         try:
             fpath = self._cache_path(key)
-            with open(fpath, 'w') as f:
+            tmp_path = fpath + ".tmp"
+            
+            # 1. 写入临时文件
+            with open(tmp_path, 'w') as f:
                 json.dump({
                     "plan": entry.plan,
                     "task_hash": entry.task_hash,
                     "created_at": entry.created_at,
                     "hit_count": entry.hit_count,
                 }, f)
+                f.flush()
+                os.fsync(f.fileno())  # P1-3 Fix: 强制刷盘
+            
+            # 2. 原子重命名（POSIX保证原子性）
+            os.replace(tmp_path, fpath)
+            
         except Exception as e:
             logger.warning(f"[FastPathCache] Failed to save entry: {e}")
+            # 清理临时文件
+            if os.path.exists(tmp_path):
+                try:
+                    os.unlink(tmp_path)
+                except:
+                    pass
 
     def get(self, task: str) -> Optional[Dict]:
         """获取缓存的规划"""
