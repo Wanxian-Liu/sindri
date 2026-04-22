@@ -299,16 +299,29 @@ class SindrisExecutor:
             # sindri制度检查：识别任务类型
             task_type = self._identify_task_type(task)
             
-            # 如果指定了team，进行制度检查
-            if team is not None:
+            # sindri制度检查：team=None时自动推断
+            valid_teams = {
+                "audit": "AUDIT_TEAM",
+                "fix": "FIXED_TEAM",
+                "role_improvement": "ROLE_EVOLUTION_DISTRIBUTOR",
+            }
+            expected_team = valid_teams.get(task_type)
+            
+            if team is None:
+                # 自动推断正确团队
+                team = expected_team
+                self._log_jsonl("team_auto_inferred", {
+                    "task_type": task_type,
+                    "auto_team": team,
+                    "reason": "team参数为空，自动推断",
+                })
+            else:
+                # 验证传入的团队是否正确
                 self._validate_team_selection(task_type, team)
                 self._log_jsonl("team_check_pass", {
                     "task_type": task_type,
                     "team": team,
                 })
-            else:
-                # 记录未指定团队的情况（warning级别）
-                self.logger.warning(f"plan()未指定team参数，sindri制度检查跳过")
             
             # 使用PlanEngine规划
             plan = self.plan_engine.plan(task)
