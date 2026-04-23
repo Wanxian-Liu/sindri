@@ -91,6 +91,7 @@ class TaskDecomposer:
             has_role_evolution_source = any(r.get('source') == 'role_evolution_team' for r in auto_matched_roles)
             has_skill_develop_source = any(r.get('source') == 'skill_develop_team' for r in auto_matched_roles)
             has_research_source = any(r.get('source') == 'research_team' for r in auto_matched_roles)
+            has_audit_source = any(r.get('source') == 'audit_team' for r in auto_matched_roles)
             
             if is_skill_develop or has_skill_develop_source:
                 for r in auto_matched_roles:
@@ -98,7 +99,7 @@ class TaskDecomposer:
             elif is_evolution or has_role_evolution_source:
                 for r in auto_matched_roles:
                     r['team_type'] = 'evolution'
-            elif is_audit:
+            elif is_audit or has_audit_source:
                 for r in auto_matched_roles:
                     r['team_type'] = 'audit'
             elif is_research or has_research_source:
@@ -225,10 +226,10 @@ class TaskDecomposer:
             if key in role_id or key in role_name:
                 return r
         
-        # 检查是否是特殊团队
-        is_special_team = any(r.get('team_type') in ('evolution', 'skill_develop', 'research') for r in roles)
+        # 检查是否是特殊团队（包括audit）
+        is_special_team = any(r.get('team_type') in ('evolution', 'skill_develop', 'research', 'audit') for r in roles)
         
-        # 如果是特殊团队（evolution/skill_develop/research），fallback到roles自身（不使用FIXED_TEAM）
+        # 如果是特殊团队（evolution/skill_develop/research/audit），fallback到roles自身（不使用FIXED_TEAM）
         if is_special_team:
             if 0 <= fallback_index < len(roles):
                 return roles[fallback_index]
@@ -270,8 +271,9 @@ class TaskDecomposer:
             ))
             return tasks
         
-        # 调研任务 → Academic角色
-        if any(kw in task_lower for kw in ['调研', '调研报告', '研究报告', '研究分析', 'research', '调查', '考察', '分析趋势', '深度调研']):
+        # 调研任务 → Academic角色（但如果team_type是audit或audit关键词，跳过）
+        is_audit_team = any(r.get('team_type') == 'audit' or r.get('source') == 'audit_team' for r in roles)
+        if not is_audit_team and any(kw in task_lower for kw in ['调研', '调研报告', '研究报告', '研究分析', '调查', '考察', '分析趋势', '深度调研']):
             researcher_role = self._get_role_from_team(roles, 'academic', 0) or roles[0] if roles else {}
             tasks.append(Task(
                 id=self._gen_id("task"),
@@ -287,6 +289,27 @@ class TaskDecomposer:
                 }
             ))
             return tasks
+        
+        # 审计任务 → Code Reviewer（审计关键词优先级最高）
+        if any(kw in task_lower for kw in ['审计', 'audit', '审查', '检查问题', '代码审查', '安全审计']):
+            # 检查是否是审计团队（检查source或team_type）
+            is_audit_team = any(r.get('team_type') == 'audit' or r.get('source') == 'audit_team' for r in roles)
+            if is_audit_team:
+                auditor_role = self._get_role_from_team(roles, 'reviewer', 0) or self._get_role_from_team(roles, 'code', 0)
+                tasks.append(Task(
+                    id=self._gen_id("task"),
+                    title="代码审计与问题识别",
+                    kind="round1_planning",
+                    phase="round1",
+                    priority="high",
+                    verify=["审计范围明确", "检查清单完整"],
+                    metadata={
+                        "role": auditor_role,
+                        "task_context": task,
+                        "stage": "audit_planning",
+                    }
+                ))
+                return tasks
         
         # 工程任务 → Software Architect
         engineering_keywords = [
