@@ -218,15 +218,16 @@ class TaskDecomposer:
     
     def _get_role_from_team(self, roles: List[Dict], key: str, fallback_index: int) -> Dict:
         """从团队中获取角色"""
-        # 尝试通过key匹配
+        # 尝试通过key匹配（检查id、name和domain）
         for r in roles:
             role_id = r.get('id', '').lower()
             role_name = r.get('name', '').lower()
-            # 同时匹配id和name
-            if key in role_id or key in role_name:
+            role_domain = r.get('domain', '').lower()
+            # 同时匹配id、name和domain（RESEARCH_TEAM使用domain字段）
+            if key in role_id or key in role_name or key in role_domain:
                 return r
         
-        # 检查是否是特殊团队（包括audit）
+        # 检查是否是特殊团队（包括audit和research）
         is_special_team = any(r.get('team_type') in ('evolution', 'skill_develop', 'research', 'audit') for r in roles)
         
         # 如果是特殊团队（evolution/skill_develop/research/audit），fallback到roles自身（不使用FIXED_TEAM）
@@ -236,7 +237,11 @@ class TaskDecomposer:
             # 最后的fallback：返回roles中的第一个
             return roles[0] if roles else {"id": "researcher", "name": "Researcher"}
         
-        # fallback到FIXED_TEAM
+        # 如果有有效的roles参数，也使用roles而非FIXED_TEAM
+        if roles and 0 <= fallback_index < len(roles):
+            return roles[fallback_index]
+        
+        # 最后才fallback到FIXED_TEAM
         if 0 <= fallback_index < len(FIXED_TEAM):
             return FIXED_TEAM[fallback_index]
         
@@ -290,26 +295,24 @@ class TaskDecomposer:
             ))
             return tasks
         
-        # 审计任务 → Code Reviewer（审计关键词优先级最高）
-        if any(kw in task_lower for kw in ['审计', 'audit', '审查', '检查问题', '代码审查', '安全审计']):
-            # 检查是否是审计团队（检查source或team_type）
-            is_audit_team = any(r.get('team_type') == 'audit' or r.get('source') == 'audit_team' for r in roles)
-            if is_audit_team:
-                auditor_role = self._get_role_from_team(roles, 'reviewer', 0) or self._get_role_from_team(roles, 'code', 0)
-                tasks.append(Task(
-                    id=self._gen_id("task"),
-                    title="代码审计与问题识别",
-                    kind="round1_planning",
-                    phase="round1",
-                    priority="high",
-                    verify=["审计范围明确", "检查清单完整"],
-                    metadata={
-                        "role": auditor_role,
-                        "task_context": task,
-                        "stage": "audit_planning",
-                    }
-                ))
-                return tasks
+        # 审计任务 → Code Reviewer（只有审计团队才处理审计任务）
+        is_audit_team = any(r.get('team_type') == 'audit' or r.get('source') == 'audit_team' for r in roles)
+        if is_audit_team and any(kw in task_lower for kw in ['审计', 'audit', '审查', '检查问题', '代码审查', '安全审计']):
+            auditor_role = self._get_role_from_team(roles, 'reviewer', 0) or self._get_role_from_team(roles, 'code', 0)
+            tasks.append(Task(
+                id=self._gen_id("task"),
+                title="代码审计与问题识别",
+                kind="round1_planning",
+                phase="round1",
+                priority="high",
+                verify=["审计范围明确", "检查清单完整"],
+                metadata={
+                    "role": auditor_role,
+                    "task_context": task,
+                    "stage": "audit_planning",
+                }
+            ))
+            return tasks
         
         # 工程任务 → Software Architect
         engineering_keywords = [
