@@ -257,7 +257,7 @@ Step 1: 审计规划 → 角色匹配 → 并行分析 → 验收
 Step 2: 修复执行 → 动作拆分 → 串行写入 → 逐个验收
 Step 3: Ralph验证（强制机制）→ 3轮验证 → 验证修复是否真实
 Step 4: 审查完成 → 整体验证 → 模块集成
-Step 5: Git + MEMORY → 交付 + 记录
+Step 5: Git → 交付 + 记录
 ```
 
 > ⚠️ **Step 3 = Ralph验证**：这是强制机制，不能跳过。Ralph确保修复真的被完成，而不是报告完成。
@@ -355,7 +355,7 @@ class SubAgentState(Enum):
 Step 1: 规划 → sindris.plan(task) → subtasks（含role/title/verify）
 Step 2: 执行 → sessions_spawn子代理 → sessions_yield等待
 Step 3: 验证 → verify_with_ralph() → 强制（失败则重试/上报）
-Step 4: 完成 → Git提交 + MEMORY更新
+Step 4: 完成 → Git提交
 ```
 
 **⚠️ 核心原则**：sindris执行必须由主代理协调，不能只调用plan()就结束！
@@ -378,8 +378,23 @@ result = await sindris.execute("任务描述")
 for subtask in result['subtasks']:
     action_id = subtask['_action_id']
     
+    # 加载角色MD文件内容
+    role_instruction = ""
+    md_file = subtask.get('md_file')
+    if md_file:
+        try:
+            with open(md_file, 'r') as f:
+                role_content = f.read()
+            # 提取body内容（去掉frontmatter）
+            if role_content.startswith('---'):
+                parts = role_content.split('---', 2)
+                if len(parts) >= 3:
+                    role_instruction = f"\n\n# 你的角色定义\n{parts[2][:3000]}"
+        except Exception as e:
+            print(f"[WARN] Failed to load role MD: {e}")
+    
     spawn(
-        task=f"你是{subtask['role']}。请完成：{subtask['title']}",
+        task=f"你是{subtask['role']}。请完成：{subtask['title']}{role_instruction}",
         runtime="subagent",
         timeoutSeconds=subtask.get('timeout', DEFAULT_SPAWN_TIMEOUT)
     )
@@ -393,10 +408,25 @@ for subtask in result['subtasks']:
 spawned = []
 for subtask in result['subtasks']:
     action_id = subtask['_action_id']
+    
+    # 加载角色MD文件内容
+    role_instruction = ""
+    md_file = subtask.get('md_file')
+    if md_file:
+        try:
+            with open(md_file, 'r') as f:
+                role_content = f.read()
+            if role_content.startswith('---'):
+                parts = role_content.split('---', 2)
+                if len(parts) >= 3:
+                    role_instruction = f"\n\n# 你的角色定义\n{parts[2][:3000]}"
+        except Exception as e:
+            print(f"[WARN] Failed to load role MD: {e}")
+    
     spawned.append({
         'action_id': action_id,
         'spawn_result': spawn(
-            task=f"你是{subtask['role']}。请完成：{subtask['title']}",
+            task=f"你是{subtask['role']}。请完成：{subtask['title']}{role_instruction}",
             runtime="subagent",
             timeoutSeconds=subtask.get('timeout', DEFAULT_SPAWN_TIMEOUT)
         )
@@ -412,7 +442,7 @@ verify_items = [{"name": v, "description": v, "check_fn": sindris._default_impl_
                 for v in subtask['verify']]
 ralph_result = await sindris.verify_with_ralph(task_name=subtask['title'], verify_items=verify_items)
 
-# Step 4: Git提交 + MEMORY更新
+# Step 4: Git提交
 ```
 
 ### 旧代码模板（仅参考）
@@ -435,7 +465,7 @@ verify_items = [{"name": v, "description": v, "check_fn": sindris._default_impl_
                 for v in subtask.verify]
 result = await sindris.verify_with_ralph(task_name=subtask.title, verify_items=verify_items)
 
-# Step 4: Git提交 + MEMORY更新
+# Step 4: Git提交
 ```
 
 ### sessions_yield() 关键说明

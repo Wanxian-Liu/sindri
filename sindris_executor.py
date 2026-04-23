@@ -76,6 +76,96 @@ from modules.verify_engine import (
 from scripts.omx_integrator import get_integrator
 
 
+# ========== 角色MD文件查找 ==========
+
+# 角色名称到MD文件的映射
+_ROLE_TO_MD = {
+    # ai-factory (AUDIT_TEAM相关)
+    "Code Reviewer": "ai-factory/engineering-code-reviewer.md",
+    "Security Engineer": "ai-factory/engineering-security-engineer.md",
+    "Software Architect": "ai-factory/engineering-software-architect.md",
+    # testing (AUDIT_TEAM相关)
+    "QA Lead": "testing/testing-qa-lead.md",
+    "Reality Checker": "testing/testing-reality-checker.md",
+    # engineering
+    "Senior Developer": "engineering/engineering-senior-developer.md",
+    "Frontend Developer": "engineering/engineering-frontend-developer.md",
+    "AI/ML Engineer": "engineering/engineering-ai-ml-engineer.md",
+    "Debugger": "engineering/engineering-debugger.md",
+    "Release Engineer": "engineering/engineering-release-engineer.md",
+    "Staff Engineer": "engineering/engineering-staff-engineer.md",
+    # academic
+    "Psychologist": "academic/academic-psychologist.md",
+    "Historian": "academic/academic-historian.md",
+    "Narratologist": "academic/academic-narratologist.md",
+    "Geographer": "academic/academic-geographer.md",
+    "Anthropologist": "academic/academic-anthropologist.md",
+    # product
+    "Product Trend Researcher": "product/product-trend-researcher.md",
+    # design
+    "Design UX Researcher": "design/design-ux-researcher.md",
+}
+
+# 角色完整ID到MD文件的映射
+_ROLE_ID_TO_MD = {
+    "engineering_code_reviewer": "ai-factory/engineering-code-reviewer.md",
+    "engineering_security_engineer": "ai-factory/engineering-security-engineer.md",
+    "engineering_software_architect": "ai-factory/engineering-software-architect.md",
+    "testing_qa_lead": "testing/testing-qa-lead.md",
+    "testing_reality_checker": "testing/testing-reality-checker.md",
+    "engineering_senior_developer": "engineering/engineering-senior-developer.md",
+    "engineering_frontend_developer": "engineering/engineering-frontend-developer.md",
+    "engineering_ai_ml_engineer": "engineering/engineering-ai-ml-engineer.md",
+    "engineering_debugger": "engineering/engineering-debugger.md",
+    "engineering_release_engineer": "engineering/engineering-release-engineer.md",
+    "engineering_staff_engineer": "engineering/engineering-staff-engineer.md",
+    "academic_psychologist": "academic/academic-psychologist.md",
+    "academic_historian": "academic/academic-historian.md",
+    "academic_narratologist": "academic/academic-narratologist.md",
+    "academic_geographer": "academic/academic-geographer.md",
+    "academic_anthropologist": "academic/academic-anthropologist.md",
+    "product_trend_researcher": "product/product-trend-researcher.md",
+    "design_ux_researcher": "design/design-ux-researcher.md",
+}
+
+ROLES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "roles")
+
+
+def find_role_md_file(role_name: str, role_id: str = None) -> str:
+    """
+    根据角色名称或ID查找对应的MD文件路径
+    
+    Args:
+        role_name: 角色名称 (如 "Code Reviewer")
+        role_id: 角色ID (可选, 如 "engineering_code_reviewer")
+    
+    Returns:
+        MD文件完整路径，如果不存在返回None
+    """
+    # 优先使用role_id查找
+    if role_id and role_id in _ROLE_ID_TO_MD:
+        md_rel = _ROLE_ID_TO_MD[role_id]
+        md_path = os.path.join(ROLES_DIR, md_rel)
+        if os.path.exists(md_path):
+            return md_path
+    
+    # 使用role_name查找
+    if role_name in _ROLE_TO_MD:
+        md_rel = _ROLE_TO_MD[role_name]
+        md_path = os.path.join(ROLES_DIR, md_rel)
+        if os.path.exists(md_path):
+            return md_path
+    
+    # 尝试从role_name推断 (e.g., "Psychologist" -> "academic/academic-psychologist.md")
+    for key, md_rel in _ROLE_TO_MD.items():
+        if key.lower() in role_name.lower() or role_name.lower() in key.lower():
+            md_path = os.path.join(ROLES_DIR, md_rel)
+            if os.path.exists(md_path):
+                return md_path
+    
+    return None
+
+
 class SubagentState:
     """子代理状态枚举"""
     PENDING = "pending"
@@ -188,20 +278,25 @@ class SindrisExecutor:
 
     def _plan_to_dict(self, plan: Plan) -> Dict[str, Any]:
         """将Plan对象转换为字典格式"""
+        subtasks = []
+        for s in plan.subtasks:
+            md_file = find_role_md_file(s.role)
+            subtask_dict = {
+                "phase": s.phase,
+                "role": s.role,
+                "title": s.title,
+                "verify": s.verify,
+                "timeout": s.timeout,
+                "metadata": s.metadata,
+            }
+            if md_file:
+                subtask_dict["md_file"] = md_file
+            subtasks.append(subtask_dict)
+        
         return {
             "task_id": plan.task_id,
             "original_task": plan.original_task,
-            "subtasks": [
-                {
-                    "phase": s.phase,
-                    "role": s.role,
-                    "title": s.title,
-                    "verify": s.verify,
-                    "timeout": s.timeout,
-                    "metadata": s.metadata,
-                }
-                for s in plan.subtasks
-            ],
+            "subtasks": subtasks,
             "matched_roles": plan.matched_roles,
             "cache_hit": plan.cache_hit,
             "circuit_broken": plan.circuit_broken,
@@ -760,7 +855,7 @@ class SindrisExecutor:
         Step 1: plan() → 规划任务
         Step 2: 执行subtasks → 自动OMX记录
         Step 3: verify_with_ralph() → 强制验证
-        Step 4: Git commit + MEMORY更新
+        Step 4: Git commit
 
         Args:
             task: 任务描述

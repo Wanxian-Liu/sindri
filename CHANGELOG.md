@@ -1,5 +1,12 @@
 # Changelog - sindris 版本历史
 
+## v3.11更新（角色MD文件加载修复）
+- ⚠️ P0: sindris_executor.py添加find_role_md_file()函数 - 根据role名称查找MD文件路径
+- ⚠️ P0: plan()返回的subtasks添加md_file字段 - 包含角色MD文件完整路径
+- ⚠️ P0: SKILL.md Step 2添加角色MD加载逻辑 - sessions_spawn前读取MD文件内容加入task
+- **问题**: 子代理只收到"你是Code Reviewer"，不知道如何审计（MD文件未被加载）
+- **解决**: plan()提供md_file路径，sessions_spawn时读取MD内容加入task提示
+
 ## v3.10更新（Technical Writer Round4审计文档更新）
 - ⚠️ P0: 添加FIXED_TEAM状态映射 - 规范化修复流程状态定义
 - ⚠️ P1: Reality Checker保持原名testing_reality_checker - sindri使用testing_reality_checker
