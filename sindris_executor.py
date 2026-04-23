@@ -101,9 +101,13 @@ _ROLE_TO_MD = {
     "Geographer": "academic/academic-geographer.md",
     "Anthropologist": "academic/academic-anthropologist.md",
     # product
+    "Product Manager": "product/product-manager.md",
     "Product Trend Researcher": "product/product-trend-researcher.md",
     # design
     "Design UX Researcher": "design/design-ux-researcher.md",
+    # strategy
+    "CEO Founder": "strategy/strategy-ceo-founder.md",
+    "Technical Writer": "strategy/strategy-technical-writer.md",
 }
 
 # 角色完整ID到MD文件的映射
@@ -124,8 +128,12 @@ _ROLE_ID_TO_MD = {
     "academic_narratologist": "academic/academic-narratologist.md",
     "academic_geographer": "academic/academic-geographer.md",
     "academic_anthropologist": "academic/academic-anthropologist.md",
+    "product_product_manager": "product/product-manager.md",
     "product_trend_researcher": "product/product-trend-researcher.md",
     "design_ux_researcher": "design/design-ux-researcher.md",
+    # strategy
+    "strategy_ceo_founder": "strategy/strategy-ceo-founder.md",
+    "strategy_technical_writer": "strategy/strategy-technical-writer.md",
 }
 
 ROLES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "roles")
