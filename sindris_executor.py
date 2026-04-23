@@ -1,13 +1,7 @@
 """
-sindris_executor.py - 织界统一协调系统执行引擎 (v4.2)
+sindris_executor.py - 织界统一协调系统执行引擎 (v4.1)
 
-版本:v4.2
-
-全局常量:
-- DEFAULT_SPAWN_TIMEOUT: 默认subagent超时(秒)
-"""
-
-DEFAULT_SPAWN_TIMEOUT = 30  # 默认subagent超时30秒
+版本:v4.1
 
 架构原则:
 - 执行框架 ≠ 文档系统
@@ -235,6 +229,11 @@ class SindrisExecutor:
         if any(kw in task_lower for kw in audit_keywords):
             return "audit"
         
+        # 调研类关键词
+        research_keywords = ["调研", "research", "调查", "研究报告", "考察", "研究分析"]
+        if any(kw in task_lower for kw in research_keywords):
+            return "research"
+        
         # 修复类关键词
         fix_keywords = ["修复", "fix", "修补", "解决", "bug", "缺陷", "fixed team"]
         if any(kw in task_lower for kw in fix_keywords):
@@ -266,6 +265,7 @@ class SindrisExecutor:
             "fix": "FIXED_TEAM",
             "role_improvement": "ROLE_EVOLUTION_TEAM",
             "skill_develop": "SKILL_DEVELOP_TEAM",
+            "research": "RESEARCH_TEAM",
         }
         
         expected = valid_teams.get(task_type)
@@ -313,7 +313,7 @@ class SindrisExecutor:
 
         self._log_jsonl("plan_start", {"task": task[:100]})
 
-        # OMX Step 1开始
+        # OMX Round1开始
         self.omx.on_round1_start(
             task_description=task,
             matched_roles=[],
@@ -329,6 +329,7 @@ class SindrisExecutor:
                 "fix": "FIXED_TEAM",
                 "role_improvement": "ROLE_EVOLUTION_TEAM",
                 "skill_develop": "SKILL_DEVELOP_TEAM",
+                "research": "RESEARCH_TEAM",
             }
             expected_team = valid_teams.get(task_type)
             
@@ -375,7 +376,7 @@ class SindrisExecutor:
                 "from_cache": plan.cache_hit,
             })
 
-            # OMX Step 1完成
+            # OMX Round1完成
             self.omx.on_round1_complete(
                 plan_summary=result.get("plan_summary", ""),
             )
@@ -558,33 +559,6 @@ class SindrisExecutor:
                     "description": f"验证改进遵循{target_role}角色约束",
                     "check_fn": self._default_role_consistency_check,
                 })
-        elif task_type in ("role_improvement", "role_iteration"):
-            # 角色迭代任务验证项
-            items.append({
-                "name": "MD文件存在",
-                "description": "存在",
-                "check_fn": self._default_impl_check,
-            })
-            items.append({
-                "name": "frontmatter完整",
-                "description": "完整",
-                "check_fn": self._default_impl_check,
-            })
-            items.append({
-                "name": "CLAUDE.md准则",
-                "description": "包含",
-                "check_fn": self._default_impl_check,
-            })
-            items.append({
-                "name": "workflow步骤",
-                "description": "完整",
-                "check_fn": self._default_impl_check,
-            })
-            items.append({
-                "name": "验证标准",
-                "description": "可执行",
-                "check_fn": self._default_impl_check,
-            })
         elif task_type in ("audit", "review"):
             # Audit验证项
             items.append({
@@ -783,85 +757,6 @@ class SindrisExecutor:
     def is_executor_circuit_open(self) -> bool:
         """检查执行器熔断器是否打开"""
         return self._executor_circuit_breaker.state == CircuitState.OPEN
-
-    # --------------------- execute() 自动执行 ---------------------
-
-    async def execute(self, task: str, team: str = None) -> Dict[str, Any]:
-        """
-        自动执行完整sindri流程
-
-        Step 1: plan() → 规划任务
-        Step 2: 执行subtasks → 自动OMX记录
-        Step 3: verify_with_ralph() → 强制验证
-        Step 4: Git commit + MEMORY更新
-
-        Args:
-            task: 任务描述
-            team: 可选的团队名称
-
-        Returns:
-            执行结果字典
-        """
-        # Step 1: 规划
-        plan_result = await self.plan(task, team)
-        if not plan_result.get("success"):
-            return plan_result
-
-        subtasks = plan_result.get("subtasks", [])
-        task_id = self.omx.last_task_id
-
-        # Step 2: OMX Step 2开始
-        actions = [
-            {
-                "action_id": st.get("task_id", f"action_{i}"),
-                "action_name": st.get("title", ""),
-                "role": st.get("role", ""),
-            }
-            for i, st in enumerate(subtasks)
-        ]
-        self.omx.on_round2_start(task_id=task_id, actions=actions)
-
-        # 执行每个subtask
-        for i, subtask in enumerate(subtasks):
-            action_id = subtask.get("task_id", f"action_{i}")
-
-            # OMX动作开始
-            self.omx.on_action_start(action_id=action_id)
-
-            # 执行subtask（由调用者通过sessions_spawn执行）
-            # 这里只记录，不真正执行
-            subtask["_action_id"] = action_id
-            subtask["_index"] = i
-
-        # 返回plan_result，让调用者执行subtasks
-        plan_result["_omx_task_id"] = task_id
-        plan_result["_omx_actions"] = actions
-        plan_result["_execution_mode"] = "manual_spawn"
-
-        return plan_result
-
-    def mark_action_complete(
-        self,
-        action_id: str,
-        verified: bool = True,
-        verify_results: Dict[str, bool] = None,
-        error: str = None,
-    ) -> None:
-        """
-        标记一个action完成（供调用者在subtask完成后调用）
-
-        Args:
-            action_id: 动作ID
-            verified: 是否通过验证
-            verify_results: 验证结果字典
-            error: 错误信息
-        """
-        self.omx.on_action_complete(
-            action_id=action_id,
-            verified=verified,
-            verify_results=verify_results or {},
-            error=error,
-        )
 
 
 # 兼容性别名

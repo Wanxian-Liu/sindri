@@ -167,6 +167,24 @@ EVOLUTION_DISTRIBUTOR = {
     },
 }
 
+
+# 调研团队
+RESEARCH_TEAM = [
+    {"name": "AcademicHistorian", "description": "历史学家", "domain": "academic"},
+    {"name": "AcademicPsychologist", "description": "心理学家", "domain": "academic"},
+    {"name": "AcademicNarratologist", "description": "叙事学家", "domain": "academic"},
+    {"name": "AcademicGeographer", "description": "地理学家", "domain": "academic"},
+    {"name": "AcademicAnthropologist", "description": "人类学家", "domain": "academic"},
+    {"name": "ProductTrendResearcher", "description": "产品趋势研究员", "domain": "research"},
+    {"name": "DesignUXResearcher", "description": "设计体验研究员", "domain": "research"},
+    {"name": "TestResultsAnalyzer", "description": "测试结果分析师", "domain": "research"},
+]
+
+RESEARCH_TEAM_TRIGGERS = [
+    "调研", "research", "调查", "研究报告", "考察", "研究分析",
+    "研究报告", "深度调研", "市场调研", "用户调研",
+]
+
 # 技能开发团队（参考学习→自主开发）
 SKILL_DEVELOP_TEAM = [
     {
@@ -306,6 +324,11 @@ class RoleMatcher:
         task_lower = task.lower()
         return any(trigger in task_lower for trigger in SKILL_DEVELOP_TEAM_TRIGGERS)
     
+    def should_use_research_team(self, task: str) -> bool:
+        """检测是否应该使用调研团队"""
+        task_lower = task.lower()
+        return any(trigger in task_lower for trigger in RESEARCH_TEAM_TRIGGERS)
+
     def get_evolution_improver(self, task: str) -> Optional[Dict]:
         """
         根据任务中的被改进角色，返回最合适的改进角色
@@ -370,6 +393,14 @@ class RoleMatcher:
             return [
                 RoleMatch(role=r, similarity=1.0, source="skill_develop_team")
                 for r in SKILL_DEVELOP_TEAM
+            ][:top_k]
+        
+        # 1.8. 调研团队（调研任务使用专业调研团队）
+        if self.should_use_research_team(task):
+            print(f"[RoleMatcher] 检测到调研任务，使用调研团队")
+            return [
+                RoleMatch(role=r, similarity=1.0, source="research_team")
+                for r in RESEARCH_TEAM
             ][:top_k]
         
         # 2. 任务类型识别 + 固定小组（creative/specialized域不用固定团队）

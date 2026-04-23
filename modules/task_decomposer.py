@@ -86,9 +86,11 @@ class TaskDecomposer:
             is_audit = any(r.get('team_type') == 'audit' for r in auto_matched_roles)
             is_evolution = any(r.get('team_type') == 'evolution' for r in auto_matched_roles)
             is_skill_develop = any(r.get('team_type') == 'skill_develop' for r in auto_matched_roles)
+            is_research = any(r.get('team_type') == 'research' for r in auto_matched_roles)
             # 也检查source='role_evolution_team'的情况
             has_role_evolution_source = any(r.get('source') == 'role_evolution_team' for r in auto_matched_roles)
             has_skill_develop_source = any(r.get('source') == 'skill_develop_team' for r in auto_matched_roles)
+            has_research_source = any(r.get('source') == 'research_team' for r in auto_matched_roles)
             
             if is_skill_develop or has_skill_develop_source:
                 for r in auto_matched_roles:
@@ -99,6 +101,9 @@ class TaskDecomposer:
             elif is_audit:
                 for r in auto_matched_roles:
                     r['team_type'] = 'audit'
+            elif is_research or has_research_source:
+                for r in auto_matched_roles:
+                    r['team_type'] = 'research'
             return auto_matched_roles
         
         # auto_matched_roles为空时才调用RoleMatcher（降级fallback）
@@ -112,8 +117,10 @@ class TaskDecomposer:
                 is_evolution = any(getattr(m, 'source', None) in ('evolution_distributor', 'audit_evolution', 'role_evolution_team') for m in matches)
                 # 检查是否是技能开发团队
                 is_skill_develop = any(getattr(m, 'source', None) == 'skill_develop_team' for m in matches)
+                # 检查是否是调研团队
+                is_research = any(getattr(m, 'source', None) == 'research_team' for m in matches)
                 roles = [m.role for m in matches]
-                # 注意：优先级 skill_develop > evolution > audit
+                # 注意：优先级 skill_develop > evolution > audit > research
                 if is_skill_develop:
                     for r in roles:
                         r['team_type'] = 'skill_develop'
@@ -123,6 +130,9 @@ class TaskDecomposer:
                 elif is_audit:
                     for r in roles:
                         r['team_type'] = 'audit'
+                elif is_research:
+                    for r in roles:
+                        r['team_type'] = 'research'
                 return roles
         except Exception as e:
             logger.warning(f"[TaskDecomposer] RoleMatcher错误: {e}，使用fallback")
@@ -210,18 +220,20 @@ class TaskDecomposer:
         # 尝试通过key匹配
         for r in roles:
             role_id = r.get('id', '').lower()
-            if key in role_id:
+            role_name = r.get('name', '').lower()
+            # 同时匹配id和name
+            if key in role_id or key in role_name:
                 return r
         
-        # 检查是否是evolution或skill_develop团队
-        is_special_team = any(r.get('team_type') in ('evolution', 'skill_develop') for r in roles)
+        # 检查是否是特殊团队
+        is_special_team = any(r.get('team_type') in ('evolution', 'skill_develop', 'research') for r in roles)
         
-        # 如果是特殊团队（evolution/skill_develop），fallback到roles自身（不使用FIXED_TEAM）
+        # 如果是特殊团队（evolution/skill_develop/research），fallback到roles自身（不使用FIXED_TEAM）
         if is_special_team:
             if 0 <= fallback_index < len(roles):
                 return roles[fallback_index]
             # 最后的fallback：返回roles中的第一个
-            return roles[0] if roles else {"id": "engineering_senior_developer", "name": "Senior Developer"}
+            return roles[0] if roles else {"id": "researcher", "name": "Researcher"}
         
         # fallback到FIXED_TEAM
         if 0 <= fallback_index < len(FIXED_TEAM):
@@ -254,6 +266,24 @@ class TaskDecomposer:
                     "role": pm_role,
                     "task_context": task,
                     "stage": "planning",
+                }
+            ))
+            return tasks
+        
+        # 调研任务 → Academic角色
+        if any(kw in task_lower for kw in ['调研', '调研报告', '研究报告', '研究分析', 'research', '调查', '考察', '分析趋势', '深度调研']):
+            researcher_role = self._get_role_from_team(roles, 'academic', 0) or roles[0] if roles else {}
+            tasks.append(Task(
+                id=self._gen_id("task"),
+                title="调研任务规划与设计",
+                kind="round1_planning",
+                phase="round1",
+                priority="high",
+                verify=["调研计划完整", "研究方法可行"],
+                metadata={
+                    "role": researcher_role,
+                    "task_context": task,
+                    "stage": "research_planning",
                 }
             ))
             return tasks
@@ -305,7 +335,11 @@ class TaskDecomposer:
     def _create_round2_tasks(self, slices: List[Dict], roles: List[Dict]) -> List[Task]:
         """创建Round2任务（执行）"""
         tasks = []
-        developer_role = self._get_role_from_team(roles, 'developer', 3)  # Senior Developer
+        # 优先使用researcher角色，其次使用developer角色
+        researcher_role = self._get_role_from_team(roles, 'researcher', 0)
+        developer_role = researcher_role or self._get_role_from_team(roles, 'developer', 3)
+        if not developer_role and roles:
+            developer_role = roles[0]  # fallback到第一个角色
         
         # 如果有slices且数量合理（<=5），按slice创建任务
         # 数量>5说明SliceGenerator无法精确匹配，使用fallback避免污染
