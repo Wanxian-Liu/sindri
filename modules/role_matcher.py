@@ -379,13 +379,13 @@ class RoleMatcher:
                 for r in ROLE_EVOLUTION_TEAM
             ][:top_k]
         
-        # 1.5. 审计团队（只有明确是审计任务时才触发）
+        # 1.5. 审计团队（只有明确是审计任务时才触发）- 不使用top_k限制，返回全部5个角色
         if self.should_use_audit_team(task):
             print(f"[RoleMatcher] 检测到审计任务，使用审计专业团队")
             return [
                 RoleMatch(role=r, similarity=1.0, source="audit_team")
                 for r in AUDIT_TEAM
-            ][:top_k]
+            ]  # 不使用[:top_k]，确保全部5个角色都被返回
         
         # 1.75. 技能开发团队（参考学习→自主开发）
         if self.should_use_skill_develop_team(task):

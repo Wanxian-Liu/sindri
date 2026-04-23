@@ -295,24 +295,54 @@ class TaskDecomposer:
             ))
             return tasks
         
-        # 审计任务 → Code Reviewer（只有审计团队才处理审计任务）
+        # 审计任务 → AUDIT_TEAM 5个角色全部参与
         is_audit_team = any(r.get('team_type') == 'audit' or r.get('source') == 'audit_team' for r in roles)
-        if is_audit_team and any(kw in task_lower for kw in ['审计', 'audit', '审查', '检查问题', '代码审查', '安全审计']):
-            auditor_role = self._get_role_from_team(roles, 'reviewer', 0) or self._get_role_from_team(roles, 'code', 0)
-            tasks.append(Task(
-                id=self._gen_id("task"),
-                title="代码审计与问题识别",
-                kind="round1_planning",
-                phase="round1",
-                priority="high",
-                verify=["审计范围明确", "检查清单完整"],
-                metadata={
-                    "role": auditor_role,
-                    "task_context": task,
-                    "stage": "audit_planning",
-                }
-            ))
-            return tasks
+        if is_audit_team and any(kw in task_lower for kw in ['审计', 'audit', '审查', '检查问题', '代码审查', '安全审计', '评估', '评价']):
+            # AUDIT_TEAM 5个角色，每个都有独立的审计任务
+            audit_roles = [
+                {'name': 'Code Reviewer', 'title': '代码审计与问题识别', 'verify': ['审计范围明确', '检查清单完整', '代码逻辑无误']},
+                {'name': 'Security Engineer', 'title': '安全审计与风险识别', 'verify': ['安全漏洞识别', '风险评估完成', '修复建议可行']},
+                {'name': 'Software Architect', 'title': '架构审查与设计评估', 'verify': ['架构设计合理', '模块划分清晰', '扩展性评估']},
+                {'name': 'QA Lead', 'title': '质量审查与测试覆盖', 'verify': ['质量标准明确', '测试覆盖充分', '验收条件清晰']},
+                {'name': 'Reality Checker', 'title': '现实检查与可行性验证', 'verify': ['假设验证', '约束检查', '可行性确认']},
+            ]
+            
+            for audit_info in audit_roles:
+                # 从AUDIT_TEAM roles中找到匹配的角色
+                matched_role = None
+                for r in roles:
+                    role_name = r.get('name', '').lower()
+                    if audit_info['name'].lower() in role_name or role_name in audit_info['name'].lower():
+                        matched_role = r
+                        break
+                
+                if not matched_role:
+                    # fallback: 尝试通过ID匹配
+                    for r in roles:
+                        role_id = r.get('id', '').lower()
+                        if audit_info['name'].lower().replace(' ', '_') in role_id:
+                            matched_role = r
+                            break
+                
+                if matched_role:
+                    tasks.append(Task(
+                        id=self._gen_id("task"),
+                        title=audit_info['title'],
+                        kind="round1_planning",
+                        phase="round1",
+                        priority="high",
+                        verify=audit_info['verify'],
+                        metadata={
+                            "role": matched_role,
+                            "task_context": task,
+                            "stage": "audit_planning",
+                            "audit_dimension": audit_info['name'],
+                        }
+                    ))
+            
+            # AUDIT_TEAM所有角色都参与审计，不返回，继续让其他流程处理后续任务
+            if tasks:
+                return tasks
         
         # 工程任务 → Software Architect
         engineering_keywords = [
