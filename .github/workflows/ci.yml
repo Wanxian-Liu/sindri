@@ -31,8 +31,8 @@ jobs:
 
       - name: Prepare legacy compatibility paths
         run: |
-          mkdir -p /home/rayliu/.openclaw/skills
-          ln -sfn "$GITHUB_WORKSPACE" /home/rayliu/.openclaw/skills/sindris
+          sudo mkdir -p /home/rayliu/.openclaw/skills
+          sudo ln -sfn "$GITHUB_WORKSPACE" /home/rayliu/.openclaw/skills/sindris
 
       - name: Release contract
         run: python -m pytest tests/test_release_contract.py -q --tb=short
