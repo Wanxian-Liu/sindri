@@ -156,13 +156,21 @@ class CircuitBreaker:
         """
         if not self.can_execute():
             raise CircuitOpenError(f"Circuit is {self.state.value}")
-        try:
-            result = func(*args, **kwargs)
-            self.record_success()
-            return result
-        except Exception as e:
-            self.record_failure()
-            raise
+        attempt = 0
+        last_error = None
+        while True:
+            try:
+                result = func(*args, **kwargs)
+                self.record_success()
+                return result
+            except Exception as e:
+                last_error = e
+                self.record_failure()
+                if not self.can_execute():
+                    raise CircuitOpenError(f"Circuit is {self.state.value}") from last_error
+                delay = self._calculate_delay(attempt)
+                time.sleep(delay)
+                attempt += 1
 
     def __enter__(self):
         """上下文管理器入口"""

@@ -34,7 +34,7 @@ import os
 import re
 import math
 from pathlib import Path
-from typing import Optional, Literal
+from typing import Optional, Literal, Union
 
 # ── Config ─────────────────────────────────────────────────────────────────────
 
@@ -244,7 +244,12 @@ def jaccard(a: set[str], b: set[str]) -> float:
     union = len(a | b)
     return inter / union if union else 0.0
 
-def score_role(query_tokens: set[str], role: dict, task_type: Optional[str] = None) -> tuple[float, list[str]]:
+def score_role(
+    query_tokens: set[str],
+    role: dict,
+    task_type: Optional[str] = None,
+    return_reasons: bool = False,
+) -> Union[float, tuple[float, list[str]]]:
     """
     Compute weighted aggregate score for a single role.
     General terms are penalized unless combined with domain-specific terms.
@@ -359,7 +364,14 @@ def score_role(query_tokens: set[str], role: dict, task_type: Optional[str] = No
         bonus_multiplier = 0.2  # category不匹配时0.2倍
     total *= bonus_multiplier
     
-    return total, reasons
+    # 归一化到 0-1，保持API语义稳定（测试与文档均假设分数是概率型区间）
+    max_base = sum(WEIGHTS.values())  # 3.0 + 1.0 + 1.5 + 0.8 = 6.3
+    max_multiplier = 2.0              # engineering_bonus 场景
+    normalized = max(0.0, min(total / (max_base * max_multiplier), 1.0))
+
+    if return_reasons:
+        return normalized, reasons
+    return normalized
 
 
 def detect_task_type(task_keywords: list[str]) -> Optional[Literal["code", "research", "write", "design", "test", "operation"]]:
@@ -468,7 +480,7 @@ def match_roles(
     # Score every role
     scored = []
     for role in all_roles:
-        score, reasons = score_role(query_tokens, role, task_type)
+        score, reasons = score_role(query_tokens, role, task_type, return_reasons=True)
         if score >= MIN_SCORE:
             role_entry = {
                 "id":          role["id"],
