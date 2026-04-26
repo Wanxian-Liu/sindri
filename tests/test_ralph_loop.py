@@ -316,15 +316,12 @@ class TestRun:
 
     @pytest.mark.anyio
     async def test_run_fails_then_passes(self):
-        """先失败后通过"""
-        call_count = [0]
+        """先失败后通过（使用白名单内的 RalphDemoChecks）"""
+        from ralph_loop import RalphDemoChecks
 
-        def checker():
-            call_count[0] += 1
-            return call_count[0] >= 2  # 第一次失败，第二次通过
-
+        demo = RalphDemoChecks()
         items = [
-            {"name": "checker", "check_fn": checker},
+            {"name": "checker", "check_fn": demo.demo_fail_then_pass},
         ]
         r = RalphLoop(task_name="先败后成", verify_items=items)
 

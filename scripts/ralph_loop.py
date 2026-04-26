@@ -83,6 +83,37 @@ class RalphResult:
     error_feedback: List[str] = field(default_factory=list)
 
 # ============================================================
+# 受控演示 / 测试桩（通过 check_fn 白名单，禁止任意 lambda）
+# ============================================================
+
+
+class RalphDemoChecks:
+    """CLI 与单测使用的受控校验方法，非用户任意可调用对象。"""
+
+    def __init__(self) -> None:
+        self._call_seq = 0
+
+    def demo_file_ok(self) -> bool:
+        return True
+
+    def demo_code_ok(self) -> bool:
+        return True
+
+    def demo_output_fail(self) -> bool:
+        return False
+
+    def demo_all_pass_a(self) -> bool:
+        return True
+
+    def demo_all_pass_b(self) -> bool:
+        return True
+
+    def demo_fail_then_pass(self) -> bool:
+        self._call_seq += 1
+        return self._call_seq >= 2
+
+
+# ============================================================
 # Ralph Loop 核心
 # ============================================================
 
@@ -146,6 +177,13 @@ class RalphLoop:
         ("MockSindrisExecutor", "_check_pass_async"),
         ("MockSindrisExecutor", "_check_fail_async"),
         ("MockSindrisExecutor", "_check_impl_error_async"),
+        # 模块内受控演示桩（CLI / 单测）
+        ("RalphDemoChecks", "demo_file_ok"),
+        ("RalphDemoChecks", "demo_code_ok"),
+        ("RalphDemoChecks", "demo_output_fail"),
+        ("RalphDemoChecks", "demo_all_pass_a"),
+        ("RalphDemoChecks", "demo_all_pass_b"),
+        ("RalphDemoChecks", "demo_fail_then_pass"),
     ]
 
     @classmethod
@@ -224,7 +262,9 @@ class RalphLoop:
             on_round_complete: 轮次完成回调 (可选)
         """
         self.task_name = task_name
-        self.verify_items = self._parse_verify_items(verify_items or [])
+        raw_items = verify_items or []
+        self.verify_items = self._parse_verify_items(raw_items)
+        self._raw_verify_items_count = len(raw_items)
         self.execute_fn = execute_fn
         self.on_round_complete = on_round_complete
         
@@ -371,7 +411,16 @@ class RalphLoop:
         report.failed_count = sum(1 for i in self.verify_items if i.result == False)
         
         # Step 5: 结论
-        report.conclusion = "通过" if report.failed_count == 0 else "不通过"
+        # 安全策略会过滤不受信任check_fn，过滤后若无有效验证项，不能判定为通过。
+        if len(self.verify_items) == 0:
+            if self._raw_verify_items_count > 0:
+                report.problems.append("所有验证项均被安全策略拦截，无法完成有效验证")
+            else:
+                report.problems.append("未提供验证项，无法判定任务通过")
+            report.failed_count = 1
+            report.conclusion = "不通过"
+        else:
+            report.conclusion = "通过" if report.failed_count == 0 else "不通过"
         report.end_time = datetime.now().isoformat()
         report.state = RoundState.COMPLETED
         
@@ -514,14 +563,14 @@ async def verify_skill(
 if __name__ == "__main__":
     async def test():
         print("=== Ralph Loop 测试 ===\n")
-        
-        # 测试验证项
+
+        demo = RalphDemoChecks()
         items = [
-            {"name": "文件存在", "description": "检查文件是否存在", "check_fn": lambda: True},
-            {"name": "代码可执行", "description": "检查代码能否执行", "check_fn": lambda: True},
-            {"name": "输出正确", "description": "检查输出是否符合预期", "check_fn": lambda: False},  # 故意失败
+            {"name": "文件存在", "description": "检查文件是否存在", "check_fn": demo.demo_file_ok},
+            {"name": "代码可执行", "description": "检查代码能否执行", "check_fn": demo.demo_code_ok},
+            {"name": "输出正确", "description": "检查输出是否符合预期", "check_fn": demo.demo_output_fail},
         ]
-        
+
         verifier = RalphLoop(
             task_name="测试任务",
             verify_items=items,

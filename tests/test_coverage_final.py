@@ -125,10 +125,11 @@ class TestRalphLoopMainBlock:
         """RalphLoop with mixed pass/fail items (as in __main__ block)."""
         import scripts.ralph_loop as rl
 
+        demo = rl.RalphDemoChecks()
         items = [
-            {"name": "文件存在", "description": "检查文件是否存在", "check_fn": lambda: True},
-            {"name": "代码可执行", "description": "检查代码能否执行", "check_fn": lambda: True},
-            {"name": "输出正确", "description": "检查输出是否符合预期", "check_fn": lambda: False},
+            {"name": "文件存在", "description": "检查文件是否存在", "check_fn": demo.demo_file_ok},
+            {"name": "代码可执行", "description": "检查代码能否执行", "check_fn": demo.demo_code_ok},
+            {"name": "输出正确", "description": "检查输出是否符合预期", "check_fn": demo.demo_output_fail},
         ]
 
         verifier = rl.RalphLoop(task_name="测试任务", verify_items=items)
@@ -144,9 +145,10 @@ class TestRalphLoopMainBlock:
         """RalphLoop with all items passing (simulates main block passing path)."""
         import scripts.ralph_loop as rl
 
+        demo = rl.RalphDemoChecks()
         items = [
-            {"name": "check1", "description": "d1", "check_fn": lambda: True},
-            {"name": "check2", "description": "d2", "check_fn": lambda: True},
+            {"name": "check1", "description": "d1", "check_fn": demo.demo_all_pass_a},
+            {"name": "check2", "description": "d2", "check_fn": demo.demo_all_pass_b},
         ]
 
         verifier = rl.RalphLoop(task_name="测试任务", verify_items=items)

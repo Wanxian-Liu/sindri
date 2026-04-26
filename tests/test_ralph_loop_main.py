@@ -8,7 +8,7 @@ import asyncio
 import pytest
 from pathlib import Path
 
-SCRIPT_DIR = Path("/home/rayliu/.openclaw/skills/sindris/scripts")
+SCRIPT_DIR = Path(__file__).resolve().parents[1] / "scripts"
 
 
 class TestRalphLoopMain:

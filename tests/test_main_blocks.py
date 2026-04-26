@@ -14,7 +14,7 @@ import tempfile
 import shutil
 from pathlib import Path
 
-SCRIPT_DIR = Path("/home/rayliu/.openclaw/skills/sindris/scripts")
+SCRIPT_DIR = Path(__file__).resolve().parent.parent / "scripts"
 sys.path.insert(0, str(SCRIPT_DIR))
 
 
@@ -137,13 +137,14 @@ def test_ralph_loop_main_block_direct():
     Cover ralph_loop.py lines 409-428: the __main__ block.
     Executes the async test() function that runs in __main__.
     """
-    from ralph_loop import RalphLoop
+    from ralph_loop import RalphLoop, RalphDemoChecks
 
     async def run_test():
+        demo = RalphDemoChecks()
         items = [
-            {"name": "文件存在", "description": "检查文件是否存在", "check_fn": lambda: True},
-            {"name": "代码可执行", "description": "检查代码能否执行", "check_fn": lambda: True},
-            {"name": "输出正确", "description": "检查输出是否符合预期", "check_fn": lambda: False},  # 故意失败
+            {"name": "文件存在", "description": "检查文件是否存在", "check_fn": demo.demo_file_ok},
+            {"name": "代码可执行", "description": "检查代码能否执行", "check_fn": demo.demo_code_ok},
+            {"name": "输出正确", "description": "检查输出是否符合预期", "check_fn": demo.demo_output_fail},
         ]
 
         verifier = RalphLoop(
@@ -167,7 +168,7 @@ def test_all_main_block_paths():
     """Verify all main block paths are reachable and functional."""
     from circuit_breaker import CircuitBreaker, ROLE_TIMEOUTS
     from match_roles import match_roles
-    from ralph_loop import RalphLoop
+    from ralph_loop import RalphLoop, RalphDemoChecks
 
     # circuit_breaker: verify all print paths exist
     cb = CircuitBreaker("verifier")
@@ -180,7 +181,8 @@ def test_all_main_block_paths():
 
     # ralph_loop: verify verify_items with all passing
     async def check():
-        items = [{"name": "pass", "check_fn": lambda: True}]
+        demo = RalphDemoChecks()
+        items = [{"name": "pass", "check_fn": demo.demo_all_pass_a}]
         v = RalphLoop(task_name="x", verify_items=items)
         r = await v.run()
         return r

@@ -1,5 +1,27 @@
 # Changelog - sindris 版本历史
 
+## 版本升级检查清单（v4.1 起）
+
+发布新版本时按顺序完成，避免 SKILL 与代码脱节：
+
+1. **`sindris_executor.py`**：更新 `VERSION = "x.y"`。
+2. **`SKILL.md`**：frontmatter `version: "x.y"` 与正文涉及版本号的句子。
+3. **`tests/test_release_contract.py`**：将 `assert ... == "4.1"` 中的期望版本改为 `x.y`（或与常量统一）。
+4. **`audit/README.md`**：「当前基线」中的版本号。
+5. **本文件**：在顶部增加 `## vx.y` 小节，记录变更摘要。
+6. **合并前**：本地或通过 CI 运行 `python3 -m pytest tests/test_release_contract.py` 与 `python3 -m pytest tests/`。
+
+CI：仓库 `.github/workflows/ci.yml` 在 push/PR 至 `main` 或 `master` 时对 Python 3.11 / 3.12 运行上述测试。
+
+---
+
+## v4.1 维护记录（OpenClaw 对齐与门禁）
+
+- SKILL：增加 OpenClaw 运行时契约与 **plan() → sessions_spawn / sessions_yield 映射表**；统一 Sindris 命名，去除 A2 代号。
+- 工程：`tests/test_release_contract.py` 发布契约；`audit/README.md` / `audit/PROMPT_MAINTAINER.md`；历史审计报告归档声明。
+- 脚本：`register_roles.py` 使用仓库相对路径；`install_sindri.sh` 触发词与 Sindris 一致。
+- 质量：全量 `pytest` + CI 工作流。
+
 ## v3.11更新（角色MD文件加载修复）
 - ⚠️ P0: sindris_executor.py添加find_role_md_file()函数 - 根据role名称查找MD文件路径
 - ⚠️ P0: plan()返回的subtasks添加md_file字段 - 包含角色MD文件完整路径

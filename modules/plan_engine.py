@@ -265,7 +265,7 @@ class FastPathCache:
             if os.path.exists(tmp_path):
                 try:
                     os.unlink(tmp_path)
-                except:
+                except OSError:
                     pass
 
     def get(self, task: str) -> Optional[Dict]:

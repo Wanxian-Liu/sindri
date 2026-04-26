@@ -1,10 +1,10 @@
 ---
 name: sindris
-version: "3.10"
+version: "4.1"
 license: MIT
 copyright: "2026 琬弦 (Wanxian)"
 description: |
-  织界统一协调系统 v3.10 - 多Agent协作执行引擎
+  织界统一协调系统 v4.1 - 多Agent协作执行引擎
   
   基于sindris Step 1-5流程，参考oh-my-codex v2设计，
   整合织界中枢模块（熔断/投票/worktree）和OMX持久化。
@@ -16,7 +16,7 @@ description: |
   完整版本历史见 [CHANGELOG.md](CHANGELOG.md)
 ---
 
-# Sindri's A2v3 多Agent协作流程
+# Sindris v4.1 多Agent协作流程
 
 
 > **Sindri's** — 冰岛语"真挚、纯粹" | 意为每个协作都是真诚的、有目的的
@@ -25,7 +25,7 @@ description: |
 
 ## 零、审计状态
 
-> **最新审计**: 2026-04-22 | **版本**: v3.10
+> **最新审计**: 2026-04-27 | **版本**: v4.1
 
 ### 当前状态
 
@@ -115,7 +115,54 @@ for subtask in plan['subtasks']:
         runtime="subagent",
         timeoutSeconds=subtask['timeout']
     )
+# spawn 为非阻塞；每个子任务启动后须按 OpenClaw 约定调用 sessions_yield，
+# 结束当前轮次并等待子智能体结果以下一条消息形式进入（见下文「运行时契约」）。
 ```
+
+### OpenClaw 运行时契约
+
+Sindris 运行在 **OpenClaw Gateway** 之上：会话状态由 Gateway 持有，跨会话编排依赖**会话工具**。官方概念见 [会话管理](https://docs.openclaw.ai/zh-CN/concepts/session) 与 [会话工具](https://docs.openclaw.ai/zh-CN/concepts/session-tool)。
+
+| 要求 | 说明 |
+|------|------|
+| **执行只通过工具** | 子智能体工作必须由主会话中的 Agent 调用 `sessions_spawn` 启动；`sindris_executor` 只产出规划结果，不替代 spawn。 |
+| **spawn 后必须 yield** | `sessions_spawn` **非阻塞**，返回 `runId` / `childSessionKey` 后，须调用 `sessions_yield`，有意结束当前轮次，使子智能体结果以**后续消息**到达，避免在同一轮内空转等待。 |
+| **子任务上下文** | 子项需要继承当前讨论上下文时使用 `context: "fork"`；需要干净子上下文时使用 `context: "isolated"` 或省略（按 OpenClaw 默认）。参数以当时 Gateway 支持的会话工具为准。 |
+| **编排深度** | 默认**叶子**子智能体不持有会话编排工具；仅当 `maxSpawnDepth >= 2` 等配置满足时，**一层编排型**子智能体才可能获得 `sessions_spawn`、`subagents`、`sessions_list`、`sessions_history` 等。SKILL 不得承诺「任意子代理都能再 spawn」，除非部署已显式放开深度。 |
+| **可见性** | 会话工具可见性默认为 `tree`（当前会话 + 已 spawn 子树）。跨会话汇总或读其他会话须符合 Gateway 配置（如 `agent` / `all`），且安全面更大，需单独评审。 |
+| **排障（可选）** | `subagents`（list / steer / kill）、`sessions_list` 可用于查看或干预子智能体；非 Sindris Python 代码职责，由主 Agent 按需调用。 |
+
+**部署提示（与 Sindris 逻辑无关、与事故率有关）**
+
+- 多人可通过私信联系同一智能体时，应配置私信隔离（如 `session.dmScope: "per-channel-peer"`），避免上下文串台。详见官方 [会话管理 · 私信隔离](https://docs.openclaw.ai/zh-CN/concepts/session)。
+- 会话存在每日重置、空闲重置、`/new` 等生命周期；长任务若跨会话切换，需结合官方 [会话](https://docs.openclaw.ai/zh-CN/concepts/session) 与后台任务文档评估是否拆分或挂任务引用。
+
+#### plan() 输出 → OpenClaw 会话工具映射（建议）
+
+以下映射供**主会话中的 Agent**实现，非 `sindris_executor` 内建行为。工具名与语义以 [会话工具](https://docs.openclaw.ai/zh-CN/concepts/session-tool) 为准。
+
+| Sindris / `plan()` | 建议映射 | 说明 |
+|--------------------|----------|------|
+| `subtasks[].title` | `sessions_spawn` 的任务正文（`task` / 等价参数） | 子智能体收到的指令主体；若存在 `md_file`，主 Agent 应先读该文件，将要点并入正文再 spawn。 |
+| `subtasks[].timeout` | `timeoutSeconds`（或当时 API 等价项） | 与规划器给出的超时一致。 |
+| `subtasks[].md_file` | 不直接作为 spawn 字段 | 由主 Agent 读盘拼入 `task`，避免工具层路径语义不一致。 |
+| `subtasks[].role` / `phase` | 写入 `task` 前缀或说明块 | 便于子智能体与日志对齐；若 Gateway 支持 `label` 等元数据可一并设置。 |
+| `subtasks[].verify` | **不映射 spawn** | 供 Sindris 验证层（如 Ralph）或主 Agent 人工核对使用。 |
+| `task_id` / `original_task` | 写入 `task` 首部或本地/OMX 记录 | 便于与子智能体结果、JSONL 对照。 |
+| spawn 返回的 `runId` / `childSessionKey` | 主 Agent 自行记录 | 用于 `subagents` 排障或与 `sessions_history` 对照（在可见性策略允许时）。 |
+| 每个子任务 spawn 之后 | `sessions_yield` | **必须**：结束当前轮次，等待子结果以下一条消息进入；可「每 spawn 一次 yield 一次」或按 Gateway 允许的批模式编排（以官方行为为准）。 |
+| 需要子继承当前对话 | `context: "fork"` | 见会话工具文档。 |
+| 需要干净子上下文 | `context: "isolated"` 或省略默认 | 见会话工具文档。 |
+| 高风险子任务 | `sandbox: "require"`（若支持） | 按部署安全策略选用。 |
+
+#### 推荐拓扑：单人使用、仅主代理 spawn
+
+适用于**只有你本人**使用、且**只有主智能体**通过 `sessions_spawn` 拉起若干子智能体、**子智能体不再 spawn** 的常见模式：
+
+- **不必**为「子代理还能再 spawn」去调整 `maxSpawnDepth`；拓扑是**星形**（主 → 多叶子），上表「编排深度」一节在此模式下主要是背景说明。
+- **私信隔离**（`session.dmScope`）非刚需；仅当未来多人共用同一智能体时再按官方文档开启。
+- 子任务默认优先 **`context: "fork"`**，便于继承当前讨论；仅在需要干净上下文时用 `isolated`（或等价选项）。
+- **`sessions_spawn` 后仍须 `sessions_yield`**，与是否多人、是否嵌套 spawn 无关。
 
 ---
 
@@ -123,14 +170,14 @@ for subtask in plan['subtasks']:
 
 ### 触发方式
 
-在对话中说出以下任一关键词即可激活Sindri's流程：
+在对话中说出以下任一关键词即可激活 Sindris 流程：
 
 | 触发词 | 说明 |
 |--------|------|
-| `启动Sindri's` | 开始完整A2v3流程 |
-| `A2流程` | 开始A2v3协作 |
+| `启动Sindris` / `启动Sindri's` | 开始完整 Sindris v4.1 流程 |
+| `Sindris流程` / `织界流程` | 开始 v4.1 多Agent协作 |
 | `多Agent协作` | 启动团队协作 |
-| `执行A2` | 快速启动 |
+| `执行Sindris` | 快速启动 |
 | `审计` | **启动审计专业团队** |
 
 ### 激活示例
@@ -138,7 +185,7 @@ for subtask in plan['subtasks']:
 ```
 用户：解决Mimir-Core两套并行路径问题
     ↓
-主Agent识别触发词 → 启动Sindri's Step 1
+主Agent识别触发词 → 启动 Sindris v4.1 Step 1
 
 用户：审计sindris角色质量
     ↓

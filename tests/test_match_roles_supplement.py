@@ -12,7 +12,7 @@ import shutil
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-SCRIPT_DIR = Path("/home/rayliu/.openclaw/skills/sindris/scripts")
+SCRIPT_DIR = Path(__file__).resolve().parents[1] / "scripts"
 sys.path.insert(0, str(SCRIPT_DIR))
 
 
@@ -169,9 +169,13 @@ def test_score_role_full():
     
     query_tokens = tokenize("security audit")
     score = score_role(query_tokens, role)
-    
+
     assert isinstance(score, float)
     assert 0 <= score <= 1
+
+    scored, reasons = score_role(query_tokens, role, return_reasons=True)
+    assert isinstance(scored, float)
+    assert isinstance(reasons, list)
 
 
 def test_match_roles_score_sorting():

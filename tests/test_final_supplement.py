@@ -10,7 +10,7 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
-SCRIPT_DIR = Path("/home/rayliu/.openclaw/skills/sindris/scripts")
+SCRIPT_DIR = Path(__file__).resolve().parents[1] / "scripts"
 sys.path.insert(0, str(SCRIPT_DIR))
 
 
@@ -207,8 +207,10 @@ def test_worktree_officer_remove_from_git_list(tmp_path):
 @pytest.mark.anyio
 async def test_ralph_verify_skill():
     """覆盖 verify_skill 函数"""
-    from ralph_loop import verify_skill
-    items = [{"name": "t1", "check_fn": lambda: True}]
+    from ralph_loop import verify_skill, RalphDemoChecks
+
+    demo = RalphDemoChecks()
+    items = [{"name": "t1", "check_fn": demo.demo_all_pass_a}]
     result = await verify_skill("test-skill", items)
     assert hasattr(result, 'success')
     assert hasattr(result, 'total_rounds')
@@ -217,10 +219,12 @@ async def test_ralph_verify_skill():
 @pytest.mark.anyio
 async def test_ralph_loop_main_block():
     """覆盖 __main__ 块"""
-    from ralph_loop import RalphLoop
+    from ralph_loop import RalphLoop, RalphDemoChecks
+
+    demo = RalphDemoChecks()
     items = [
-        {"name": "f1", "check_fn": lambda: True},
-        {"name": "f2", "check_fn": lambda: False},
+        {"name": "f1", "check_fn": demo.demo_all_pass_a},
+        {"name": "f2", "check_fn": demo.demo_output_fail},
     ]
     v = RalphLoop(task_name="test", verify_items=items)
     result = await v.run()

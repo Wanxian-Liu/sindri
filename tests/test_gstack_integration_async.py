@@ -37,8 +37,8 @@ except ImportError as e:
 
 
 def run_async(coro):
-    """运行协程的辅助函数"""
-    return asyncio.get_event_loop().run_until_complete(coro)
+    """运行协程的辅助函数（Python 3.12+ 兼容，避免隐式事件循环问题）"""
+    return asyncio.run(coro)
 
 
 class TestDeepseekCall:

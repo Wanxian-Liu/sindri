@@ -1,5 +1,12 @@
 # 🔒 Sindris 安全审计报告
 
+> [!WARNING]
+> **归档状态（2026-04-27）**
+> - 本报告是 **2026-04-21 / v3.7** 历史快照，包含大量已过时结论。
+> - 特别是“`check_dangerous_command` 从未接入执行路径”在 **v4.1** 中已不成立（`plan()` 入口已做安全拦截）。
+> - 仅作为历史追踪使用，**不得**直接作为当前修复优先级依据。
+> - 当前版本请以 `sindris_executor.py`（`VERSION = "4.1"`）、`SKILL.md` 与最新测试结果为准。
+
 **审计日期**: 2026-04-21  
 **审计人**: Security Engineer (Subagent)  
 **版本**: sindris_executor.py v3.7 / safety_policy.py (standalone)  

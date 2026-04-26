@@ -7,8 +7,9 @@ import os
 from pathlib import Path
 from datetime import datetime
 
-REGISTRY_PATH = '/home/rayliu/.openclaw/skills/sindris/scripts/roles_registry.json'
-ROLES_DIR = Path('/home/rayliu/.openclaw/skills/sindris/roles')
+SINDRIS_ROOT = Path(__file__).resolve().parents[1]
+REGISTRY_PATH = SINDRIS_ROOT / "scripts" / "roles_registry.json"
+ROLES_DIR = SINDRIS_ROOT / "roles"
 
 def extract_frontmatter(content):
     """从markdown提取YAML frontmatter"""
@@ -17,7 +18,9 @@ def extract_frontmatter(content):
         try:
             import yaml
             return yaml.safe_load(match.group(1))
-        except:
+        except ImportError:
+            pass
+        except yaml.YAMLError:
             pass
     return {}
 
@@ -66,7 +69,7 @@ def generate_registry_entry(md_path, fm):
 
 def main():
     # 加载registry
-    with open(REGISTRY_PATH) as f:
+    with open(REGISTRY_PATH, encoding="utf-8") as f:
         registry = json.load(f)
     
     registered_ids = {r['id'] for r in registry['roles']}
@@ -85,7 +88,7 @@ def main():
             continue
         
         # 读取文件
-        with open(md) as f:
+        with open(md, encoding="utf-8") as f:
             content = f.read()
         
         fm = extract_frontmatter(content)
@@ -101,7 +104,7 @@ def main():
     registry['updated_at'] = datetime.now().isoformat()
     
     # 保存
-    with open(REGISTRY_PATH, 'w') as f:
+    with open(REGISTRY_PATH, 'w', encoding="utf-8") as f:
         json.dump(registry, f, ensure_ascii=False, indent=2)
     
     print(f"已更新 registry，共 {registry['total']} 个角色")
