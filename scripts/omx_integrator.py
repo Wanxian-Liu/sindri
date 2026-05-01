@@ -80,6 +80,7 @@ class ActionRecord:
     status: str              # "pending" | "running" | "completed" | "failed"
     verify_checks: List[str] = field(default_factory=list)
     verify_results: Dict[str, bool] = field(default_factory=dict)
+    trace_id: Optional[str] = None
     error: Optional[str] = None
     started_at: str = ""
     completed_at: str = ""
@@ -437,6 +438,7 @@ class OMXIntegrator:
                 agent_id=a.get("agent_id", ""),
                 role=a.get("role", ""),
                 status="pending",
+                trace_id=a.get("trace_id"),
                 started_at=_now(),
             )
             self._actions.append(action_rec)
@@ -450,6 +452,7 @@ class OMXIntegrator:
             metadata={
                 "session_id": self._session_id,
                 "action_count": len(actions or []),
+                "trace_ids": [a.get("trace_id") for a in (actions or []) if a.get("trace_id")],
             }
         )
 
@@ -485,6 +488,7 @@ class OMXIntegrator:
                         "session_id": self._session_id,
                         "action_id": action_id,
                         "agent_id": agent_id,
+                        "trace_id": action.trace_id,
                     }
                 )
                 return action
@@ -508,6 +512,7 @@ class OMXIntegrator:
         verify_results: Optional[Dict[str, bool]] = None,
         error: Optional[str] = None,
         task_id: Optional[str] = None,
+        trace_id: Optional[str] = None,
     ) -> Optional[ActionRecord]:
         """
         动作执行完成
@@ -527,6 +532,8 @@ class OMXIntegrator:
                 action.status = "completed" if verified else "failed"
                 action.completed_at = _now()
                 action.verify_results = verify_results or {}
+                if trace_id and not action.trace_id:
+                    action.trace_id = trace_id
                 if error:
                     action.error = error
                 self._save_actions()
@@ -539,6 +546,7 @@ class OMXIntegrator:
                         "session_id": self._session_id,
                         "action_id": action_id,
                         "verified": verified,
+                        "trace_id": action.trace_id,
                         "verify_results": verify_results or {},
                     }
                 )

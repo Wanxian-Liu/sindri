@@ -63,6 +63,24 @@ class TestOnRound2Start:
                 assert len(integrator._actions) == 2
                 assert integrator._actions[0].role == "dev"
                 assert integrator._actions[1].agent_id == "agent2"
+                assert integrator._actions[0].trace_id is None
+
+    def test_round2_start_carries_trace_id(self):
+        """action trace_id应写入ActionRecord"""
+        from omx_integrator import OMXIntegrator
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            integrator = OMXIntegrator(workspace_root=tmpdir)
+
+            with patch.object(integrator, '_save_phases'), \
+                 patch.object(integrator, '_save_actions'), \
+                 patch('omx_integrator.append_ledger'):
+
+                actions = [
+                    {"action_id": "a1", "action_name": "task 1", "trace_id": "trace_xyz"}
+                ]
+                integrator.on_round2_start(task_id="task1", actions=actions)
+                assert integrator._actions[0].trace_id == "trace_xyz"
 
     def test_round2_start_no_actions(self):
         """覆盖on_round2_start无actions"""

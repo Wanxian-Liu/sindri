@@ -215,6 +215,8 @@ class SindrisExecutor:
         # 内部状态
         self._subagent_states: Dict[str, str] = {}
         self._subagent_sessions: Dict[str, str] = {}
+        self._subagent_trace: Dict[str, Dict[str, Any]] = {}
+        self._trace_runtime: Dict[str, Dict[str, Any]] = {}
 
         # 初始化日志
         self._setup_jsonl_logger()
@@ -283,6 +285,67 @@ class SindrisExecutor:
         except Exception as e:
             # JSONL写入失败不影响主流程，只记录警告
             self.logger.warning(f"JSONL write failed: {e}")
+
+    def _new_trace_id(self) -> str:
+        """Generate a stable trace id for one execution flow."""
+        return f"trace_{uuid.uuid4().hex[:12]}"
+
+    def record_spawn_result(
+        self,
+        *,
+        task_id: str,
+        trace_id: str,
+        run_id: str,
+        child_session_key: str,
+        context: str = "fork",
+    ) -> None:
+        """
+        Record sessions_spawn result using OpenClaw canonical fields.
+
+        Args:
+            task_id: Planned subtask id
+            trace_id: Local execution trace id
+            run_id: sessions_spawn return field runId
+            child_session_key: sessions_spawn return field childSessionKey
+            context: spawn context ("fork" | "isolated")
+        """
+        if not task_id:
+            return
+
+        self._subagent_states[task_id] = SubagentState.RUNNING
+        self._subagent_sessions[task_id] = child_session_key
+        self._subagent_trace[task_id] = {
+            "trace_id": trace_id,
+            "run_id": run_id,
+            "child_session_key": child_session_key,
+            "context": context,
+        }
+        trace_runtime = self._trace_runtime.setdefault(trace_id, {"spawns": 0, "yields": 0})
+        trace_runtime["spawns"] += 1
+
+        self._log_jsonl("spawn_registered", {
+            "task_id": task_id,
+            "trace_id": trace_id,
+            "run_id": run_id,
+            "child_session_key": child_session_key,
+            "context": context,
+        })
+
+    def record_yield_boundary(self, *, trace_id: str, phase: str) -> None:
+        """
+        Record a sessions_yield boundary event for this trace.
+
+        Args:
+            trace_id: Local execution trace id
+            phase: "before_yield" | "after_yield"
+        """
+        trace_runtime = self._trace_runtime.setdefault(trace_id, {"spawns": 0, "yields": 0})
+        trace_runtime["yields"] += 1
+        self._log_jsonl("yield_boundary", {
+            "trace_id": trace_id,
+            "phase": phase,
+            "yield_count": trace_runtime["yields"],
+        })
 
     def _plan_to_dict(self, plan: Plan) -> Dict[str, Any]:
         """将Plan对象转换为字典格式"""
@@ -527,13 +590,23 @@ class SindrisExecutor:
             session_key: 子代理session key
         """
         task_id = subtask.get("task_id")
+        trace_id = subtask.get("_trace_id")
+        run_id = subtask.get("_run_id")
+        child_session_key = subtask.get("_child_session_key", session_key)
         if task_id:
             self._subagent_states[task_id] = SubagentState.RUNNING
-            self._subagent_sessions[task_id] = session_key
+            self._subagent_sessions[task_id] = child_session_key
+            self._subagent_trace[task_id] = {
+                "trace_id": trace_id,
+                "run_id": run_id,
+                "child_session_key": child_session_key,
+            }
 
         self._log_jsonl("subtask_start", {
             "task_id": task_id,
-            "session_key": session_key,
+            "trace_id": trace_id,
+            "run_id": run_id,
+            "child_session_key": child_session_key,
             "role": subtask.get("role"),
         })
 
@@ -563,8 +636,12 @@ class SindrisExecutor:
         # P1-4 Fix: 联动执行器级别的熔断器（不是FusionPlanner的规划熔断器）
         self._executor_circuit_breaker.record_success()
         
+        trace_meta = self._subagent_trace.get(task_id, {})
         self._log_jsonl("subtask_complete", {
             "task_id": task_id,
+            "trace_id": trace_meta.get("trace_id"),
+            "run_id": trace_meta.get("run_id"),
+            "child_session_key": trace_meta.get("child_session_key"),
         })
 
     def fail_subtask(self, task_id: str, error: str):
@@ -574,8 +651,12 @@ class SindrisExecutor:
         # P1-4 Fix: 联动执行器级别的熔断器（不是FusionPlanner的规划熔断器）
         self._executor_circuit_breaker.record_failure()
         
+        trace_meta = self._subagent_trace.get(task_id, {})
         self._log_jsonl("subtask_fail", {
             "task_id": task_id,
+            "trace_id": trace_meta.get("trace_id"),
+            "run_id": trace_meta.get("run_id"),
+            "child_session_key": trace_meta.get("child_session_key"),
             "error": error,
         })
 
@@ -600,10 +681,12 @@ class SindrisExecutor:
             states[task_id] = {
                 "state": state,
                 "session": self._subagent_sessions.get(task_id),
+                "trace": self._subagent_trace.get(task_id, {}),
             }
         return {
             "total_tasks": len(self._subagent_states),
             "states": states,
+            "trace_runtime": self._trace_runtime,
         }
 
     # ========== 验证接口 ==========
@@ -893,6 +976,7 @@ class SindrisExecutor:
 
         subtasks = plan_result.get("subtasks", [])
         task_id = self.omx.last_task_id
+        trace_id = self._new_trace_id()
 
         # Step 2: OMX Step 2开始
         actions = [
@@ -900,6 +984,7 @@ class SindrisExecutor:
                 "action_id": st.get("task_id", f"action_{i}"),
                 "action_name": st.get("title", ""),
                 "role": st.get("role", ""),
+                "trace_id": trace_id,
             }
             for i, st in enumerate(subtasks)
         ]
@@ -916,11 +1001,19 @@ class SindrisExecutor:
             # 这里只记录，不真正执行
             subtask["_action_id"] = action_id
             subtask["_index"] = i
+            subtask["_trace_id"] = trace_id
 
         # 返回plan_result，让调用者执行subtasks
         plan_result["_omx_task_id"] = task_id
         plan_result["_omx_actions"] = actions
         plan_result["_execution_mode"] = "manual_spawn"
+        plan_result["_trace_id"] = trace_id
+
+        self._log_jsonl("execution_trace_created", {
+            "trace_id": trace_id,
+            "task_id": task_id,
+            "actions_count": len(actions),
+        })
 
         return plan_result
 
@@ -930,6 +1023,7 @@ class SindrisExecutor:
         verified: bool = True,
         verify_results: Dict[str, bool] = None,
         error: str = None,
+        trace_id: str = None,
     ) -> None:
         """
         标记一个action完成（供调用者在subtask完成后调用）
@@ -945,6 +1039,7 @@ class SindrisExecutor:
             verified=verified,
             verify_results=verify_results or {},
             error=error,
+            trace_id=trace_id,
         )
 
 
