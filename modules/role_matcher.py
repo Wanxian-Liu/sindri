@@ -18,6 +18,23 @@ from .task_classifier import TaskClassifier, TaskType
 from .role_hierarchical_matcher import classify_domain, RoleHierarchicalMatcher
 
 
+def _default_roles_registry_path() -> str:
+    """Prefer ~/.openclaw layout; fall back to repo scripts/ for CI and dev checkouts."""
+    home_p = os.path.expanduser(
+        "~/.openclaw/skills/sindris/scripts/roles_registry.json"
+    )
+    if os.path.isfile(home_p):
+        return home_p
+    repo_p = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "scripts",
+        "roles_registry.json",
+    )
+    if os.path.isfile(repo_p):
+        return repo_p
+    return home_p
+
+
 # 固定小组配置（sindri原生团队）
 # 修复专业团队 v2.0（5人核心团队）
 FIXED_TEAM = [
@@ -280,9 +297,7 @@ class RoleMatcher:
         self.workspace_root = workspace_root
         self._role_cache: Dict[str, Dict] = {}
         self._claim_overrides: Dict[str, str] = {}  # task_id -> role_id
-        self._registry_path = os.path.expanduser(
-            "~/.openclaw/skills/sindris/scripts/roles_registry.json"
-        )
+        self._registry_path = _default_roles_registry_path()
         self._task_classifier = TaskClassifier()  # 任务类型识别器
         self._hierarchical_matcher = RoleHierarchicalMatcher(self._registry_path)  # 分层匹配器
         self._load_roles()

@@ -609,7 +609,12 @@ class TestWorkerCreation:
         assert w.command is None
         assert temp_log_dir in w.log_file
         assert w.window_name is None
-        assert w.session_name == "test-session"
+        expected_session = (
+            worker_manager._tmux.session_name
+            if worker_manager._tmux.is_available()
+            else None
+        )
+        assert w.session_name == expected_session
 
     def test_create_worker_with_agent_id(self, worker_manager):
         """创建带agent_id的worker"""

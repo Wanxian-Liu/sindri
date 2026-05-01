@@ -54,6 +54,8 @@ jobs:
 
       - name: Prepare legacy compatibility paths
         run: |
+          mkdir -p "$HOME/.openclaw/skills"
+          ln -sfn "$GITHUB_WORKSPACE" "$HOME/.openclaw/skills/sindris"
           sudo mkdir -p /home/rayliu/.openclaw/skills
           sudo ln -sfn "$GITHUB_WORKSPACE" /home/rayliu/.openclaw/skills/sindris
 

@@ -491,18 +491,16 @@ def test_read_logs_file_unreadable(tmp_path):
     from sindris_tmux_manager import SindrisWorkerManager
     mgr = SindrisWorkerManager("s", str(tmp_path), str(tmp_path / "logs"))
     w = mgr.create_worker("dev")
-    
-    # Make log file unreadable
-    log_path = tmp_path / "logs" / f"{w.id}.log"
-    log_path.parent.mkdir(parents=True, exist_ok=True)
-    log_path.write_text("log content")
-    log_path.chmod(0o000)
-    
-    try:
+    real_open = open
+
+    def deny_log(path, *args, **kwargs):
+        if str(path) == w.log_file:
+            raise PermissionError("denied")
+        return real_open(path, *args, **kwargs)
+
+    with patch("builtins.open", side_effect=deny_log):
         lines = mgr.read_logs(w.id)
-        assert lines == []  # Should return empty on error
-    finally:
-        log_path.chmod(0o644)  # Restore for cleanup
+    assert lines == []
 
 
 def test_worktree_officer_setup_project_git_init_fails(tmp_path):
