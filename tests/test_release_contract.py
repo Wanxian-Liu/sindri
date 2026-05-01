@@ -39,7 +39,8 @@ def test_skill_has_no_a2_terminology():
 def test_runtime_scripts_have_no_user_specific_absolute_paths():
     """Runtime scripts should avoid hardcoded local user paths."""
     register_text = REGISTER_ROLES.read_text(encoding="utf-8")
-    assert "/home/rayliu/.openclaw/skills/sindris" not in register_text
+    assert "/home/" not in register_text
+    assert "C:\\" not in register_text
 
 
 def test_install_script_uses_sindris_naming():

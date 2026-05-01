@@ -6,7 +6,7 @@ import tempfile
 import pytest
 from unittest.mock import patch, MagicMock
 
-SCRIPT_DIR = Path("/home/rayliu/.openclaw/skills/sindris")
+SCRIPT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SCRIPT_DIR))
 sys.path.insert(0, str(SCRIPT_DIR / "scripts"))
 

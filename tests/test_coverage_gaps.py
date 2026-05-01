@@ -19,7 +19,7 @@ import pytest
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-SCRIPT_DIR = Path("/home/rayliu/.openclaw/skills/sindris/scripts")
+SCRIPT_DIR = Path(__file__).resolve().parents[1] / "scripts"
 sys.path.insert(0, str(SCRIPT_DIR))
 
 
@@ -48,8 +48,9 @@ def test_circuit_breaker_main_block_via_coverage_run():
     """circuit_breaker.py __main__ block通过coverage run执行覆盖"""
     result = subprocess.run(
         [sys.executable, "-c", """
+import os
 import sys
-sys.path.insert(0, '/home/rayliu/.openclaw/skills/sindris/scripts')
+sys.path.insert(0, os.environ["SINDRIS_SCRIPT_DIR"])
 import circuit_breaker
 
 import coverage
@@ -81,7 +82,8 @@ print("Coverage saved")
 """],
         capture_output=True,
         text=True,
-        timeout=30
+        timeout=30,
+        env={**os.environ, "SINDRIS_SCRIPT_DIR": str(SCRIPT_DIR)},
     )
     assert result.returncode == 0, f"stderr: {result.stderr}"
     assert "Coverage saved" in result.stdout
@@ -168,8 +170,9 @@ def test_match_roles_cli_via_coverage_run():
     """match_roles.py CLI通过coverage run执行覆盖"""
     result = subprocess.run(
         [sys.executable, "-c", """
+import os
 import sys
-sys.path.insert(0, '/home/rayliu/.openclaw/skills/sindris/scripts')
+sys.path.insert(0, os.environ["SINDRIS_SCRIPT_DIR"])
 
 import coverage
 cov = coverage.Coverage()
@@ -212,7 +215,8 @@ print("Coverage saved")
 """],
         capture_output=True,
         text=True,
-        timeout=30
+        timeout=30,
+        env={**os.environ, "SINDRIS_SCRIPT_DIR": str(SCRIPT_DIR)},
     )
     assert result.returncode == 0, f"stderr: {result.stderr}"
     assert "Coverage saved" in result.stdout
@@ -243,8 +247,9 @@ def test_ralph_loop_main_block_via_coverage_run():
     """ralph_loop.py __main__ async test通过coverage run执行覆盖"""
     result = subprocess.run(
         [sys.executable, "-c", """
+import os
 import sys
-sys.path.insert(0, '/home/rayliu/.openclaw/skills/sindris/scripts')
+sys.path.insert(0, os.environ["SINDRIS_SCRIPT_DIR"])
 
 import coverage
 cov = coverage.Coverage()
@@ -280,7 +285,8 @@ print("Coverage saved")
 """],
         capture_output=True,
         text=True,
-        timeout=60
+        timeout=60,
+        env={**os.environ, "SINDRIS_SCRIPT_DIR": str(SCRIPT_DIR)},
     )
     assert result.returncode == 0, f"stderr: {result.stderr}\nstdout: {result.stdout}"
     assert "Coverage saved" in result.stdout
