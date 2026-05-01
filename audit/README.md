@@ -57,6 +57,12 @@
 
 ---
 
+## 个人编排自检（单人使用）
+
+OpenClaw 下 spawn / yield / trace 的**最短清单**：[`docs/personal-orchestration-checklist.md`](../docs/personal-orchestration-checklist.md)
+
+---
+
 ## 维护约定
 
 - 当版本升级（例如 `v4.2`）时，先改版本源，再更新本 README 的“当前基线”。
