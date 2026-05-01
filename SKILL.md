@@ -164,6 +164,59 @@ Sindris 运行在 **OpenClaw Gateway** 之上：会话状态由 Gateway 持有�
 - 子任务默认优先 **`context: "fork"`**，便于继承当前讨论；仅在需要干净上下文时用 `isolated`（或等价选项）。
 - **`sessions_spawn` 后仍须 `sessions_yield`**，与是否多人、是否嵌套 spawn 无关。
 
+#### 主 Agent 编排模板（`sessions_spawn` + `trace_id`）
+
+以下顺序供**主会话中的 Agent**实现；工具名与参数以 [会话工具](https://docs.openclaw.ai/zh-CN/concepts/session-tool) 为准。
+
+- **`trace_id`**：`await sindris.execute(...)` 返回的 `_trace_id`，用于把同一次编排的 JSONL / OMX 记录串在一起；**不是** OpenClaw 返回字段。
+- **`runId` / `childSessionKey`**：`sessions_spawn` 的返回值（官方文档字段名），必须保存；可与 `trace_id` 一起写入 `sindris.record_spawn_result(...)`。
+
+```python
+result = await sindris.execute("任务描述")
+trace_id = result["_trace_id"]
+
+for subtask in result["subtasks"]:
+    action_id = subtask["_action_id"]
+    task_body = f"你是{subtask['role']}。请完成：{subtask['title']}"
+    # 若存在 md_file：主 Agent 先读文件，将要点并入 task_body
+
+    ret = sessions_spawn(
+        task=task_body,
+        runtime="subagent",
+        context="fork",
+        timeoutSeconds=subtask.get("timeout", 600),
+    )
+    sindris.record_spawn_result(
+        task_id=action_id,
+        trace_id=trace_id,
+        run_id=ret["runId"],
+        child_session_key=ret["childSessionKey"],
+        context="fork",
+    )
+
+sindris.record_yield_boundary(trace_id=trace_id, phase="before_yield")
+sessions_yield()
+
+# 子结果以下一条（或多条）消息进入后，再记 yield 后边界并收尾：
+sindris.record_yield_boundary(trace_id=trace_id, phase="after_yield")
+
+for subtask in result["subtasks"]:
+    action_id = subtask["_action_id"]
+    ok = True  # 由主 Agent 根据子智能体输出判定
+    if ok:
+        sindris.complete_subtask(action_id)
+        sindris.mark_action_complete(action_id=action_id, verified=True, trace_id=trace_id)
+    else:
+        sindris.fail_subtask(action_id, error="subagent failed")
+        sindris.mark_action_complete(
+            action_id=action_id, verified=False, error="subagent failed", trace_id=trace_id
+        )
+```
+
+**并行 spawn**：可先对多个 `subtask` 连续调用 `sessions_spawn` + `record_spawn_result`，再统一 `record_yield_boundary` → `sessions_yield` → 收结果；以 Gateway 是否允许批式 yield 为准。
+
+**链路自检（可选）**：在 Sindris 仓库根执行 `python3 scripts/trace_report.py --latest` 或 `python3 scripts/trace_report.py <trace_id>`，查看输出里的 `summary.complete`。
+
 ---
 
 ## 三、快速开始
@@ -409,12 +462,15 @@ Step 4: 完成 → Git提交
 
 ### 代码模板（推荐使用execute()）
 
+完整顺序（含 `trace_id`、`record_spawn_result`、`record_yield_boundary`）见上文 **「主 Agent 编排模板（`sessions_spawn` + `trace_id`）」**。以下为精简版，工具名统一为 `sessions_spawn`。
+
 ```python
 # 推荐方式：使用execute()自动处理OMX记录
 result = await sindris.execute("任务描述")
 
 # result包含：
 #   - subtasks: 子任务列表
+#   - _trace_id: 本次编排追踪 id（Sindris 本地）
 #   - _omx_task_id: OMX任务ID
 #   - _omx_actions: OMX动作列表
 #   - _execution_mode: "manual_spawn"
@@ -440,15 +496,25 @@ for subtask in result['subtasks']:
         except Exception as e:
             print(f"[WARN] Failed to load role MD: {e}")
     
-    spawn(
+    ret = sessions_spawn(
         task=f"你是{subtask['role']}。请完成：{subtask['title']}{role_instruction}",
         runtime="subagent",
+        context="fork",
         timeoutSeconds=subtask.get('timeout', DEFAULT_SPAWN_TIMEOUT)
     )
+    sindris.record_spawn_result(
+        task_id=action_id,
+        trace_id=result["_trace_id"],
+        run_id=ret["runId"],
+        child_session_key=ret["childSessionKey"],
+        context="fork",
+    )
+    sindris.record_yield_boundary(trace_id=result["_trace_id"], phase="before_yield")
     sessions_yield()  # ← 必须调用！等待子代理完成
+    sindris.record_yield_boundary(trace_id=result["_trace_id"], phase="after_yield")
     
     # 标记action完成（自动记录到OMX）
-    sindris.mark_action_complete(action_id=action_id, verified=True)
+    sindris.mark_action_complete(action_id=action_id, verified=True, trace_id=result["_trace_id"])
 
 # 方式B: 并行执行（适合独立的subtask）
 # 1. 先并行启动所有subtask
@@ -470,24 +536,39 @@ for subtask in result['subtasks']:
         except Exception as e:
             print(f"[WARN] Failed to load role MD: {e}")
     
-    spawned.append({
-        'action_id': action_id,
-        'spawn_result': spawn(
-            task=f"你是{subtask['role']}。请完成：{subtask['title']}{role_instruction}",
-            runtime="subagent",
-            timeoutSeconds=subtask.get('timeout', DEFAULT_SPAWN_TIMEOUT)
-        )
-    })
+    ret = sessions_spawn(
+        task=f"你是{subtask['role']}。请完成：{subtask['title']}{role_instruction}",
+        runtime="subagent",
+        context="fork",
+        timeoutSeconds=subtask.get('timeout', DEFAULT_SPAWN_TIMEOUT)
+    )
+    sindris.record_spawn_result(
+        task_id=action_id,
+        trace_id=result["_trace_id"],
+        run_id=ret["runId"],
+        child_session_key=ret["childSessionKey"],
+        context="fork",
+    )
+    spawned.append({'action_id': action_id})
 
 # 2. 统一sessions_yield等待所有完成
-for s in spawned:
+sindris.record_yield_boundary(trace_id=result["_trace_id"], phase="before_yield")
+for _ in spawned:
     sessions_yield()
-    sindris.mark_action_complete(action_id=s['action_id'], verified=True)
+sindris.record_yield_boundary(trace_id=result["_trace_id"], phase="after_yield")
+for s in spawned:
+    sindris.mark_action_complete(action_id=s['action_id'], verified=True, trace_id=result["_trace_id"])
 
-# Step 3: 强制验证
-verify_items = [{"name": v, "description": v, "check_fn": sindris._default_impl_check}
-                for v in subtask['verify']]
-ralph_result = await sindris.verify_with_ralph(task_name=subtask['title'], verify_items=verify_items)
+# Step 3: 强制验证（示例：逐个子任务）
+for subtask in result["subtasks"]:
+    verify_items = [
+        {"name": v, "description": v, "check_fn": sindris._default_impl_check}
+        for v in subtask.get("verify", [])
+    ]
+    if verify_items:
+        ralph_result = await sindris.verify_with_ralph(
+            task_name=subtask["title"], verify_items=verify_items
+        )
 
 # Step 4: Git提交
 ```
@@ -500,17 +581,24 @@ plan = await sindris.plan("任务描述")
 
 # Step 2: 按Step执行
 for subtask in plan['subtasks']:
-    spawn(
-        task=f"你是{subtask.role}。请完成：{subtask.title}",
+    sessions_spawn(
+        task=f"你是{subtask['role']}。请完成：{subtask['title']}",
         runtime="subagent",
+        context="fork",
         timeoutSeconds=subtask.get('timeout', 300)
     )
     sessions_yield()  # ← 必须调用！等待子代理完成
 
 # Step 3: 强制验证
-verify_items = [{"name": v, "description": v, "check_fn": sindris._default_impl_check}
-                for v in subtask.verify]
-result = await sindris.verify_with_ralph(task_name=subtask.title, verify_items=verify_items)
+for subtask in plan["subtasks"]:
+    verify_items = [
+        {"name": v, "description": v, "check_fn": sindris._default_impl_check}
+        for v in subtask.get("verify", [])
+    ]
+    if verify_items:
+        result = await sindris.verify_with_ralph(
+            task_name=subtask["title"], verify_items=verify_items
+        )
 
 # Step 4: Git提交
 ```
@@ -521,7 +609,7 @@ result = await sindris.verify_with_ralph(task_name=subtask.title, verify_items=v
 
 | 错误做法 | 正确做法 |
 |----------|----------|
-| `plan() → spawn() → 直接返回` | `plan() → spawn() → yield() → 收集结果` |
+| `plan() → sessions_spawn() → 直接返回` | `plan() → sessions_spawn() → yield() → 收集结果` |
 
 **⚠️ yield后必须验证**：文件存在？内容正确？trust_gate通过？
 
