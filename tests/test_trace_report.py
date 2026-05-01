@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_DIR = ROOT / "scripts"
 sys.path.insert(0, str(SCRIPT_DIR))
 
-from trace_report import build_trace_report
+from trace_report import build_trace_report, find_latest_trace_id
 
 
 def _write_jsonl(path: Path, rows: list[dict]) -> None:
@@ -64,3 +64,27 @@ def test_build_trace_report_incomplete_chain(tmp_path):
     assert report["summary"]["complete"] is False
     assert report["checks"]["spawn_fields_complete"] is False
     assert report["checks"]["yield_after_recorded"] is False
+
+
+def test_find_latest_trace_id_picks_newest_timestamp(tmp_path):
+    jsonl = tmp_path / ".logs" / "sindris_20260501.jsonl"
+    _write_jsonl(
+        jsonl,
+        [
+            {
+                "timestamp": "2026-05-01T10:00:00",
+                "event_type": "execution_trace_created",
+                "trace_id": "trace_old",
+            },
+            {
+                "timestamp": "2026-05-01T12:00:00",
+                "event_type": "execution_trace_created",
+                "trace_id": "trace_new",
+            },
+        ],
+    )
+    assert find_latest_trace_id(tmp_path) == "trace_new"
+
+
+def test_find_latest_trace_id_none_when_missing(tmp_path):
+    assert find_latest_trace_id(tmp_path) is None

@@ -4,8 +4,9 @@ trace_report.py - Trace continuity report for Sindris execution flows.
 
 Usage:
   python scripts/trace_report.py trace_xxx
+  python scripts/trace_report.py --latest
   python scripts/trace_report.py trace_xxx --workspace-root /path/to/sindris
-  python scripts/trace_report.py trace_xxx --jsonl /tmp/sindris_20260501.jsonl
+  python scripts/trace_report.py --latest --jsonl /tmp/sindris_20260501.jsonl
 """
 
 from __future__ import annotations
@@ -28,6 +29,41 @@ def _collect_jsonl_files(workspace_root: Path, explicit_jsonl: str | None) -> Li
     if not logs_dir.exists():
         return []
     return sorted(logs_dir.glob("sindris_*.jsonl"))
+
+
+def find_latest_trace_id(workspace_root: Path, explicit_jsonl: str | None = None) -> str | None:
+    """
+    Pick the trace_id from the most recent execution_trace_created line (by JSON timestamp).
+
+    Scans all matching JSONL files; if multiple creation events exist, the lexicographically
+    greatest ISO timestamp wins (typical for sindris executor logs).
+    """
+    jsonl_files = _collect_jsonl_files(workspace_root, explicit_jsonl)
+    best_ts: str | None = None
+    best_tid: str | None = None
+    for file in jsonl_files:
+        try:
+            with open(file, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        obj = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    if obj.get("event_type") != "execution_trace_created":
+                        continue
+                    tid = obj.get("trace_id")
+                    ts = obj.get("timestamp")
+                    if not tid or not ts:
+                        continue
+                    if best_ts is None or ts > best_ts:
+                        best_ts = ts
+                        best_tid = tid
+        except OSError:
+            continue
+    return best_tid
 
 
 def _load_trace_events(trace_id: str, jsonl_files: List[Path]) -> List[Dict[str, Any]]:
@@ -115,7 +151,17 @@ def build_trace_report(trace_id: str, workspace_root: Path, explicit_jsonl: str 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Inspect Sindris trace continuity across JSONL and OMX.")
-    parser.add_argument("trace_id", help="Trace id like trace_xxxxx")
+    parser.add_argument(
+        "trace_id",
+        nargs="?",
+        default=None,
+        help="Trace id like trace_xxxxx (omit with --latest)",
+    )
+    parser.add_argument(
+        "--latest",
+        action="store_true",
+        help="Use trace_id from the newest execution_trace_created in JSONL",
+    )
     parser.add_argument(
         "--workspace-root",
         default=str(_default_workspace_root()),
@@ -128,9 +174,27 @@ def main() -> int:
     )
     args = parser.parse_args()
 
+    workspace = Path(args.workspace_root)
+    if args.latest:
+        resolved = find_latest_trace_id(workspace, args.jsonl)
+        if not resolved:
+            print(
+                json.dumps(
+                    {"error": "no execution_trace_created with trace_id found in JSONL"},
+                    ensure_ascii=False,
+                ),
+                flush=True,
+            )
+            return 1
+        trace_id = resolved
+    elif args.trace_id:
+        trace_id = args.trace_id
+    else:
+        parser.error("provide trace_id or --latest")
+
     report = build_trace_report(
-        trace_id=args.trace_id,
-        workspace_root=Path(args.workspace_root),
+        trace_id=trace_id,
+        workspace_root=workspace,
         explicit_jsonl=args.jsonl,
     )
     print(json.dumps(report, indent=2, ensure_ascii=False))
