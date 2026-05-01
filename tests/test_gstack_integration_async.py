@@ -35,6 +35,7 @@ try:
 except ImportError as e:
     pass
 
+# 单测对 deepseek_call 传入 api_key=...，不依赖 DEEPSEEK_API_KEY 环境变量（避免 xdist/CI 子进程未继承 env）
 
 def run_async(coro):
     """运行协程的辅助函数（Python 3.12+ 兼容，避免隐式事件循环问题）"""
@@ -43,7 +44,7 @@ def run_async(coro):
 
 class TestDeepseekCall:
     """测试deepseek_call核心API调用"""
-    
+
     def test_deepseek_call_success(self):
         """测试成功调用"""
         mock_response = '{"choices":[{"message":{"content":"test response"}}]}'
@@ -67,7 +68,7 @@ class TestDeepseekCall:
                 raise ImportError(f"Not allowed: {name}")
             mock_safe_import.side_effect = fake_safe_import
             
-            result = run_async(deepseek_call("test prompt"))
+            result = run_async(deepseek_call("test prompt", api_key="unit-test-mock"))
             assert result == "test response"
     
     def test_deepseek_call_http_error(self):
@@ -96,7 +97,7 @@ class TestDeepseekCall:
             mock_safe_import.side_effect = fake_safe_import
             
             with pytest.raises(Exception) as exc_info:
-                run_async(deepseek_call("test prompt"))
+                run_async(deepseek_call("test prompt", api_key="unit-test-mock"))
             assert "401" in str(exc_info.value)
     
     def test_deepseek_call_generic_error(self):
@@ -126,7 +127,7 @@ class TestDeepseekCall:
             mock_safe_import.side_effect = fake_safe_import
             
             with pytest.raises(Exception) as exc_info:
-                run_async(deepseek_call("test prompt"))
+                run_async(deepseek_call("test prompt", api_key="unit-test-mock"))
             # HTTPError会被捕获并转为Exception
             assert "500" in str(exc_info.value)
 

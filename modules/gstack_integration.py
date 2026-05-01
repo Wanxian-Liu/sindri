@@ -99,7 +99,8 @@ async def deepseek_call(
     model: str = None,
     temperature: float = 0.3,
     max_tokens: int = 2000,
-    timeout: int = 60
+    timeout: int = 60,
+    api_key: Optional[str] = None,
 ) -> str:
     """
     调用LLM API（支持DeepSeek和Moonshot）
@@ -110,12 +111,14 @@ async def deepseek_call(
         temperature: 温度参数
         max_tokens: 最大token数
         timeout: 请求超时（秒）
+        api_key: 显式密钥；默认 None 时读环境变量 DEEPSEEK_API_KEY（便于单测不依赖进程环境）
         
     Returns:
         API响应文本
     """
     # P1-8 Fix: API key检查
-    if not DEEPSEEK_API_KEY:
+    resolved = (api_key if api_key is not None else os.environ.get("DEEPSEEK_API_KEY") or "").strip()
+    if not resolved:
         raise ValueError(
             f"API key未配置。请设置 DEEPSEEK_API_KEY 环境变量。"
         )
@@ -128,7 +131,7 @@ async def deepseek_call(
     
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {DEEPSEEK_API_KEY}"
+        "Authorization": f"Bearer {resolved}"
     }
     
     payload = {

@@ -1,5 +1,5 @@
 """
-test_sindris_tmux_manager.py - SindrisTmuxManager 完整测试
+test_sindris_tmux_manager.py - TmuxManager / SindrisWorkerManager 完整测试
 测试所有公开方法、状态转换、事件溯源和Worker生命周期
 """
 

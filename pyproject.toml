@@ -1,0 +1,30 @@
+[project]
+name = "sindris"
+version = "4.1"
+requires-python = ">=3.11"
+description = "Sindris skill / executor (tooling metadata only; install layout unchanged)"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+src = ["scripts", "modules", "validators", "contracts", "tests"]
+exclude = [
+    ".git",
+    ".venv",
+    ".venv_ci",
+    "__pycache__",
+    "*.bak.*",
+]
+
+# 门禁从「必炸类」规则起步，后续可逐步放宽为完整 Ruff 默认集并修存量
+[tool.ruff.lint]
+select = [
+    "E9",
+    "F63",
+    "F7",
+    "F82",
+]
+
+[tool.bandit]
+exclude_dirs = ["tests", ".venv", ".venv_ci", "build"]
+# CI 使用 `bandit -r ... -lll` 仅门禁 High；本地可去掉 -lll 做完整报告

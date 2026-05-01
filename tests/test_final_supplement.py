@@ -49,19 +49,21 @@ def test_circuit_breaker_main_block():
 
 def test_circuit_breaker_call_exception_and_retry():
     """覆盖 call 方法异常触发重试"""
-    from circuit_breaker import CircuitBreaker, CircuitOpenError
-    
-    cb = CircuitBreaker("developer")
-    cb.failure_threshold = 100
+    import circuit_breaker as cb_module
+    from circuit_breaker import CircuitBreaker
+
+    cb = CircuitBreaker("developer", failure_threshold=100)
     count = [0]
-    
+
     def flaky():
         count[0] += 1
         if count[0] < 3:
             raise ValueError("temp")
         return "ok"
-    
-    with patch.object(cb, '_calculate_delay', return_value=0.01):
+
+    with patch.object(cb, "_calculate_delay", return_value=0.0), patch.object(
+        cb_module.time, "sleep", lambda *a, **k: None
+    ):
         result = cb.call(flaky)
     assert result == "ok"
     assert count[0] == 3

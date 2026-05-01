@@ -334,14 +334,12 @@ class CircuitBreakerOpenError(Exception):
 
 
 
-# 导出
+# 导出（与 modules/__init__.py、sindris_executor 实际导入保持一致）
 __all__ = [
-    "PlanEngine",
     "Plan",
     "Subtask",
     "FastPathCache",
     "CircuitBreaker",
     "CircuitState",
     "CircuitBreakerOpenError",
-    "create_plan_engine",
 ]

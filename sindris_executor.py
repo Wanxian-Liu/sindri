@@ -313,17 +313,23 @@ class SindrisExecutor:
 
     # ========== sindri制度检查 ==========
 
-    def _identify_task_type(self, task: str) -> str:
+    def _identify_task_type(self, task: Optional[str]) -> str:
         """
         识别任务类型：audit/fix/role_improvement/other
         
         检测优先级: role_improvement > audit > fix > other
         注意：role_improvement优先级最高，避免"完善"被误判为fix
         """
-        task_lower = task.lower()
+        if task is None or not str(task).strip():
+            return "other"
+
+        task_lower = str(task).lower()
         
         # 角色改进类关键词（最高优先级）
-        role_keywords = ["改进角色", "优化角色", "完善角色", "完善团队", "改进团队", "改进fixed", "角色进化", "role evolution", "角色改进", "完善修复"]
+        role_keywords = [
+            "改进角色", "优化角色", "完善角色", "修复角色",
+            "完善团队", "改进团队", "改进fixed", "角色进化", "role evolution", "角色改进", "完善修复",
+        ]
         if any(kw in task_lower for kw in role_keywords):
             return "role_improvement"
         
@@ -363,11 +369,11 @@ class SindrisExecutor:
             "fix": "FIXED_TEAM",
             "role_improvement": "ROLE_EVOLUTION_TEAM",
             "skill_develop": "SKILL_DEVELOP_TEAM",
+            "other": "FIXED_TEAM",
         }
         
         expected = valid_teams.get(task_type)
         if expected is None:
-            # other类型不限制团队
             return True
         
         if team != expected:
@@ -378,7 +384,7 @@ class SindrisExecutor:
 
     # ========== 核心接口 ==========
 
-    async def plan(self, task: str, team: str = None) -> Dict[str, Any]:
+    async def plan(self, task: Optional[str], team: str = None) -> Dict[str, Any]:
         """
         规划阶段:返回子任务列表
 
@@ -393,6 +399,13 @@ class SindrisExecutor:
             "phase": "planned|audit|evolution",
         }
         """
+        if task is None or not str(task).strip():
+            return {
+                "success": False,
+                "error": "任务描述不能为空",
+                "phase": "rejected",
+            }
+
         # SafetyPolicy检查：拒绝危险任务
         from scripts.safety_policy import can_execute
         ok, safety_result = can_execute(task)
@@ -426,6 +439,7 @@ class SindrisExecutor:
                 "fix": "FIXED_TEAM",
                 "role_improvement": "ROLE_EVOLUTION_TEAM",
                 "skill_develop": "SKILL_DEVELOP_TEAM",
+                "other": "FIXED_TEAM",
             }
             expected_team = valid_teams.get(task_type)
             

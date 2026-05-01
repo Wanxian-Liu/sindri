@@ -129,7 +129,10 @@ class MtimeTracker:
                 content_hash = None
                 if stat.st_size < 1024 * 1024:  # <1MB
                     try:
-                        content_hash = hashlib.md5(full_path.read_bytes()).hexdigest()
+                        content_hash = hashlib.md5(
+                            full_path.read_bytes(),
+                            usedforsecurity=False,
+                        ).hexdigest()
                     except Exception:
                         pass
                 self._snapshots[str(full_path)] = {
