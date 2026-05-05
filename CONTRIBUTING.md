@@ -23,6 +23,5 @@ CI runs Python **3.11** and **3.12** on Ubuntu; match that before opening a PR.
 
 ## Docs
 
-- Chinese overview: [`README.md`](README.md)
-- English overview: [`README.en.md`](README.en.md)
+- Project overview: [`README.md`](README.md)
 - Memory / OMX bridge: [`docs/MEMORY_OMX_CONTRACT.md`](docs/MEMORY_OMX_CONTRACT.md)

@@ -23,7 +23,8 @@ CI：仓库 `.github/workflows/ci.yml` 在 push/PR 至 `main` 或 `master` 时�
 - 测试：Ralph 用例统一使用 `MockSindrisExecutor` 绑定方法，满足 `check_fn` 白名单；`asyncio.run` 隔离 gstack 异步用例事件循环；`score_role` 与返回 `(score, reasons)` 对齐。
 - 工程：新增 `tests/conftest.py`、`tests/ralph_mock_executor.py`；根目录 `README.md`；`.github/workflows/ci.yml`（Python 3.11 / 3.12，`pytest` + `pytest-anyio`）。
 - 仓库：从 Git 索引移除误跟踪的 `tests/__pycache__/*.pyc`（仍由 `.gitignore` 忽略）。
-- **B1 记忆桥接**：`MemoryManager.search_keyword`（索引尾部子串检索 MVP）；`memory_omx_bridge` 将 `index.jsonl` 全量快照同步到 `.omx/memory/{namespace}.json`；契约见 `docs/MEMORY_OMX_CONTRACT.md`；`README.en.md`、`CONTRIBUTING.md`、Issue 模板。
+- **B1 记忆桥接**：`MemoryManager.search_keyword`（索引尾部子串检索 MVP）；`memory_omx_bridge` 将 `index.jsonl` 全量快照同步到 `.omx/memory/{namespace}.json`；契约见 `docs/MEMORY_OMX_CONTRACT.md`；`CONTRIBUTING.md`、Issue 模板。
+- 文档：根目录 `README.md` 使用英文；移除 `README.en.md`。
 
 ## v4.1 维护记录（OpenClaw 对齐与门禁）
 
