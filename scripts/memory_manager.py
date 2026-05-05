@@ -350,6 +350,37 @@ class MemoryManager:
         all_memories = self.get_recent_memories(limit=1000)
         return [m for m in all_memories if tag in m.tags][:limit]
 
+    def search_keyword(
+        self,
+        query: str,
+        limit: int = 20,
+        max_scan: int = 2000,
+    ) -> List[TaskMemory]:
+        """
+        在 index.jsonl 中按关键词检索（MVP：子串匹配 content + tags，从新到旧扫描最多 max_scan 行）。
+        """
+        q = (query or "").strip().lower()
+        if not q or not self.index_file.exists():
+            return []
+        with open(self.index_file, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+        window = lines[-max_scan:] if len(lines) > max_scan else lines
+        matched: List[TaskMemory] = []
+        for line in reversed(window):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                m = TaskMemory.from_dict(json.loads(line))
+            except (json.JSONDecodeError, TypeError, KeyError):
+                continue
+            hay = f"{m.content} {' '.join(m.tags)}".lower()
+            if q in hay:
+                matched.append(m)
+            if len(matched) >= limit:
+                break
+        return matched
+
     def _write_memory(self, memory: TaskMemory):
         """写入记忆文件"""
         # 按月份组织: sindris-tasks/YYYY-MM.md

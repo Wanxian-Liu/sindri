@@ -23,9 +23,14 @@ CI：仓库 `.github/workflows/ci.yml` 在 push/PR 至 `main` 或 `master` 时�
 - 测试：Ralph 用例统一使用 `MockSindrisExecutor` 绑定方法，满足 `check_fn` 白名单；`asyncio.run` 隔离 gstack 异步用例事件循环；`score_role` 与返回 `(score, reasons)` 对齐。
 - 工程：新增 `tests/conftest.py`、`tests/ralph_mock_executor.py`；根目录 `README.md`；`.github/workflows/ci.yml`（Python 3.11 / 3.12，`pytest` + `pytest-anyio`）。
 - 仓库：从 Git 索引移除误跟踪的 `tests/__pycache__/*.pyc`（仍由 `.gitignore` 忽略）。
+- **B1 记忆桥接**：`MemoryManager.search_keyword`（索引尾部子串检索 MVP）；`memory_omx_bridge` 将 `index.jsonl` 全量快照同步到 `.omx/memory/{namespace}.json`；契约见 `docs/MEMORY_OMX_CONTRACT.md`；`README.en.md`、`CONTRIBUTING.md`、Issue 模板。
 
 ## v4.1 维护记录（OpenClaw 对齐与门禁）
 
+- SKILL：**Sindris 独立编排 + Foundry 硬绑定** — 主代理须以 Sindris 为唯一可追溯主线；Foundry 不得单独替代；平台自动 Foundry 时须在同一任务内补全 Sindris 链。
+- SKILL：**任务类型 A/B**（交付物 vs 只读/学习）— 明确 Ralph、yield 后验证、Git 的强制边界与类型 B 豁免须显式声明；**主代理自审五问**；消除「Step 3」与角色改进子流程的命名混淆；规划入口须 `plan` 或 `execute`。
+- 执行器：`audit_keywords` 与 SKILL「审计团队触发条件」对齐（含 `评估`、`review`、`质量检查` 等）。
+- SKILL：**Spawn 公约**（单一真源）— 经常 spawn 时的三要素、`trace_id`、yield/失败 yield、主会话与所有权、并行度与收束四问；编排模板与之交叉引用。`docs/personal-orchestration-checklist.md` 与 `audit/README.md` 同步指向该节。
 - SKILL：增加 OpenClaw 运行时契约与 **plan() → sessions_spawn / sessions_yield 映射表**；统一 Sindris 命名，去除 A2 代号。
 - 工程：`tests/test_release_contract.py` 发布契约；`audit/README.md` / `audit/PROMPT_MAINTAINER.md`；历史审计报告归档声明。
 - 脚本：`register_roles.py` 使用仓库相对路径；`install_sindri.sh` 触发词与 Sindris 一致。
