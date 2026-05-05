@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Release contract checks for Sindris v4.1."""
+"""Release contract checks for Sindris v4.2."""
 
 from pathlib import Path
 import re
@@ -26,7 +26,7 @@ def test_skill_and_executor_version_are_aligned():
     skill_version = _extract_version(skill_text, r'^version:\s*"([^"]+)"')
     code_version = _extract_version(executor_text, r'^VERSION\s*=\s*"([^"]+)"')
 
-    assert skill_version == code_version == "4.1"
+    assert skill_version == code_version == "4.2"
 
 
 def test_skill_has_no_a2_terminology():

@@ -1,10 +1,10 @@
 ---
 name: sindris
-version: "4.1"
+version: "4.2"
 license: MIT
 copyright: "2026 琬弦 (Wanxian)"
 description: |
-  织界统一协调系统 v4.1 - 多Agent协作执行引擎
+  织界统一协调系统 v4.2 - 多Agent协作执行引擎
   
   基于sindris Step 1-5流程，参考oh-my-codex v2设计，
   整合织界中枢模块（熔断/投票/worktree）和OMX持久化。
@@ -16,7 +16,7 @@ description: |
   完整版本历史见 [CHANGELOG.md](CHANGELOG.md)
 ---
 
-# Sindris v4.1 多Agent协作流程
+# Sindris v4.2 多Agent协作流程
 
 
 > **Sindri's** — 冰岛语"真挚、纯粹" | 意为每个协作都是真诚的、有目的的
@@ -25,7 +25,7 @@ description: |
 
 ## 零、审计状态
 
-> **最新审计**: 2026-04-27 | **版本**: v4.1
+> **最新审计**: 2026-04-27 | **版本**: v4.2
 
 ### 当前状态
 
@@ -227,8 +227,8 @@ for subtask in result["subtasks"]:
 
 | 触发词 | 说明 |
 |--------|------|
-| `启动Sindris` / `启动Sindri's` | 开始完整 Sindris v4.1 流程 |
-| `Sindris流程` / `织界流程` | 开始 v4.1 多Agent协作 |
+| `启动Sindris` / `启动Sindri's` | 开始完整 Sindris v4.2 流程 |
+| `Sindris流程` / `织界流程` | 开始 v4.2 多Agent协作 |
 | `多Agent协作` | 启动团队协作 |
 | `执行Sindris` | 快速启动 |
 | `审计` | **启动审计专业团队** |
@@ -238,7 +238,7 @@ for subtask in result["subtasks"]:
 ```
 用户：解决Mimir-Core两套并行路径问题
     ↓
-主Agent识别触发词 → 启动 Sindris v4.1 Step 1
+主Agent识别触发词 → 启动 Sindris v4.2 Step 1
 
 用户：审计sindris角色质量
     ↓

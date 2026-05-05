@@ -6,7 +6,7 @@
 
 1. **`sindris_executor.py`**：更新 `VERSION = "x.y"`。
 2. **`SKILL.md`**：frontmatter `version: "x.y"` 与正文涉及版本号的句子。
-3. **`tests/test_release_contract.py`**：将 `assert ... == "4.1"` 中的期望版本改为 `x.y`（或与常量统一）。
+3. **`tests/test_release_contract.py`**（若存在）：将其中期望版本改为 `x.y`（或与 `VERSION` 常量统一）。
 4. **`audit/README.md`**：「当前基线」中的版本号。
 5. **本文件**：在顶部增加 `## vx.y` 小节，记录变更摘要。
 6. **合并前**：本地或通过 CI 运行 `python3 -m pytest tests/test_release_contract.py` 与 `python3 -m pytest tests/`。
@@ -14,6 +14,15 @@
 CI：仓库 `.github/workflows/ci.yml` 在 push/PR 至 `main` 或 `master` 时对 Python 3.11 / 3.12 运行上述测试。
 
 ---
+
+## v4.2 维护记录（测试门禁与仓库卫生）
+
+- SKILL：**负一、自警条款**（琬弦 2026-05-06）— 执行前自审，与 v4.1 编排规则并存。
+- 执行器：`VERSION` 与 `SKILL.md` frontmatter 对齐为 **4.2**。
+- `CircuitBreaker.call`：同步路径下失败时指数退避**重试**后再抛出（与测试及韧性预期一致）。
+- 测试：Ralph 用例统一使用 `MockSindrisExecutor` 绑定方法，满足 `check_fn` 白名单；`asyncio.run` 隔离 gstack 异步用例事件循环；`score_role` 与返回 `(score, reasons)` 对齐。
+- 工程：新增 `tests/conftest.py`、`tests/ralph_mock_executor.py`；根目录 `README.md`；`.github/workflows/ci.yml`（Python 3.11 / 3.12，`pytest` + `pytest-anyio`）。
+- 仓库：从 Git 索引移除误跟踪的 `tests/__pycache__/*.pyc`（仍由 `.gitignore` 忽略）。
 
 ## v4.1 维护记录（OpenClaw 对齐与门禁）
 

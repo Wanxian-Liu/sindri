@@ -1,7 +1,7 @@
 """
-sindris_executor.py - 织界统一协调系统执行引擎 (v4.1)
+sindris_executor.py - 织界统一协调系统执行引擎 (v4.2)
 
-版本:v4.1
+版本:v4.2
 
 架构原则:
 - 执行框架 ≠ 文档系统
@@ -18,7 +18,7 @@ sindris_executor.py - 织界统一协调系统执行引擎 (v4.1)
 - PathValidator: 路径验证
 """
 
-VERSION = "4.1"
+VERSION = "4.2"
 
 import uuid
 import json
@@ -185,7 +185,7 @@ class SubagentState:
 
 class SindrisExecutor:
     """
-    Sindris执行器 - 新架构 (v4.1)
+    Sindris执行器 - 新架构 (v4.2)
 
     两大引擎:
     1. PlanEngine - 任务规划
